@@ -21,3 +21,18 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Next.js (如果之後用到)
+.next/
+out/
+
+# 編輯器設定檔案
+.vscode/
+.idea/
+
+# Windows 系統檔案
+Thumbs.db
+
+# 臨時檔案
+*.tmp
+*.temp
