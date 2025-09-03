@@ -56,7 +56,13 @@ const Header = ({
             <ArrowLeft className="w-6 h-6" />
           </button>
         )}
-        <h1 className="text-xl font-bold">Sagasu POS系統</h1>
+        <button
+          type="button"
+          className="text-xl font-bold hover:text-blue-600 transition-colors"
+          onClick={() => onMenuSelect && onMenuSelect("seating")}
+        >
+          Sagasu POS系統
+        </button>
       </div>
 
       <div className="flex items-center space-x-4">
