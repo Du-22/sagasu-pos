@@ -1,5 +1,6 @@
 import React from "react";
 import TableButton from "../UI/TableButton";
+import Timer from "../UI/Timer";
 
 const seatingData = {
   // 1F: 矩形房間，外帶區在左上角，桌子沿著牆邊排列
@@ -13,8 +14,8 @@ const seatingData = {
   // 2F: 分兩房間
   "2F": [
     // 左房間：中間1桌，三邊各1桌，總共4桌
-    { id: "2F-1", x: 25, y: 25, size: "medium" }, // 中央桌
-    { id: "2F-2", x: 5, y: 45, size: "medium" }, // 左邊牆
+    { id: "2F-2", x: 25, y: 25, size: "medium" }, // 中央桌
+    { id: "2F-1", x: 5, y: 45, size: "medium" }, // 左邊牆
     { id: "2F-3", x: 25, y: 70, size: "medium" }, // 下邊牆
     { id: "2F-4", x: 45, y: 45, size: "medium" }, // 右邊牆
 
@@ -25,9 +26,14 @@ const seatingData = {
   ],
 };
 
-const TakeoutPanel = ({ takeoutOrders, onTakeoutClick, onNewTakeout }) => {
+const TakeoutPanel = ({
+  takeoutOrders = [],
+  timers = {},
+  onTakeoutClick,
+  onNewTakeout,
+}) => {
   return (
-    <div className="w-80 bg-white border-l-2 border-gray-300 flex flex-col">
+    <div className="w-1/5 bg-white border-l-2 border-b-2 border-t-2 border-r-2 border-gray-300 flex flex-col h-[605px]">
       {/* 外帶標題 */}
       <div className="p-4 border-b bg-orange-50">
         <div className="flex items-center justify-between">
@@ -66,14 +72,17 @@ const TakeoutPanel = ({ takeoutOrders, onTakeoutClick, onNewTakeout }) => {
                 >
                   <div className="flex items-center justify-between">
                     <div className="font-medium text-sm">外帶 #{takeoutId}</div>
-                    <div
-                      className={`text-xs px-2 py-1 rounded ${
-                        isPaid
-                          ? "bg-green-200 text-green-700"
-                          : "bg-orange-200 text-orange-700"
-                      }`}
-                    >
-                      {isPaid ? "已結帳" : "待結帳"}
+                    <div className="flex items-center space-x-2">
+                      <Timer startTime={timers[takeoutId]} />
+                      <div
+                        className={`text-xs px-2 py-1 rounded ${
+                          isPaid
+                            ? "bg-green-200 text-green-700"
+                            : "bg-orange-200 text-orange-700"
+                        }`}
+                      >
+                        {isPaid ? "已結帳" : "待結帳"}
+                      </div>
                     </div>
                   </div>
 
@@ -100,6 +109,7 @@ const SeatingArea = ({
   currentFloor,
   orders,
   takeoutOrders,
+  timers,
   onTableClick,
   onTakeoutClick,
   onNewTakeout,
@@ -138,14 +148,14 @@ const SeatingArea = ({
       return {
         containerClass: "flex",
         seatingClass:
-          "flex-1 bg-white rounded-lg shadow-sm h-[400px] relative border-2 border-gray-300 mr-4",
+          "flex-1 bg-white rounded-lg shadow-sm h-[605px] relative border-2 border-gray-300 mr-8",
       };
     } else {
       // 2F: 只有座位區
       return {
-        containerClass: "",
+        containerClass: "flex",
         seatingClass:
-          "bg-white rounded-lg shadow-sm h-[480px] relative border-2 border-gray-300",
+          "flex-1 bg-white rounded-lg shadow-sm h-[620px] relative border-2 border-gray-300",
       };
     }
   };
@@ -153,39 +163,45 @@ const SeatingArea = ({
   const { containerClass, seatingClass } = getContainerStyle();
 
   return (
-    <div className="p-8">
-      <div className={containerClass}>
+    <div className="relative px-6 flex-1 flex flex-col">
+      {/* 2F 區域分隔線 */}
+      {currentFloor === "2F" && (
+        <div
+          className="absolute top-0 left-1/2 w-0.5 h-[620px] bg-gray-400"
+          style={{ zIndex: 10 }}
+        ></div>
+      )}
+      <div className={containerClass + " flex-1 flex"}>
         {/* 座位區域 */}
-        <div className={seatingClass}>
+        <div className={seatingClass} style={{ overflowY: "auto" }}>
           {/* 1F 外帶區域標示 */}
-          {currentFloor === "1F" && (
+          {/* {currentFloor === "1F" && (
             <div className="absolute top-4 left-4 w-20 h-12 border-2 border-orange-400 rounded flex items-center justify-center bg-orange-50">
               <div className="text-xs text-center font-medium text-orange-600">
                 外帶
               </div>
             </div>
-          )}
+          )} */}
 
-          {/* 2F 區域分隔線 */}
-          {currentFloor === "2F" && (
-            <div className="absolute top-0 left-1/2 w-0.5 h-full bg-gray-400"></div>
-          )}
-
-          {/* 座位按鈕 */}
-          {seatingData[currentFloor].map((table) => (
-            <TableButton
-              key={table.id}
-              table={table}
-              status={getTableStatus(table.id)}
-              onClick={onTableClick}
-            />
-          ))}
+          <div className="relative w-full h-[600px] bg-white">
+            {/* 這裡渲染所有 TableButton */}
+            {seatingData[currentFloor].map((table) => (
+              <TableButton
+                key={table.id}
+                table={table}
+                status={getTableStatus(table.id)}
+                onClick={onTableClick}
+                startTime={timers[table.id]}
+              />
+            ))}
+          </div>
         </div>
 
         {/* 外帶面板（只在 1F 顯示） */}
         {currentFloor === "1F" && (
           <TakeoutPanel
             takeoutOrders={takeoutOrders}
+            timers={timers}
             onTakeoutClick={onTakeoutClick}
             onNewTakeout={onNewTakeout}
           />
@@ -193,25 +209,22 @@ const SeatingArea = ({
       </div>
 
       {/* 圖例 */}
-      <div className="mt-4 flex justify-center space-x-8">
+      <div
+        className="absolute left-0 bottom-0 w-full flex justify-center space-x-6 bg-gray-100 py-8"
+        style={{ zIndex: 20 }}
+      >
         <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-green-200 border border-green-400 rounded-full"></div>
+          <div className="w-4 h-4 bg-blue-200 border border-blue-400 rounded-full"></div>
           <span className="text-sm">空桌</span>
         </div>
         <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-red-200 border border-red-400 rounded-full"></div>
+          <div className="w-4 h-4 bg-purple-200 border border-purple-400 rounded-full"></div>
           <span className="text-sm">用餐中</span>
         </div>
         <div className="flex items-center space-x-2">
           <div className="w-4 h-4 bg-yellow-200 border border-yellow-400 rounded-full animate-pulse"></div>
           <span className="text-sm">待清理</span>
         </div>
-        {currentFloor === "1F" && (
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-orange-200 border border-orange-400 rounded"></div>
-            <span className="text-sm">外帶</span>
-          </div>
-        )}
       </div>
     </div>
   );

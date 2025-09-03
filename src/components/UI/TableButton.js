@@ -1,6 +1,7 @@
 import React from "react";
+import Timer from "./Timer";
 
-const TableButton = ({ table, status, onClick }) => {
+const TableButton = ({ table, status, onClick, startTime }) => {
   const getTableSizeClass = (size) => {
     switch (size) {
       case "small":
@@ -17,9 +18,9 @@ const TableButton = ({ table, status, onClick }) => {
   const getTableColor = (status) => {
     switch (status) {
       case "available":
-        return "bg-green-200 border-green-400 hover:bg-green-300";
+        return "bg-blue-200 border-blue-400 hover:bg-blue-300";
       case "occupied":
-        return "bg-red-200 border-red-400 hover:bg-red-300";
+        return "bg-purple-200 border-purple-400 hover:bg-purple-300";
       case "ready-to-clean":
         return "bg-yellow-200 border-yellow-400 hover:bg-yellow-300";
       default:
@@ -41,22 +42,59 @@ const TableButton = ({ table, status, onClick }) => {
   };
 
   return (
-    <button
-      onClick={() => onClick(table.id)}
-      className={`absolute border-2 rounded-full ${getTableSizeClass(
-        table.size
-      )} ${getTableColor(status)} 
-        flex items-center justify-center font-bold text-xs transition-all duration-200
-        ${status === "ready-to-clean" ? "animate-pulse" : ""}`}
+    <div
+      className="absolute"
       style={{
         left: `${table.x}%`,
         top: `${table.y}%`,
         transform: "translate(-50%, -50%)",
+        zIndex: 1,
+        width:
+          table.size === "large"
+            ? "150px"
+            : table.size === "medium"
+            ? "96px"
+            : "32px",
+        height:
+          table.size === "large"
+            ? "150px"
+            : table.size === "medium"
+            ? "96px"
+            : "32px",
       }}
-      title={`${table.id} - ${getStatusText(status)}`}
     >
-      {table.id.split("-")[1]}
-    </button>
+      <button
+        onClick={() => onClick(table.id)}
+        className={`border-2 rounded-full w-full h-full ${getTableColor(
+          status
+        )} 
+      flex items-center justify-center font-bold text-xs transition-all duration-200
+      ${status === "ready-to-clean" ? "animate-pulse" : ""}`}
+        title={`${table.id} - ${getStatusText(status)}`}
+        style={{ zIndex: 2 }}
+      >
+        {table.id.split("-")[1]}
+      </button>
+      {/* Timer 用絕對定位在 div 下方 */}
+      {status !== "available" && startTime && (
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: "100%",
+            transform: "translate(-50%, 0)",
+            marginTop: "2px",
+            zIndex: 3,
+          }}
+        >
+          <Timer
+            startTime={startTime}
+            className="bg-black text-white px-2 py-0.5 rounded text-xs"
+          />
+        </div>
+      )}
+      {console.log(table.id, status, startTime)}
+    </div>
   );
 };
 

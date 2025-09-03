@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import OrderingPage from "./components/menuData/OrderingPage";
 import SeatingPage from "./components/seatingData/SeatingPage";
+import HistoryPage from "./components/pages/HistoryPage";
 
 const CafePOSSystem = () => {
   const [currentFloor, setCurrentFloor] = useState("1F");
@@ -10,19 +11,30 @@ const CafePOSSystem = () => {
   const [currentOrder, setCurrentOrder] = useState([]);
   const [takeoutOrders, setTakeoutOrders] = useState({});
   const [nextTakeoutId, setNextTakeoutId] = useState(1);
+  const [timers, setTimers] = useState({});
+  const [salesHistory, setSalesHistory] = useState([]);
 
   useEffect(() => {
     console.log("currentView 已變更為:", currentView);
     console.log("selectedTable:", selectedTable);
   }, [currentView, selectedTable]);
 
-  // 從localStorage載入資料
+  useEffect(() => {
+    const savedHistory = localStorage.getItem("cafeSalesHistory");
+    if (savedHistory) {
+      try {
+        setSalesHistory(JSON.parse(savedHistory));
+      } catch (error) {
+        console.error("載入歷史記錄時發生錯誤:", error);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     const savedOrders = localStorage.getItem("cafeOrders");
     if (savedOrders) {
       try {
         const parsedOrders = JSON.parse(savedOrders);
-        console.log("載入的原始資料:", parsedOrders);
         setOrders(parsedOrders);
       } catch (error) {
         console.error("載入訂單資料時發生錯誤:", error);
@@ -40,14 +52,106 @@ const CafePOSSystem = () => {
     }
   }, []);
 
-  // 儲存訂單到localStorage
+  useEffect(() => {
+    const savedTimers = localStorage.getItem("cafeTimers");
+    if (savedTimers) {
+      try {
+        setTimers(JSON.parse(savedTimers));
+      } catch (error) {
+        console.error("載入計時器資料時發生錯誤:", error);
+      }
+    }
+  }, []);
+
   const saveOrders = (newOrders) => {
-    console.log("儲存資料:", newOrders);
     setOrders(newOrders);
     localStorage.setItem("cafeOrders", JSON.stringify(newOrders));
   };
 
-  // 外帶相關函數
+  const generateHistoryId = () => {
+    const now = new Date();
+    const dateStr = now.toISOString().split("T")[0].replace(/-/g, "");
+    const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, "");
+    const randomStr = Math.random().toString(36).substr(2, 3).toUpperCase();
+    return `H${dateStr}${timeStr}${randomStr}`;
+  };
+
+  const createHistoryRecord = (tableId, orderData, type = "dine-in") => {
+    const now = new Date();
+    let items = [];
+    let total = 0;
+
+    if (type === "takeout") {
+      // 外帶資料處理（合併所有批次）
+      if (orderData.batches && Array.isArray(orderData.batches)) {
+        orderData.batches.forEach((batch) => {
+          batch.forEach((item) => {
+            const existingItem = items.find((i) => i.id === item.id);
+            if (existingItem) {
+              existingItem.quantity += item.quantity;
+              existingItem.subtotal =
+                existingItem.price * existingItem.quantity;
+            } else {
+              items.push({
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                subtotal: item.price * item.quantity,
+              });
+            }
+          });
+        });
+      }
+      total = items.reduce((sum, item) => sum + item.subtotal, 0);
+    } else {
+      // 內用資料處理 - 將所有批次合併
+      orderData.forEach((batch) => {
+        batch.forEach((item) => {
+          const existingItem = items.find((i) => i.id === item.id);
+          if (existingItem) {
+            existingItem.quantity += item.quantity;
+            existingItem.subtotal = existingItem.price * existingItem.quantity;
+          } else {
+            items.push({
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity,
+              subtotal: item.price * item.quantity,
+            });
+          }
+        });
+      });
+      total = items.reduce((sum, item) => sum + item.subtotal, 0);
+    }
+
+    const parts = now
+      .toLocaleDateString("zh-TW", { timeZone: "Asia/Taipei" })
+      .split("/");
+    const taiwanDateStr = `${parts[0]}-${parts[1].padStart(
+      2,
+      "0"
+    )}-${parts[2].padStart(2, "0")}`;
+
+    return {
+      id: generateHistoryId(),
+      date: taiwanDateStr,
+      time: now.toTimeString().slice(0, 8),
+      timestamp: now.getTime(),
+      type: type,
+      table: tableId,
+      items: items,
+      total: total,
+      itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
+    };
+  };
+
+  const saveSalesHistory = (newHistory) => {
+    setSalesHistory(newHistory);
+    localStorage.setItem("cafeSalesHistory", JSON.stringify(newHistory));
+  };
+
   const handleNewTakeout = () => {
     const takeoutId = `T${String(nextTakeoutId).padStart(3, "0")}`;
     setSelectedTable(takeoutId);
@@ -63,7 +167,6 @@ const CafePOSSystem = () => {
       setCurrentOrder([]);
       setCurrentView("ordering");
     } else if (orderData && orderData.paid) {
-      // 清除已結帳的外帶訂單
       const newTakeoutOrders = { ...takeoutOrders };
       delete newTakeoutOrders[takeoutId];
       setTakeoutOrders(newTakeoutOrders);
@@ -74,9 +177,12 @@ const CafePOSSystem = () => {
     }
   };
 
-  // 取得座位狀態
+  const saveTimers = (newTimers) => {
+    setTimers(newTimers);
+    localStorage.setItem("cafeTimers", JSON.stringify(newTimers));
+  };
+
   const getTableStatus = (tableId) => {
-    // 如果是外帶，返回特殊狀態
     if (tableId.startsWith("T")) {
       const takeoutData = takeoutOrders[tableId];
       if (takeoutData) {
@@ -95,7 +201,6 @@ const CafePOSSystem = () => {
       return "available";
     }
 
-    // 簡化邏輯：檢查是否有未付款的項目
     let hasUnpaidItems = false;
     let hasPaidItems = false;
 
@@ -116,23 +221,13 @@ const CafePOSSystem = () => {
     return "available";
   };
 
-  // 點選座位處理
   const handleTableClick = (tableId) => {
     const status = getTableStatus(tableId);
-    console.log(`點擊座位 ${tableId}, 狀態: ${status}`);
-
     if (status === "available" || status === "occupied") {
-      // 強制同步更新，避免狀態競爭
-      console.log("強制進入點餐模式");
-
-      // 先更新所有狀態
       setSelectedTable(tableId);
       setCurrentOrder([]);
-
-      // 使用 setTimeout 確保狀態更新後再改變視圖
       setTimeout(() => {
         setCurrentView("ordering");
-        console.log("視圖已切換到 ordering");
       }, 10);
     } else if (status === "ready-to-clean") {
       const newOrders = { ...orders };
@@ -141,7 +236,6 @@ const CafePOSSystem = () => {
     }
   };
 
-  // 添加商品到訂單
   const addToOrder = (item) => {
     const existingItem = currentOrder.find(
       (orderItem) => orderItem.id === item.id
@@ -159,7 +253,6 @@ const CafePOSSystem = () => {
     }
   };
 
-  // 更新商品數量
   const updateQuantity = (itemId, quantity) => {
     if (quantity <= 0) {
       setCurrentOrder(currentOrder.filter((item) => item.id !== itemId));
@@ -172,7 +265,6 @@ const CafePOSSystem = () => {
     }
   };
 
-  // 移除商品
   const removeFromOrder = (itemId) => {
     const removingItem = currentOrder.find((item) => item.id === itemId);
 
@@ -180,19 +272,23 @@ const CafePOSSystem = () => {
       if (removingItem.isTakeout) {
         // 外帶項目的刪除邏輯
         const takeoutData = takeoutOrders[selectedTable];
-        if (takeoutData && takeoutData.items) {
-          const updatedItems = takeoutData.items.filter(
-            (_, index) => index !== removingItem.originalItemIndex
+        if (takeoutData && takeoutData.batches) {
+          // 找到正在編輯的批次和項目
+          const batchIndex = removingItem.originalBatchIndex ?? 0;
+          const itemIndex = removingItem.originalItemIndex;
+          const updatedBatches = takeoutData.batches.map((batch, idx) =>
+            idx === batchIndex ? batch.filter((_, i) => i !== itemIndex) : batch
           );
-
+          const filteredBatches = updatedBatches.filter(
+            (batch) => batch.length > 0
+          );
           const newTakeoutOrders = {
             ...takeoutOrders,
             [selectedTable]: {
               ...takeoutData,
-              items: updatedItems,
+              batches: filteredBatches,
             },
           };
-
           setTakeoutOrders(newTakeoutOrders);
           localStorage.setItem(
             "cafeTakeoutOrders",
@@ -200,66 +296,53 @@ const CafePOSSystem = () => {
           );
         }
       } else {
-        // 內用項目的刪除邏輯（原有邏輯）
-        const batches = [...(orders[selectedTable] || [])];
+        // 內用項目的刪除邏輯
+        const batches = Array.isArray(orders[selectedTable])
+          ? [...orders[selectedTable]]
+          : [];
         const { originalBatchIndex, originalItemIndex } = removingItem;
-
         batches[originalBatchIndex].splice(originalItemIndex, 1);
         const filteredBatches = batches.filter((batch) => batch.length > 0);
-
         const newOrders = {
           ...orders,
           [selectedTable]: filteredBatches,
         };
-
         saveOrders(newOrders);
       }
     }
 
-    // 從當前編輯區域移除
     setCurrentOrder(currentOrder.filter((item) => item.id !== itemId));
   };
 
-  // 送出訂單
   const submitOrder = () => {
     if (currentOrder.length === 0) return;
 
-    // 判斷是外帶還是內用
-    if (selectedTable.startsWith("T")) {
-      // 外帶訂單
-      const existingTakeoutData = takeoutOrders[selectedTable];
-      const newItems = [];
-      let updatedItems = existingTakeoutData
-        ? [...existingTakeoutData.items]
-        : [];
-      const hasEditingItems = currentOrder.some(
-        (item) => item.isEditing && item.isTakeout
-      );
+    if (!timers[selectedTable]) {
+      const newTimers = {
+        ...timers,
+        [selectedTable]: Date.now(),
+      };
+      saveTimers(newTimers);
+    }
 
-      currentOrder.forEach((item) => {
-        if (item.isEditing && item.isTakeout) {
-          // 這是修改的外帶項目，更新原位置
-          const { isEditing, isTakeout, originalItemIndex, ...updatedItem } =
-            item;
-          updatedItems[originalItemIndex] = {
-            ...updatedItem,
-            timestamp: new Date().toISOString(),
-            paid: false,
-          };
-        } else {
-          // 這是新增的項目
-          newItems.push({
-            ...item,
-            timestamp: new Date().toISOString(),
-            paid: false,
-          });
-        }
-      });
+    if (selectedTable.startsWith("T")) {
+      // 外帶訂單分批記錄
+      const existingTakeoutData = takeoutOrders[selectedTable];
+      const newBatch = currentOrder.map((item) => ({
+        ...item,
+        timestamp: new Date().toISOString(),
+        paid: false,
+      }));
+
+      const updatedBatches =
+        existingTakeoutData && Array.isArray(existingTakeoutData.batches)
+          ? [...existingTakeoutData.batches, newBatch]
+          : [newBatch];
 
       const newTakeoutOrders = {
         ...takeoutOrders,
         [selectedTable]: {
-          items: [...updatedItems, ...newItems],
+          batches: updatedBatches,
           timestamp: existingTakeoutData
             ? existingTakeoutData.timestamp
             : new Date().toISOString(),
@@ -273,18 +356,14 @@ const CafePOSSystem = () => {
         JSON.stringify(newTakeoutOrders)
       );
 
-      // 外帶的跳轉邏輯
-      if (hasEditingItems && newItems.length === 0) {
-        setCurrentOrder([]); // 只清空編輯區域
-      } else {
-        // 有新增項目或是第一次點餐，跳回座位頁面
-        setCurrentView("seating");
-        setSelectedTable(null);
-        setCurrentOrder([]);
-      }
+      setCurrentView("seating");
+      setSelectedTable(null);
+      setCurrentOrder([]);
     } else {
       // 內用訂單 - 使用替換邏輯
-      const existingBatches = [...(orders[selectedTable] || [])];
+      const existingBatches = Array.isArray(orders[selectedTable])
+        ? [...orders[selectedTable]]
+        : [];
       const newItems = [];
       const hasEditingItems = currentOrder.some(
         (item) => item.isEditing && !item.isTakeout
@@ -292,7 +371,6 @@ const CafePOSSystem = () => {
 
       currentOrder.forEach((item) => {
         if (item.isEditing && !item.isTakeout) {
-          // 內用修改項目，更新原位置
           const {
             isEditing,
             originalBatchIndex,
@@ -305,7 +383,6 @@ const CafePOSSystem = () => {
             paid: false,
           };
         } else if (!item.isEditing) {
-          // 新增的項目
           newItems.push({
             ...item,
             timestamp: new Date().toISOString(),
@@ -324,7 +401,6 @@ const CafePOSSystem = () => {
 
       saveOrders(newOrders);
 
-      // 內用的跳轉邏輯
       if (hasEditingItems && newItems.length === 0) {
         setCurrentOrder([]);
       } else {
@@ -335,87 +411,144 @@ const CafePOSSystem = () => {
     }
   };
 
-  // 結帳
   const checkout = () => {
+    if (!selectedTable) return;
+
     if (selectedTable.startsWith("T")) {
-      // 外帶結帳
-      const newTakeoutOrders = {
-        ...takeoutOrders,
-        [selectedTable]: {
-          ...takeoutOrders[selectedTable],
-          paid: true,
-        },
-      };
-      setTakeoutOrders(newTakeoutOrders);
-      localStorage.setItem(
-        "cafeTakeoutOrders",
-        JSON.stringify(newTakeoutOrders)
-      );
-    } else {
-      // 內用結帳（原有邏輯）
-      if (!orders[selectedTable]) return;
+      let takeoutData = takeoutOrders[selectedTable];
 
-      const updatedBatches = orders[selectedTable].map((batch) =>
-        batch.map((item) => ({ ...item, paid: true }))
-      );
+      // 如果還沒送出訂單，但 currentOrder 有內容
+      if (!takeoutData && currentOrder.length > 0) {
+        const newBatch = currentOrder.map((item) => ({
+          ...item,
+          timestamp: new Date().toISOString(),
+        }));
+        takeoutData = {
+          batches: [newBatch],
+          timestamp: new Date().toISOString(),
+          paid: false,
+        };
+        const newTakeoutOrders = {
+          ...takeoutOrders,
+          [selectedTable]: takeoutData,
+        };
+        setTakeoutOrders(newTakeoutOrders);
+        localStorage.setItem(
+          "cafeTakeoutOrders",
+          JSON.stringify(newTakeoutOrders)
+        );
+      }
 
-      const newOrders = {
-        ...orders,
-        [selectedTable]: updatedBatches,
-      };
+      if (takeoutData && !takeoutData.paid) {
+        const historyRecord = createHistoryRecord(
+          selectedTable,
+          takeoutData,
+          "takeout"
+        );
+        const newHistory = [...salesHistory, historyRecord];
+        saveSalesHistory(newHistory);
 
-      saveOrders(newOrders);
+        const newTakeoutOrders = {
+          ...takeoutOrders,
+          [selectedTable]: {
+            ...takeoutData,
+            paid: true,
+          },
+        };
+        setTakeoutOrders(newTakeoutOrders);
+        localStorage.setItem(
+          "cafeTakeoutOrders",
+          JSON.stringify(newTakeoutOrders)
+        );
+      }
+      setCurrentOrder([]);
+      setSelectedTable(null);
+      setCurrentView("main");
+      return;
     }
 
-    setCurrentView("seating");
-    setSelectedTable(null);
-    setCurrentOrder([]);
+    if (selectedTable) {
+      const tableOrder = orders[selectedTable];
+      if (tableOrder && !tableOrder.paid) {
+        const historyRecord = createHistoryRecord(
+          selectedTable,
+          tableOrder,
+          "table"
+        );
+        const newHistory = [...salesHistory, historyRecord];
+        saveSalesHistory(newHistory);
+
+        const paidBatches = tableOrder.map((batch) =>
+          batch.map((item) => ({ ...item, paid: true }))
+        );
+        const newOrders = {
+          ...orders,
+          [selectedTable]: paidBatches,
+        };
+        setOrders(newOrders);
+        localStorage.setItem("cafeOrders", JSON.stringify(newOrders));
+      }
+      setCurrentOrder([]);
+      setSelectedTable(null);
+      setCurrentView("main");
+    }
+    if (timers[selectedTable]) {
+      const newTimers = { ...timers };
+      delete newTimers[selectedTable];
+      setTimers(newTimers);
+      localStorage.setItem("cafeTimers", JSON.stringify(newTimers));
+    }
   };
 
-  // 編輯已確認項目
   const editConfirmedItem = (item, batchIndex, itemIndex) => {
     if (selectedTable.startsWith("T")) {
-      // 外帶訂單編輯
       const takeoutData = takeoutOrders[selectedTable];
-      if (!takeoutData || !takeoutData.items[itemIndex]) return;
+      if (
+        !takeoutData ||
+        !takeoutData.batches ||
+        !takeoutData.batches[batchIndex] ||
+        !takeoutData.batches[batchIndex][itemIndex]
+      )
+        return;
 
-      const editingItem = { ...takeoutData.items[itemIndex] };
+      const editingItem = { ...takeoutData.batches[batchIndex][itemIndex] };
 
-      // 檢查是否已經在編輯這個項目
       const isAlreadyEditing = currentOrder.some(
         (orderItem) =>
           orderItem.isEditing &&
+          orderItem.originalBatchIndex === batchIndex &&
           orderItem.originalItemIndex === itemIndex &&
           orderItem.isTakeout === true
       );
 
       if (isAlreadyEditing) {
-        // 取消編輯
         setCurrentOrder(
           currentOrder.filter(
             (orderItem) =>
               !(
                 orderItem.isEditing &&
+                orderItem.originalBatchIndex === batchIndex &&
                 orderItem.originalItemIndex === itemIndex &&
                 orderItem.isTakeout === true
               )
           )
         );
       } else {
-        // 開始編輯
         setCurrentOrder([
           ...currentOrder,
           {
             ...editingItem,
             isEditing: true,
             isTakeout: true,
+            originalBatchIndex: batchIndex,
             originalItemIndex: itemIndex,
           },
         ]);
       }
     } else {
-      // 內用訂單編輯（原有邏輯保持不變）
-      const batches = orders[selectedTable] || [];
+      const batches = Array.isArray(orders[selectedTable])
+        ? [...orders[selectedTable]]
+        : [];
       if (!batches[batchIndex] || !batches[batchIndex][itemIndex]) return;
 
       const editingItem = { ...batches[batchIndex][itemIndex] };
@@ -452,28 +585,38 @@ const CafePOSSystem = () => {
     }
   };
 
-  // 返回座位頁面
   const handleBack = () => {
     setCurrentView("seating");
     setSelectedTable(null);
     setCurrentOrder([]);
   };
 
-  console.log("檢查 currentView:", currentView);
+  const handleMenuSelect = (menuId) => {
+    setCurrentView(menuId);
+  };
+
+  if (currentView === "history") {
+    return (
+      <HistoryPage
+        salesHistory={salesHistory}
+        onBack={() => setCurrentView("seating")}
+        onMenuSelect={handleMenuSelect}
+      />
+    );
+  }
 
   if (currentView === "ordering") {
     let confirmedOrdersBatches = [];
 
-    // 判斷是外帶還是內用
     if (selectedTable.startsWith("T")) {
-      // 外帶訂單
       const takeoutData = takeoutOrders[selectedTable];
       if (takeoutData && !takeoutData.paid) {
-        confirmedOrdersBatches = [takeoutData.items]; // 外帶只有一個批次
+        confirmedOrdersBatches = takeoutData.batches || [];
       }
     } else {
-      // 內用訂單（原有邏輯）
-      const tableBatches = orders[selectedTable] || [];
+      const tableBatches = Array.isArray(orders[selectedTable])
+        ? [...orders[selectedTable]]
+        : [];
       for (let i = 0; i < tableBatches.length; i++) {
         const batch = tableBatches[i];
         if (Array.isArray(batch)) {
@@ -484,8 +627,6 @@ const CafePOSSystem = () => {
         }
       }
     }
-
-    console.log("處理後的確認批次:", confirmedOrdersBatches);
 
     return (
       <OrderingPage
@@ -499,6 +640,7 @@ const CafePOSSystem = () => {
         onRemoveItem={removeFromOrder}
         onSubmitOrder={submitOrder}
         onCheckout={checkout}
+        timers={timers}
         onEditConfirmedItem={editConfirmedItem}
       />
     );
@@ -508,11 +650,13 @@ const CafePOSSystem = () => {
     <SeatingPage
       currentFloor={currentFloor}
       orders={orders}
-      takeoutOrders={takeoutOrders} // 新增
+      takeoutOrders={takeoutOrders}
+      timers={timers}
       onFloorChange={setCurrentFloor}
       onTableClick={handleTableClick}
-      onTakeoutClick={handleTakeoutClick} // 新增
-      onNewTakeout={handleNewTakeout} // 新增
+      onTakeoutClick={handleTakeoutClick}
+      onNewTakeout={handleNewTakeout}
+      onMenuSelect={handleMenuSelect}
     />
   );
 };

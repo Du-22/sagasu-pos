@@ -136,7 +136,7 @@ const OrderSummary = ({
 
   return (
     <>
-      <div className="w-1/3 p-4">
+      <div className="p-4 max-h-[600px]">
         <div className="bg-white rounded-lg shadow-sm h-full flex flex-col">
           <div className="p-4 border-b">
             <h2 className="text-lg font-bold">小計</h2>

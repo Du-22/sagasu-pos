@@ -49,7 +49,7 @@ const MenuArea = ({ onAddToOrder }) => {
   const [activeCategory, setActiveCategory] = useState("義式");
 
   return (
-    <div className="w-2/3 p-4">
+    <div className="p-4">
       <div className="bg-white rounded-lg shadow-sm h-full">
         <MenuCategories
           activeCategory={activeCategory}
