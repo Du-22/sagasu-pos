@@ -13,6 +13,9 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
   const [newProductPrice, setNewProductPrice] = useState("");
   const [newProductCategory, setNewProductCategory] = useState("");
   const [newProductCustomOptions, setNewProductCustomOptions] = useState([]);
+  const [newCustomOptions, setNewCustomOptions] = useState([
+    { type: "", options: [""] },
+  ]);
 
   // 編輯現有產品
   const handleEditProduct = () => {
@@ -222,19 +225,80 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
             </option>
           ))}
         </select>
-        <input
-          type="text"
-          value={newProductCustomOptions.join(",")}
-          onChange={(e) =>
-            setNewProductCustomOptions(
-              e.target.value.split(",").map((opt) => opt.trim())
-            )
-          }
-          placeholder="客製選項（例如：少冰,無糖）"
-          className="border rounded px-2 py-1 mb-2 w-full"
-        />
+        {/* 客製選項 */}
+        <div className="mb-2">
+          <label className="font-medium">客製選項：</label>
+          {newCustomOptions.map((opt, idx) => (
+            <div key={idx} className="flex mb-1">
+              <input
+                type="text"
+                value={opt.type}
+                onChange={(e) => {
+                  const arr = [...newCustomOptions];
+                  arr[idx].type = e.target.value;
+                  setNewCustomOptions(arr);
+                }}
+                placeholder="選項類型（如：冰量）"
+                className="border rounded px-2 py-1 mr-2"
+              />
+              <input
+                type="text"
+                value={opt.options.join(",")}
+                onChange={(e) => {
+                  const arr = [...newCustomOptions];
+                  arr[idx].options = e.target.value
+                    .split(",")
+                    .map((s) => s.trim());
+                  setNewCustomOptions(arr);
+                }}
+                placeholder="選項內容（如：正常冰,少冰,去冰）"
+                className="border rounded px-2 py-1"
+              />
+              <button
+                onClick={() => {
+                  setNewCustomOptions(
+                    newCustomOptions.filter((_, i) => i !== idx)
+                  );
+                }}
+                className="ml-2 px-2 py-1 bg-red-400 text-white rounded"
+              >
+                刪除
+              </button>
+            </div>
+          ))}
+          <button
+            onClick={() =>
+              setNewCustomOptions([
+                ...newCustomOptions,
+                { type: "", options: [""] },
+              ])
+            }
+            className="mt-1 px-2 py-1 bg-blue-500 text-white rounded"
+          >
+            新增選項
+          </button>
+        </div>
         <button
-          onClick={handleAddProduct}
+          onClick={() => {
+            if (!newProductName || !newProductPrice || !newProductCategory)
+              return;
+            setMenuData([
+              ...menuData,
+              {
+                id: Date.now().toString(),
+                name: newProductName,
+                price: Number(newProductPrice),
+                category: newProductCategory,
+                customOptions: newCustomOptions.filter(
+                  (opt) => opt.type && opt.options.length > 0
+                ),
+              },
+            ]);
+            setNewProductName("");
+            setNewProductPrice("");
+            setNewProductCategory("");
+            setNewCustomOptions([{ type: "", options: [""] }]);
+          }}
           className="px-4 py-2 bg-green-500 text-white rounded"
         >
           新增
