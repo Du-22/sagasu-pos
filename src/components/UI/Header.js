@@ -34,7 +34,7 @@ const Header = ({
     { id: "seating", label: "座位管理", icon: <Coffee className="w-5 h-5" /> },
     { id: "history", label: "營業記錄", icon: "📊" },
     { id: "statistics", label: "統計分析", icon: "📈" },
-    { id: "settings", label: "系統設定", icon: "⚙️" },
+    { id: "menuedit", label: "菜單編輯", icon: "📝" },
     { id: "export", label: "資料匯出", icon: "📤" },
   ];
 

@@ -220,6 +220,60 @@ const HistoryPage = ({ salesHistory, onBack, onMenuSelect }) => {
               </div>
             )}
           </div>
+
+          {/* 付款方式統計 */}
+          <div className="bg-white rounded-lg p-4">
+            <h3 className="text-lg font-bold mb-3">付款方式統計</h3>
+            {dayRecords.length === 0 ? (
+              <div className="text-center text-gray-500 py-4">暫無數據</div>
+            ) : (
+              <div className="space-y-4">
+                {["cash", "linepay"].map((method) => {
+                  const methodRecords = dayRecords.filter(
+                    (r) => r.paymentMethod === method
+                  );
+                  const methodTotal = methodRecords.reduce(
+                    (sum, r) => sum + r.total,
+                    0
+                  );
+                  const percentage =
+                    dayTotal > 0
+                      ? Math.round((methodTotal / dayTotal) * 100)
+                      : 0;
+
+                  return (
+                    <div
+                      key={method}
+                      className="flex items-center justify-between"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div
+                          className={`w-4 h-4 rounded ${
+                            method === "cash"
+                              ? "bg-blue-500"
+                              : method === "credit_card"
+                              ? "bg-orange-500"
+                              : "bg-green-500"
+                          }`}
+                        ></div>
+                        <span className="font-medium">
+                          {method === "cash" ? "現金" : "Line Pay"}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold">
+                          {methodRecords.length} 筆
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          ${methodTotal} ({percentage}%)
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* 詳細記錄 */}
@@ -271,6 +325,18 @@ const HistoryPage = ({ salesHistory, onBack, onMenuSelect }) => {
                       {record.items.map((item, index) => (
                         <span key={index}>
                           {item.name} x{item.quantity}
+                          {/* 顯示客製選項 */}
+                          {item.selectedCustom &&
+                            Object.entries(item.selectedCustom).map(
+                              ([type, value]) => (
+                                <span
+                                  key={type}
+                                  className="ml-1 text-xs text-gray-500"
+                                >
+                                  [{type}:{value}]
+                                </span>
+                              )
+                            )}
                           {index < record.items.length - 1 ? ", " : ""}
                         </span>
                       ))}

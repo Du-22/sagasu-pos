@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { CreditCard, Edit3 } from "lucide-react";
+import { CreditCard, Edit3, Banknote, Smartphone } from "lucide-react";
 import OrderItem from "./OrderItem";
 
 const OrderSummary = ({
@@ -23,43 +23,15 @@ const OrderSummary = ({
     });
   }, [selectedTable, tableStatus, confirmedOrdersBatches, currentOrder]);
 
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+
   const calculateCurrentTotal = () => {
     return currentOrder.reduce(
       (total, item) => total + item.price * item.quantity,
       0
     );
   };
-
-  // const calculateConfirmedTotal = () => {
-  //   console.log("計算已確認總計，批次資料:", confirmedOrdersBatches);
-
-  //   // 創建一個集合來追蹤正在編輯的項目位置
-  //   const editingPositions = new Set(
-  //     currentOrder
-  //       .filter((item) => item.isEditing)
-  //       .map((item) => `${item.originalBatchIndex}-${item.originalItemIndex}`)
-  //   );
-
-  //   const total = confirmedOrdersBatches.reduce(
-  //     (batchTotal, batch, batchIndex) => {
-  //       return (
-  //         batchTotal +
-  //         batch.reduce((itemTotal, item, itemIndex) => {
-  //           // 如果這個項目正在編輯中，不計算原有的價格
-  //           const positionKey = `${batchIndex}-${itemIndex}`;
-  //           if (editingPositions.has(positionKey)) {
-  //             return itemTotal;
-  //           }
-  //           return itemTotal + item.price * item.quantity;
-  //         }, 0)
-  //       );
-  //     },
-  //     0
-  //   );
-
-  //   console.log("已確認總計:", total);
-  //   return total;
-  // };
 
   const calculateConfirmedTotal = () => {
     console.log("計算已確認總計，批次資料:", confirmedOrdersBatches);
@@ -119,11 +91,15 @@ const OrderSummary = ({
   };
 
   const handleCheckoutClick = () => {
-    const confirmed = window.confirm(
-      `確定要為 ${selectedTable} 結帳 $${calculateGrandTotal()} 嗎？`
-    );
+    setShowPaymentModal(true);
+  };
+
+  const handleConfirmPayment = () => {
+    const methodName = paymentMethod === "cash" ? "現金" : "Line Pay";
+    const confirmed = window.confirm(`確定要以 ${methodName} 結帳嗎？`);
     if (confirmed) {
-      onCheckout();
+      onCheckout(paymentMethod);
+      setShowPaymentModal(false);
     }
   };
 
@@ -133,6 +109,24 @@ const OrderSummary = ({
     const dots = "·".repeat(Math.max(5, 20 - item.name.length));
     return `${item.name} $${item.price} x ${item.quantity} ${dots} $${subtotal}`;
   };
+
+  // 付款方式選項
+  const paymentMethods = [
+    {
+      id: "cash",
+      name: "現金",
+      icon: <Banknote className="w-8 h-8" />,
+      description: "店內現金付款",
+      popular: true,
+    },
+    {
+      id: "linepay",
+      name: "Line Pay",
+      icon: <Smartphone className="w-8 h-8" />,
+      description: "掃描QR Code付款",
+      popular: false,
+    },
+  ];
 
   return (
     <>
@@ -186,6 +180,18 @@ const OrderSummary = ({
                                 <div className="text-sm font-mono text-gray-700">
                                   {formatOrderItem(item)}
                                 </div>
+                                {/* 顯示客製選項 */}
+                                {item.selectedCustom &&
+                                  Object.entries(item.selectedCustom).map(
+                                    ([type, value]) => (
+                                      <div
+                                        key={type}
+                                        className="text-xs text-gray-500 ml-2"
+                                      >
+                                        {type}: {value}
+                                      </div>
+                                    )
+                                  )}
                               </div>
                               <button
                                 onClick={() =>
@@ -278,10 +284,9 @@ const OrderSummary = ({
                 !currentOrder.some((item) => item.isEditing) && (
                   <button
                     onClick={handleCheckoutClick}
-                    className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 font-medium flex items-center justify-center space-x-2"
+                    className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 font-medium"
                   >
-                    <CreditCard className="w-5 h-5" />
-                    <span>結帳 (${calculateGrandTotal()})</span>
+                    結帳
                   </button>
                 )}
 
@@ -299,6 +304,119 @@ const OrderSummary = ({
           </div>
         </div>
       </div>
+
+      {/* 改善的付款方式選擇 Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            {/* 標題區域 */}
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                選擇付款方式
+              </h3>
+              <div className="text-3xl font-bold text-blue-600">
+                總計: ${calculateGrandTotal()}
+              </div>
+            </div>
+
+            {/* 付款方式選擇 */}
+            <div className="space-y-4 mb-8">
+              {paymentMethods.map((method) => (
+                <div
+                  key={method.id}
+                  onClick={() => setPaymentMethod(method.id)}
+                  className={`
+                    relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-200
+                    ${
+                      paymentMethod === method.id
+                        ? "border-blue-500 bg-blue-50 shadow-md"
+                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                    }
+                    ${method.popular ? "ring-2 ring-orange-200" : ""}
+                  `}
+                >
+                  {/* 推薦標籤 */}
+                  {method.popular && (
+                    <div className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                      推薦
+                    </div>
+                  )}
+
+                  <div className="flex items-center space-x-4">
+                    {/* 圖示 */}
+                    <div
+                      className={`
+                      p-3 rounded-lg
+                      ${
+                        paymentMethod === method.id
+                          ? "bg-blue-500 text-white"
+                          : "bg-gray-100 text-gray-600"
+                      }
+                      ${
+                        method.popular && paymentMethod !== method.id
+                          ? "bg-orange-100 text-orange-600"
+                          : ""
+                      }
+                    `}
+                    >
+                      {method.icon}
+                    </div>
+
+                    {/* 文字資訊 */}
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <h4 className="text-lg font-semibold text-gray-800">
+                          {method.name}
+                        </h4>
+                        {method.popular && (
+                          <span className="text-orange-600 text-sm font-medium">
+                            (常用)
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {method.description}
+                      </p>
+                    </div>
+
+                    {/* 選擇指示器 */}
+                    <div
+                      className={`
+                      w-6 h-6 rounded-full border-2 flex items-center justify-center
+                      ${
+                        paymentMethod === method.id
+                          ? "border-blue-500 bg-blue-500"
+                          : "border-gray-300"
+                      }
+                    `}
+                    >
+                      {paymentMethod === method.id && (
+                        <div className="w-2 h-2 rounded-full bg-white"></div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* 按鈕區域 */}
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleConfirmPayment}
+                className="flex-1 py-3 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium transition-colors shadow-md"
+              >
+                確認付款
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

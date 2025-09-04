@@ -16,6 +16,7 @@ const OrderingPage = ({
   onCheckout,
   onEditConfirmedItem, // 新增
   onMenuSelect,
+  menuData,
 }) => (
   <div className="min-h-screen bg-gray-100">
     <Header
@@ -29,7 +30,7 @@ const OrderingPage = ({
 
     <div className="flex ">
       <div className="flex-1  overflow-y-auto">
-        <MenuArea onAddToOrder={onAddToOrder} />
+        <MenuArea menuData={menuData} onAddToOrder={onAddToOrder} />
       </div>
       <div className="w-1/3 h-full flex flex-col">
         <OrderSummary

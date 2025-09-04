@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import OrderingPage from "./components/menuData/OrderingPage";
 import SeatingPage from "./components/seatingData/SeatingPage";
 import HistoryPage from "./components/pages/HistoryPage";
+import MenuEditorPage from "./components/pages/MenuEditorPage";
+import defaultMenuData from "./components/menuData/defaultMenuData";
 
 const CafePOSSystem = () => {
   const [currentFloor, setCurrentFloor] = useState("1F");
@@ -13,6 +15,7 @@ const CafePOSSystem = () => {
   const [nextTakeoutId, setNextTakeoutId] = useState(1);
   const [timers, setTimers] = useState({});
   const [salesHistory, setSalesHistory] = useState([]);
+  const [menuData, setMenuData] = useState(defaultMenuData);
 
   useEffect(() => {
     console.log("currentView 已變更為:", currentView);
@@ -76,7 +79,12 @@ const CafePOSSystem = () => {
     return `H${dateStr}${timeStr}${randomStr}`;
   };
 
-  const createHistoryRecord = (tableId, orderData, type = "dine-in") => {
+  const createHistoryRecord = (
+    tableId,
+    orderData,
+    type = "dine-in",
+    paymentMethod = "cash"
+  ) => {
     const now = new Date();
     let items = [];
     let total = 0;
@@ -98,6 +106,7 @@ const CafePOSSystem = () => {
                 price: item.price,
                 quantity: item.quantity,
                 subtotal: item.price * item.quantity,
+                selectedCustom: item.selectedCustom || null,
               });
             }
           });
@@ -119,6 +128,7 @@ const CafePOSSystem = () => {
               price: item.price,
               quantity: item.quantity,
               subtotal: item.price * item.quantity,
+              selectedCustom: item.selectedCustom || null,
             });
           }
         });
@@ -144,6 +154,7 @@ const CafePOSSystem = () => {
       items: items,
       total: total,
       itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
+      paymentMethod,
     };
   };
 
@@ -238,12 +249,17 @@ const CafePOSSystem = () => {
 
   const addToOrder = (item) => {
     const existingItem = currentOrder.find(
-      (orderItem) => orderItem.id === item.id
+      (orderItem) =>
+        orderItem.id === item.id &&
+        JSON.stringify(orderItem.selectedCustom || {}) ===
+          JSON.stringify(item.selectedCustom || {})
     );
     if (existingItem) {
       setCurrentOrder(
         currentOrder.map((orderItem) =>
-          orderItem.id === item.id
+          orderItem.id === item.id &&
+          JSON.stringify(orderItem.selectedCustom || {}) ===
+            JSON.stringify(item.selectedCustom || {})
             ? { ...orderItem, quantity: orderItem.quantity + 1 }
             : orderItem
         )
@@ -411,7 +427,7 @@ const CafePOSSystem = () => {
     }
   };
 
-  const checkout = () => {
+  const checkout = (paymentMethod = "cash") => {
     if (!selectedTable) return;
 
     if (selectedTable.startsWith("T")) {
@@ -443,7 +459,8 @@ const CafePOSSystem = () => {
         const historyRecord = createHistoryRecord(
           selectedTable,
           takeoutData,
-          "takeout"
+          "takeout",
+          paymentMethod
         );
         const newHistory = [...salesHistory, historyRecord];
         saveSalesHistory(newHistory);
@@ -473,7 +490,8 @@ const CafePOSSystem = () => {
         const historyRecord = createHistoryRecord(
           selectedTable,
           tableOrder,
-          "table"
+          "table",
+          paymentMethod
         );
         const newHistory = [...salesHistory, historyRecord];
         saveSalesHistory(newHistory);
@@ -595,6 +613,16 @@ const CafePOSSystem = () => {
     setCurrentView(menuId);
   };
 
+  if (currentView === "menuedit") {
+    return (
+      <MenuEditorPage
+        menuData={menuData}
+        setMenuData={setMenuData}
+        onBack={() => setCurrentView("seating")}
+      />
+    );
+  }
+
   if (currentView === "history") {
     return (
       <HistoryPage
@@ -642,6 +670,7 @@ const CafePOSSystem = () => {
         onCheckout={checkout}
         timers={timers}
         onEditConfirmedItem={editConfirmedItem}
+        menuData={menuData}
       />
     );
   }

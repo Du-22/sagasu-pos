@@ -39,13 +39,15 @@ import { Trash2 } from "lucide-react";
 const OrderItem = ({ item, onUpdateQuantity, onRemove }) => (
   <div className="flex items-center justify-between py-2 border-b">
     <div className="flex-1">
-      <div className="font-medium text-sm">
-        {item.name}
-        {item.isEditing && (
-          <span className="text-blue-500 text-xs ml-2">(修改中)</span>
-        )}
-      </div>
+      <div className="font-medium text-sm">{item.name}</div>
       <div className="text-xs text-gray-600">${item.price}</div>
+      {/* 新增：顯示客製選項 */}
+      {item.selectedCustom &&
+        Object.entries(item.selectedCustom).map(([type, value]) => (
+          <div key={type} className="text-xs text-gray-500">
+            {type}: {value}
+          </div>
+        ))}
     </div>
     <div className="flex items-center space-x-2">
       <button
