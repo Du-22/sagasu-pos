@@ -1,6 +1,6 @@
 import React from "react";
 
-const categories = ["義式", "手沖", "非咖啡", "甜點", "輕食"];
+const categories = ["義式", "手沖", "非咖啡", "小食"];
 
 const MenuCategories = ({ activeCategory, onCategoryChange }) => (
   <div className="flex border-b">

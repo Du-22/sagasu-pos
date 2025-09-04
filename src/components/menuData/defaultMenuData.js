@@ -2,75 +2,426 @@ import { type } from "@testing-library/user-event/dist/type";
 
 // 可放在 defaultMenuData.js 或 CafePOSSystem.js 的 menuData state
 const defaultMenuData = [
-  // 義式
-  { id: "espresso", category: "義式", name: "濃縮咖啡", price: 80 },
-  { id: "americano", category: "義式", name: "美式咖啡", price: 120 },
-  { id: "latte", category: "義式", name: "拿鐵咖啡", price: 150 },
-  { id: "cappuccino", category: "義式", name: "卡布奇諾", price: 140 },
-  { id: "mocha", category: "義式", name: "摩卡咖啡", price: 160 },
-  { id: "macchiato", category: "義式", name: "瑪奇朵", price: 145 },
+  // 義式咖啡
+  {
+    id: "espresso",
+    category: "義式",
+    name: "濃縮",
+    price: 100,
+    customOptions: [
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
+  {
+    id: "americano",
+    category: "義式",
+    name: "美式",
+    price: 100,
+    customOptions: [
+      { type: "冰量", options: ["少冰", "冰", "熱"] },
+      { type: "濃縮", options: ["加濃縮"] },
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
+  {
+    id: "latte",
+    category: "義式",
+    name: "拿鐵",
+    price: 130,
+    customOptions: [
+      { type: "冰量", options: ["少冰", "冰", "熱"] },
+      { type: "濃縮", options: ["加濃縮"] },
+      { type: "奶", options: ["換燕麥奶"] },
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
+  {
+    id: "cappuccino",
+    category: "義式",
+    name: "卡布奇諾",
+    price: 120,
+    customOptions: [
+      { type: "奶", options: ["換燕麥奶"] },
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
+  {
+    id: "Brown Sugar Latte",
+    category: "義式",
+    name: "黑糖拿鐵",
+    price: 140,
+    customOptions: [
+      { type: "冰量", options: ["少冰", "冰", "熱"] },
+      { type: "濃縮", options: ["加濃縮"] },
+      { type: "奶", options: ["換燕麥奶"] },
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
+  {
+    id: "1+1",
+    category: "義式",
+    name: "1+1",
+    price: 170,
+    customOptions: [
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
+  {
+    id: "Lemon American",
+    category: "義式",
+    name: "檸檬美式",
+    price: 130,
+    customOptions: [
+      { type: "冰量", options: ["少冰", "冰"] },
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
+  {
+    id: "Orange American",
+    category: "義式",
+    name: "柳橙美式",
+    price: 130,
+    customOptions: [
+      { type: "冰量", options: ["少冰", "冰"] },
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
+  {
+    id: "Apple American",
+    category: "義式",
+    name: "蘋果美式",
+    price: 140,
+    customOptions: [
+      { type: "冰量", options: ["少冰", "冰"] },
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
+  {
+    id: "shiso sparkling americano",
+    category: "義式",
+    name: "紫蘇氣泡美式",
+    price: 130,
+    customOptions: [
+      { type: "冰量", options: ["少冰", "冰"] },
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
 
-  // 手沖
-  { id: "pour_over_1", category: "手沖", name: "衣索比亞", price: 180 },
-  { id: "pour_over_2", category: "手沖", name: "哥倫比亞", price: 170 },
-  { id: "pour_over_3", category: "手沖", name: "瓜地馬拉", price: 175 },
-  { id: "pour_over_4", category: "手沖", name: "肯亞AA", price: 190 },
-  { id: "pour_over_5", category: "手沖", name: "巴西半日曬", price: 165 },
-  { id: "pour_over_6", category: "手沖", name: "巴拿馬藝伎", price: 250 },
+  // 手沖咖啡
+  {
+    id: "pour_over_1",
+    category: "手沖",
+    name: "SAGASU配方",
+    price: 160,
+    customOptions: [
+      { type: "冰量", options: ["少冰", "冰", "熱"] },
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
+  {
+    id: "pour_over_2",
+    category: "手沖",
+    name: "哥倫比亞 品種花園 粉紅波旁",
+    price: 190,
+    customOptions: [
+      { type: "冰量", options: ["少冰", "冰", "熱"] },
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
+  {
+    id: "pour_over_3",
+    category: "手沖",
+    name: "哥斯大黎加 多卡產區",
+    price: 170,
+    customOptions: [
+      { type: "冰量", options: ["少冰", "冰", "熱"] },
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
+  {
+    id: "pour_over_4",
+    category: "手沖",
+    name: "衣索比亞 耶加雪菲 果丁丁",
+    price: 180,
+    customOptions: [
+      { type: "冰量", options: ["少冰", "冰", "熱"] },
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
+  {
+    id: "pour_over_5",
+    category: "手沖",
+    name: "衣索比亞 耶加雪菲 阿梅德萊落 孔加村",
+    price: 180,
+    customOptions: [
+      { type: "冰量", options: ["少冰", "冰", "熱"] },
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
+  {
+    id: "pour_over_6",
+    category: "手沖",
+    name: "期間限定",
+    price: 190,
+    customOptions: [
+      { type: "冰量", options: ["少冰", "冰", "熱"] },
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
 
   // 非咖啡
   {
-    id: "black_tea",
+    id: "fresh_milk_tea",
     category: "非咖啡",
-    name: "紅茶",
-    price: 90,
+    name: "鮮奶茶",
+    price: 110,
     customOptions: [
       {
         type: "冰量",
-        options: ["去冰", "微冰", "少冰", "正常冰"],
+        options: ["少冰", "冰", "熱"],
       },
       {
-        type: "糖量",
-        options: ["無糖", "微糖", "半糖", "正常糖"],
+        type: "奶",
+        options: ["換燕麥奶"],
       },
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
     ],
   },
   {
-    id: "green_tea",
+    id: "apple_black_tea",
     category: "非咖啡",
-    name: "綠茶",
-    price: 90,
+    name: "蘋果紅茶",
+    price: 120,
     customOptions: [
       {
         type: "冰量",
-        options: ["去冰", "微冰", "少冰", "正常冰"],
+        options: ["少冰", "冰"],
       },
-      {
-        type: "糖量",
-        options: ["無糖", "微糖", "半糖", "正常糖"],
-      },
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
     ],
   },
-  { id: "milk_tea", category: "非咖啡", name: "奶茶", price: 110 },
-  { id: "hot_chocolate", category: "非咖啡", name: "熱巧克力", price: 130 },
-  { id: "fresh_juice", category: "非咖啡", name: "鮮果汁", price: 120 },
-  { id: "smoothie", category: "非咖啡", name: "果昔", price: 140 },
+  {
+    id: "brown_sugar_milk",
+    category: "非咖啡",
+    name: "黑糖牛奶",
+    price: 130,
+    customOptions: [
+      {
+        type: "冰量",
+        options: ["少冰", "冰", "熱"],
+      },
+      {
+        type: "奶",
+        options: ["換燕麥奶"],
+      },
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
+  {
+    id: "matcha_milk",
+    category: "非咖啡",
+    name: "抹茶牛奶",
+    price: 140,
+    customOptions: [
+      {
+        type: "冰量",
+        options: ["少冰", "冰", "熱"],
+      },
+      {
+        type: "奶",
+        options: ["換燕麥奶"],
+      },
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
+  {
+    id: "sesame_milk",
+    category: "非咖啡",
+    name: "芝麻牛奶",
+    price: 140,
+    customOptions: [
+      {
+        type: "奶",
+        options: ["換燕麥奶"],
+      },
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
+  {
+    id: "shiso_plum_sparkling",
+    category: "非咖啡",
+    name: "紫蘇梅氣泡",
+    price: 120,
+    customOptions: [
+      {
+        type: "冰量",
+        options: ["少冰", "冰"],
+      },
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
+  {
+    id: "rooibos_tea",
+    category: "非咖啡",
+    name: "國寶茶",
+    price: 120,
+    customOptions: [
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
+  {
+    id: "chamomile_tea",
+    category: "非咖啡",
+    name: "洋甘菊花草茶",
+    price: 180,
+    customOptions: [
+      { type: "順序", options: ["後上"] },
+      { type: "續杯", options: ["否", "是"] },
+    ],
+  },
 
-  // 甜點
-  { id: "cheesecake", category: "甜點", name: "起司蛋糕", price: 150 },
-  { id: "tiramisu", category: "甜點", name: "提拉米蘇", price: 160 },
-  { id: "brownie", category: "甜點", name: "布朗尼", price: 120 },
-  { id: "muffin", category: "甜點", name: "馬芬", price: 100 },
-  { id: "scone", category: "甜點", name: "司康餅", price: 110 },
-  { id: "croissant", category: "甜點", name: "可頌", price: 85 },
-
-  // 輕食
-  { id: "sandwich_1", category: "輕食", name: "火腿起司三明治", price: 180 },
-  { id: "sandwich_2", category: "輕食", name: "鮪魚沙拉三明治", price: 170 },
-  { id: "bagel", category: "輕食", name: "貝果", price: 120 },
-  { id: "salad", category: "輕食", name: "凱薩沙拉", price: 200 },
-  { id: "pasta", category: "輕食", name: "義大利麵", price: 240 },
-  { id: "panini", category: "輕食", name: "帕尼尼", price: 190 },
+  // 小食
+  {
+    id: "vanilla_bagel",
+    category: "小食",
+    name: "香草巴斯克",
+    price: 130,
+    customOptions: [{ type: "順序", options: ["後上"] }],
+  },
+  {
+    id: "sesame_bagel",
+    category: "小食",
+    name: "芝麻巴斯克",
+    price: 130,
+    customOptions: [{ type: "順序", options: ["後上"] }],
+  },
+  {
+    id: "salted_egg_yolk_bagel",
+    category: "小食",
+    name: "鹹蛋黃巴斯克",
+    price: 160,
+    customOptions: [{ type: "順序", options: ["後上"] }],
+  },
+  {
+    id: "vanilla_cocotte",
+    category: "小食",
+    name: "香草可麗露",
+    price: 100,
+    customOptions: [{ type: "順序", options: ["後上"] }],
+  },
+  {
+    id: "cocotte",
+    category: "小食",
+    name: "可麗露",
+    price: 110,
+    customOptions: [{ type: "順序", options: ["後上"] }],
+  },
+  {
+    id: "dacquoise",
+    category: "小食",
+    name: "達克瓦茲",
+    price: 130,
+    customOptions: [{ type: "順序", options: ["後上"] }],
+  },
+  {
+    id: "financier",
+    category: "小食",
+    name: "費南雪",
+    price: 120,
+    customOptions: [{ type: "順序", options: ["後上"] }],
+  },
+  {
+    id: "vanilla_hot_dog",
+    category: "小食",
+    name: "香草熱狗堡",
+    price: 140,
+    customOptions: [
+      {
+        type: "番茄",
+        options: ["不番茄"],
+      },
+      {
+        type: "芥末",
+        options: ["不芥末"],
+      },
+      {
+        type: "洋蔥",
+        options: ["不洋蔥"],
+      },
+      {
+        type: "奶油",
+        options: ["不奶油"],
+      },
+      { type: "順序", options: ["後上"] },
+    ],
+  },
+  {
+    id: "hot_dog",
+    category: "小食",
+    name: "熱狗堡",
+    price: 130,
+    customOptions: [
+      {
+        type: "番茄",
+        options: ["不番茄"],
+      },
+      {
+        type: "芥末",
+        options: ["不芥末"],
+      },
+      {
+        type: "洋蔥",
+        options: ["不洋蔥"],
+      },
+      {
+        type: "奶油",
+        options: ["不奶油"],
+      },
+      { type: "順序", options: ["後上"] },
+    ],
+  },
+  {
+    id: "egg_salad_sandwich",
+    category: "小食",
+    name: "蛋沙拉堡",
+    price: 120,
+    customOptions: [
+      {
+        type: "辣度",
+        options: ["不辣", "減半"],
+      },
+      { type: "順序", options: ["後上"] },
+    ],
+  },
+  {
+    id: "plastic_bag",
+    category: "小食",
+    name: "塑膠袋",
+    price: 1,
+  },
 ];
 
 export default defaultMenuData;

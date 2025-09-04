@@ -28,7 +28,7 @@ const OrderSummary = ({
 
   const calculateCurrentTotal = () => {
     return currentOrder.reduce(
-      (total, item) => total + item.price * item.quantity,
+      (total, item) => total + getItemSubtotal(item),
       0
     );
   };
@@ -51,7 +51,7 @@ const OrderSummary = ({
           if (editingPositions.has(index)) {
             return total;
           }
-          return total + item.price * item.quantity;
+          return total + getItemSubtotal(item);
         }, 0);
 
       return total;
@@ -72,7 +72,7 @@ const OrderSummary = ({
               if (editingPositions.has(positionKey)) {
                 return itemTotal;
               }
-              return itemTotal + item.price * item.quantity;
+              return itemTotal + getItemSubtotal(item);
             }, 0)
           );
         },
@@ -81,6 +81,15 @@ const OrderSummary = ({
 
       return total;
     }
+  };
+
+  //計算單品小計
+  const getItemSubtotal = (item) => {
+    let discount = 0;
+    if (item.selectedCustom && item.selectedCustom["續杯"] === "是") {
+      discount = 20;
+    }
+    return Math.max(item.price - discount, 0) * item.quantity;
   };
 
   // 加在這裡
@@ -105,7 +114,7 @@ const OrderSummary = ({
 
   // 格式化顯示項目
   const formatOrderItem = (item) => {
-    const subtotal = item.price * item.quantity;
+    const subtotal = getItemSubtotal(item);
     const dots = "·".repeat(Math.max(5, 20 - item.name.length));
     return `${item.name} $${item.price} x ${item.quantity} ${dots} $${subtotal}`;
   };
@@ -162,8 +171,7 @@ const OrderSummary = ({
                           $
                           {Array.isArray(batch)
                             ? batch.reduce(
-                                (total, item) =>
-                                  total + item.price * item.quantity,
+                                (total, item) => total + getItemSubtotal(item),
                                 0
                               )
                             : 0}
