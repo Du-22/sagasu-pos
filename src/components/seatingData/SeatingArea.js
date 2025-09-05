@@ -14,8 +14,8 @@ const seatingData = {
   // 2F: 分兩房間
   "2F": [
     // 左房間：中間1桌，三邊各1桌，總共4桌
-    { id: "2F-2", x: 25, y: 25, size: "medium" }, // 中央桌
-    { id: "2F-1", x: 10, y: 45, size: "medium" }, // 左邊牆
+    { id: "2F-1", x: 25, y: 25, size: "medium" }, // 中央桌
+    { id: "2F-2", x: 10, y: 45, size: "medium" }, // 左邊牆
     { id: "2F-3", x: 25, y: 70, size: "medium" }, // 下邊牆
     { id: "2F-4", x: 40, y: 45, size: "medium" }, // 右邊牆
 
@@ -247,4 +247,5 @@ const SeatingArea = ({
   );
 };
 
+export { seatingData };
 export default SeatingArea;

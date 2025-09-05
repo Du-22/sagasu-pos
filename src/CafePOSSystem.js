@@ -4,6 +4,7 @@ import SeatingPage from "./components/seatingData/SeatingPage";
 import HistoryPage from "./components/pages/HistoryPage";
 import MenuEditorPage from "./components/pages/MenuEditorPage";
 import defaultMenuData from "./components/menuData/defaultMenuData";
+import { seatingData } from "./components/seatingData/SeatingArea";
 
 const CafePOSSystem = () => {
   const [currentFloor, setCurrentFloor] = useState("1F");
@@ -16,6 +17,8 @@ const CafePOSSystem = () => {
   const [timers, setTimers] = useState({});
   const [salesHistory, setSalesHistory] = useState([]);
   const [menuData, setMenuData] = useState(defaultMenuData);
+  const [showMoveTableModal, setShowMoveTableModal] = useState(false);
+  const [moveTableTarget, setMoveTableTarget] = useState("");
 
   // 入座相關狀態
   const [showSeatConfirmModal, setShowSeatConfirmModal] = useState(false);
@@ -73,6 +76,65 @@ const CafePOSSystem = () => {
   const saveOrders = (newOrders) => {
     setOrders(newOrders);
     localStorage.setItem("cafeOrders", JSON.stringify(newOrders));
+  };
+
+  // 取得所有桌號
+  const allTableIds = Object.values(seatingData)
+    .flat()
+    .map((table) => table.id);
+
+  // 新增：換桌邏輯
+  const handleMoveTable = (fromTable, toTable) => {
+    if (!fromTable || !toTable || fromTable === toTable) return;
+
+    // 檢查目標桌狀態
+    const targetTableStatus = getTableStatus(toTable);
+
+    // 只有 available 和 ready-to-clean 狀態可以換桌
+    if (
+      targetTableStatus !== "available" &&
+      targetTableStatus !== "ready-to-clean"
+    ) {
+      alert("目標桌不可用，請選擇空桌或待清理的桌子。");
+      return;
+    }
+
+    // 若原桌沒資料也不處理
+    if (
+      !orders[fromTable] ||
+      !Array.isArray(orders[fromTable]) ||
+      orders[fromTable].length === 0
+    ) {
+      alert("原桌沒有訂單可搬移。");
+      return;
+    }
+
+    const newOrders = { ...orders };
+
+    // 如果目標桌是待清理狀態，先清理掉舊資料
+    if (targetTableStatus === "ready-to-clean") {
+      console.log(`清理目標桌 ${toTable} 的舊資料`);
+      // 這裡不需要特別處理，直接覆蓋即可
+    }
+
+    // 搬移訂單
+    newOrders[toTable] = newOrders[fromTable];
+    delete newOrders[fromTable];
+    saveOrders(newOrders);
+
+    // 搬移計時器
+    const newTimers = { ...timers };
+    if (newTimers[fromTable]) {
+      newTimers[toTable] = newTimers[fromTable];
+      delete newTimers[fromTable];
+      saveTimers(newTimers);
+    }
+
+    setSelectedTable(toTable);
+    setShowMoveTableModal(false);
+    setMoveTableTarget("");
+    setCurrentOrder([]);
+    setCurrentView("ordering");
   };
 
   const generateHistoryId = () => {
@@ -704,7 +766,6 @@ const CafePOSSystem = () => {
 
   if (currentView === "ordering") {
     let confirmedOrdersBatches = [];
-
     if (selectedTable.startsWith("T")) {
       const takeoutData = takeoutOrders[selectedTable];
       if (takeoutData && !takeoutData.paid) {
@@ -725,24 +786,90 @@ const CafePOSSystem = () => {
       }
     }
 
+    {
+      allTableIds.forEach((tid) => {
+        console.log(tid, getTableStatus(tid));
+        console.log("allTableIds:", allTableIds, "test");
+      });
+    }
+
     return (
-      <OrderingPage
-        selectedTable={selectedTable}
-        currentOrder={currentOrder}
-        confirmedOrdersBatches={confirmedOrdersBatches}
-        tableStatus={getTableStatus(selectedTable)}
-        onBack={handleBack}
-        onAddToOrder={addToOrder}
-        onUpdateQuantity={updateQuantity}
-        onRemoveItem={removeFromOrder}
-        onSubmitOrder={submitOrder}
-        onCheckout={checkout}
-        timers={timers}
-        onEditConfirmedItem={editConfirmedItem}
-        menuData={menuData}
-        // 新增：釋放座位
-        onReleaseSeat={handleReleaseSeat}
-      />
+      <>
+        {/* 換桌功能相關 */}
+        {showMoveTableModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 shadow-lg min-w-[300px]">
+              <h2 className="text-lg font-bold mb-4">換桌</h2>
+
+              <div className="mb-4">
+                選擇要搬移到哪個桌位：
+                <select
+                  className="border rounded px-2 py-1 ml-2"
+                  value={moveTableTarget}
+                  onChange={(e) => setMoveTableTarget(e.target.value)}
+                >
+                  <option value="">請選擇桌號</option>
+                  {allTableIds
+                    .filter((tid) => {
+                      const status = getTableStatus(tid);
+                      return (
+                        tid !== selectedTable &&
+                        (status === "available" || status === "ready-to-clean")
+                      );
+                    })
+                    .map((tid) => (
+                      <option key={tid} value={tid}>
+                        {tid} (
+                        {getTableStatus(tid) === "available"
+                          ? "空桌"
+                          : "待清理"}
+                        )
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                  onClick={() =>
+                    handleMoveTable(selectedTable, moveTableTarget)
+                  }
+                  disabled={!moveTableTarget}
+                >
+                  確認換桌
+                </button>
+                <button
+                  className="bg-gray-300 px-4 py-2 rounded"
+                  onClick={() => {
+                    setShowMoveTableModal(false);
+                    setMoveTableTarget("");
+                  }}
+                >
+                  取消
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        <OrderingPage
+          selectedTable={selectedTable}
+          currentOrder={currentOrder}
+          confirmedOrdersBatches={confirmedOrdersBatches}
+          tableStatus={getTableStatus(selectedTable)}
+          onBack={handleBack}
+          onAddToOrder={addToOrder}
+          onUpdateQuantity={updateQuantity}
+          onRemoveItem={removeFromOrder}
+          onSubmitOrder={submitOrder}
+          onCheckout={checkout}
+          timers={timers}
+          onEditConfirmedItem={editConfirmedItem}
+          menuData={menuData}
+          onReleaseSeat={handleReleaseSeat}
+          // 新增：換桌功能
+          onMoveTable={() => setShowMoveTableModal(true)}
+        />
+      </>
     );
   }
 
