@@ -17,6 +17,10 @@ const CafePOSSystem = () => {
   const [salesHistory, setSalesHistory] = useState([]);
   const [menuData, setMenuData] = useState(defaultMenuData);
 
+  // 入座相關狀態
+  const [showSeatConfirmModal, setShowSeatConfirmModal] = useState(false);
+  const [pendingSeatTable, setPendingSeatTable] = useState(null);
+
   useEffect(() => {
     console.log("currentView 已變更為:", currentView);
     console.log("selectedTable:", selectedTable);
@@ -193,6 +197,29 @@ const CafePOSSystem = () => {
     localStorage.setItem("cafeTimers", JSON.stringify(newTimers));
   };
 
+  // ====== 入座功能相關 ======
+
+  // 新增：入座確認 Modal 狀態與流程
+  // 已在 useState 最上方加 showSeatConfirmModal, pendingSeatTable
+
+  // 新增：入座確認
+  const handleSeatConfirm = () => {
+    // 用一個特殊的 __seated 標記在 orders 裡
+    const newOrders = {
+      ...orders,
+      [pendingSeatTable]: [[{ __seated: true }]],
+    };
+    saveOrders(newOrders);
+    const newTimers = {
+      ...timers,
+      [pendingSeatTable]: Date.now(),
+    };
+    saveTimers(newTimers);
+    setShowSeatConfirmModal(false);
+    setPendingSeatTable(null);
+  };
+
+  // 修改 getTableStatus，支援入座
   const getTableStatus = (tableId) => {
     if (tableId.startsWith("T")) {
       const takeoutData = takeoutOrders[tableId];
@@ -203,6 +230,18 @@ const CafePOSSystem = () => {
     }
 
     const tableBatches = orders[tableId];
+
+    // 新增：如果有 __seated 標記，回傳 seated
+    if (
+      tableBatches &&
+      Array.isArray(tableBatches) &&
+      tableBatches.length === 1 &&
+      tableBatches[0] &&
+      tableBatches[0][0] &&
+      tableBatches[0][0].__seated
+    ) {
+      return "seated";
+    }
 
     if (
       !tableBatches ||
@@ -232,9 +271,13 @@ const CafePOSSystem = () => {
     return "available";
   };
 
+  // 修改 handleTableClick，支援入座
   const handleTableClick = (tableId) => {
     const status = getTableStatus(tableId);
-    if (status === "available" || status === "occupied") {
+    if (status === "available") {
+      setPendingSeatTable(tableId);
+      setShowSeatConfirmModal(true);
+    } else if (status === "seated" || status === "occupied") {
       setSelectedTable(tableId);
       setCurrentOrder([]);
       setTimeout(() => {
@@ -246,6 +289,129 @@ const CafePOSSystem = () => {
       saveOrders(newOrders);
     }
   };
+
+  // 修改 submitOrder，送出第一筆餐點時移除 __seated 標記
+  const submitOrder = () => {
+    if (currentOrder.length === 0) return;
+
+    if (!timers[selectedTable]) {
+      const newTimers = {
+        ...timers,
+        [selectedTable]: Date.now(),
+      };
+      saveTimers(newTimers);
+    }
+
+    if (selectedTable.startsWith("T")) {
+      // 外帶訂單分批記錄
+      const existingTakeoutData = takeoutOrders[selectedTable];
+      const newBatch = currentOrder.map((item) => ({
+        ...item,
+        timestamp: new Date().toISOString(),
+        paid: false,
+      }));
+
+      const updatedBatches =
+        existingTakeoutData && Array.isArray(existingTakeoutData.batches)
+          ? [...existingTakeoutData.batches, newBatch]
+          : [newBatch];
+
+      const newTakeoutOrders = {
+        ...takeoutOrders,
+        [selectedTable]: {
+          batches: updatedBatches,
+          timestamp: existingTakeoutData
+            ? existingTakeoutData.timestamp
+            : new Date().toISOString(),
+          paid: false,
+        },
+      };
+
+      setTakeoutOrders(newTakeoutOrders);
+      localStorage.setItem(
+        "cafeTakeoutOrders",
+        JSON.stringify(newTakeoutOrders)
+      );
+
+      setCurrentView("seating");
+      setSelectedTable(null);
+      setCurrentOrder([]);
+    } else {
+      // 內用訂單 - 使用替換邏輯
+      let existingBatches = Array.isArray(orders[selectedTable])
+        ? [...orders[selectedTable]]
+        : [];
+
+      // 如果是入座狀態，移除 __seated 標記
+      if (
+        existingBatches.length === 1 &&
+        existingBatches[0] &&
+        existingBatches[0][0] &&
+        existingBatches[0][0].__seated
+      ) {
+        existingBatches = [];
+      }
+
+      const newItems = [];
+      const hasEditingItems = currentOrder.some(
+        (item) => item.isEditing && !item.isTakeout
+      );
+
+      currentOrder.forEach((item) => {
+        if (item.isEditing && !item.isTakeout) {
+          const {
+            isEditing,
+            originalBatchIndex,
+            originalItemIndex,
+            ...updatedItem
+          } = item;
+          existingBatches[originalBatchIndex][originalItemIndex] = {
+            ...updatedItem,
+            timestamp: new Date().toISOString(),
+            paid: false,
+          };
+        } else if (!item.isEditing) {
+          newItems.push({
+            ...item,
+            timestamp: new Date().toISOString(),
+            paid: false,
+          });
+        }
+      });
+
+      const newOrders = {
+        ...orders,
+        [selectedTable]:
+          newItems.length > 0
+            ? [...existingBatches, newItems]
+            : existingBatches,
+      };
+
+      saveOrders(newOrders);
+
+      if (hasEditingItems && newItems.length === 0) {
+        setCurrentOrder([]);
+      } else {
+        setCurrentView("seating");
+        setSelectedTable(null);
+        setCurrentOrder([]);
+      }
+    }
+  };
+
+  // 釋放座位時，移除 __seated 標記
+  const handleReleaseSeat = (tableId) => {
+    const newOrders = { ...orders };
+    delete newOrders[tableId];
+    saveOrders(newOrders);
+    const newTimers = { ...timers };
+    delete newTimers[tableId];
+    saveTimers(newTimers);
+    setCurrentView("seating");
+    setSelectedTable(null);
+  };
+
+  // 其餘函式、流程、UI、props 全部保留
 
   const addToOrder = (item) => {
     const existingItem = currentOrder.find(
@@ -328,103 +494,6 @@ const CafePOSSystem = () => {
     }
 
     setCurrentOrder(currentOrder.filter((item) => item.id !== itemId));
-  };
-
-  const submitOrder = () => {
-    if (currentOrder.length === 0) return;
-
-    if (!timers[selectedTable]) {
-      const newTimers = {
-        ...timers,
-        [selectedTable]: Date.now(),
-      };
-      saveTimers(newTimers);
-    }
-
-    if (selectedTable.startsWith("T")) {
-      // 外帶訂單分批記錄
-      const existingTakeoutData = takeoutOrders[selectedTable];
-      const newBatch = currentOrder.map((item) => ({
-        ...item,
-        timestamp: new Date().toISOString(),
-        paid: false,
-      }));
-
-      const updatedBatches =
-        existingTakeoutData && Array.isArray(existingTakeoutData.batches)
-          ? [...existingTakeoutData.batches, newBatch]
-          : [newBatch];
-
-      const newTakeoutOrders = {
-        ...takeoutOrders,
-        [selectedTable]: {
-          batches: updatedBatches,
-          timestamp: existingTakeoutData
-            ? existingTakeoutData.timestamp
-            : new Date().toISOString(),
-          paid: false,
-        },
-      };
-
-      setTakeoutOrders(newTakeoutOrders);
-      localStorage.setItem(
-        "cafeTakeoutOrders",
-        JSON.stringify(newTakeoutOrders)
-      );
-
-      setCurrentView("seating");
-      setSelectedTable(null);
-      setCurrentOrder([]);
-    } else {
-      // 內用訂單 - 使用替換邏輯
-      const existingBatches = Array.isArray(orders[selectedTable])
-        ? [...orders[selectedTable]]
-        : [];
-      const newItems = [];
-      const hasEditingItems = currentOrder.some(
-        (item) => item.isEditing && !item.isTakeout
-      );
-
-      currentOrder.forEach((item) => {
-        if (item.isEditing && !item.isTakeout) {
-          const {
-            isEditing,
-            originalBatchIndex,
-            originalItemIndex,
-            ...updatedItem
-          } = item;
-          existingBatches[originalBatchIndex][originalItemIndex] = {
-            ...updatedItem,
-            timestamp: new Date().toISOString(),
-            paid: false,
-          };
-        } else if (!item.isEditing) {
-          newItems.push({
-            ...item,
-            timestamp: new Date().toISOString(),
-            paid: false,
-          });
-        }
-      });
-
-      const newOrders = {
-        ...orders,
-        [selectedTable]:
-          newItems.length > 0
-            ? [...existingBatches, newItems]
-            : existingBatches,
-      };
-
-      saveOrders(newOrders);
-
-      if (hasEditingItems && newItems.length === 0) {
-        setCurrentOrder([]);
-      } else {
-        setCurrentView("seating");
-        setSelectedTable(null);
-        setCurrentOrder([]);
-      }
-    }
   };
 
   const checkout = (paymentMethod = "cash") => {
@@ -671,22 +740,52 @@ const CafePOSSystem = () => {
         timers={timers}
         onEditConfirmedItem={editConfirmedItem}
         menuData={menuData}
+        // 新增：釋放座位
+        onReleaseSeat={handleReleaseSeat}
       />
     );
   }
 
+  // 入座確認 Modal
   return (
-    <SeatingPage
-      currentFloor={currentFloor}
-      orders={orders}
-      takeoutOrders={takeoutOrders}
-      timers={timers}
-      onFloorChange={setCurrentFloor}
-      onTableClick={handleTableClick}
-      onTakeoutClick={handleTakeoutClick}
-      onNewTakeout={handleNewTakeout}
-      onMenuSelect={handleMenuSelect}
-    />
+    <>
+      {showSeatConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 shadow-lg min-w-[300px]">
+            <h2 className="text-lg font-bold mb-4">帶位確認</h2>
+            <div className="mb-4">是否帶客人入座此桌？</div>
+            <div className="flex space-x-2">
+              <button
+                onClick={handleSeatConfirm}
+                className="bg-blue-500 text-white px-4 py-2 rounded"
+              >
+                是
+              </button>
+              <button
+                onClick={() => {
+                  setShowSeatConfirmModal(false);
+                  setPendingSeatTable(null);
+                }}
+                className="bg-gray-300 px-4 py-2 rounded"
+              >
+                否
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <SeatingPage
+        currentFloor={currentFloor}
+        orders={orders}
+        takeoutOrders={takeoutOrders}
+        timers={timers}
+        onFloorChange={setCurrentFloor}
+        onTableClick={handleTableClick}
+        onTakeoutClick={handleTakeoutClick}
+        onNewTakeout={handleNewTakeout}
+        onMenuSelect={handleMenuSelect}
+      />
+    </>
   );
 };
 

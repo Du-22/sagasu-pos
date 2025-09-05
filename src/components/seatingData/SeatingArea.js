@@ -5,23 +5,23 @@ import Timer from "../UI/Timer";
 const seatingData = {
   // 1F: 矩形房間，外帶區在左上角，桌子沿著牆邊排列
   "1F": [
-    { id: "1F-1", x: 5, y: 40, size: "medium" }, // 左上角
-    { id: "1F-2", x: 5, y: 78, size: "medium" }, // 左下角
-    { id: "1F-3", x: 25, y: 78, size: "medium" }, // 2桌右邊
-    { id: "1F-4", x: 45, y: 78, size: "medium" }, // 3桌右邊
-    { id: "1F-5", x: 65, y: 78, size: "medium" }, // 最右下角
+    { id: "1F-1", x: 12, y: 40, size: "medium" }, // 左上角
+    { id: "1F-2", x: 12, y: 78, size: "medium" }, // 左下角
+    { id: "1F-3", x: 37, y: 78, size: "medium" }, // 2桌右邊
+    { id: "1F-4", x: 62, y: 78, size: "medium" }, // 3桌右邊
+    { id: "1F-5", x: 87, y: 78, size: "medium" }, // 最右下角
   ],
   // 2F: 分兩房間
   "2F": [
     // 左房間：中間1桌，三邊各1桌，總共4桌
     { id: "2F-2", x: 25, y: 25, size: "medium" }, // 中央桌
-    { id: "2F-1", x: 5, y: 45, size: "medium" }, // 左邊牆
+    { id: "2F-1", x: 10, y: 45, size: "medium" }, // 左邊牆
     { id: "2F-3", x: 25, y: 70, size: "medium" }, // 下邊牆
-    { id: "2F-4", x: 45, y: 45, size: "medium" }, // 右邊牆
+    { id: "2F-4", x: 40, y: 45, size: "medium" }, // 右邊牆
 
     // 右房間：4、5桌對齊，6桌是大桌
-    { id: "2F-5", x: 55, y: 45, size: "medium" }, // 右房間左側，貼牆
-    { id: "2F-6", x: 70, y: 45, size: "medium" }, // 右房間中間，與5桌對齊
+    { id: "2F-5", x: 60, y: 45, size: "medium" }, // 右房間左側，貼牆
+    { id: "2F-6", x: 75, y: 45, size: "medium" }, // 右房間中間，與5桌對齊
     { id: "2F-7", x: 90, y: 45, size: "large" }, // 右房間大桌，間隔較大
   ],
 };
@@ -114,8 +114,21 @@ const SeatingArea = ({
   onTakeoutClick,
   onNewTakeout,
 }) => {
+  // 新增：入座狀態判斷
   const getTableStatus = (tableId) => {
     const tableBatches = orders[tableId];
+
+    // 新增：如果有 __seated 標記，回傳 seated
+    if (
+      tableBatches &&
+      Array.isArray(tableBatches) &&
+      tableBatches.length === 1 &&
+      tableBatches[0] &&
+      tableBatches[0][0] &&
+      tableBatches[0][0].__seated
+    ) {
+      return "seated";
+    }
 
     if (
       !tableBatches ||
@@ -208,7 +221,7 @@ const SeatingArea = ({
         )}
       </div>
 
-      {/* 圖例 */}
+      {/* 圖例：新增入座 */}
       <div
         className="absolute left-0 bottom-0 w-full flex justify-center space-x-6 bg-gray-100 py-8"
         style={{ zIndex: 20 }}
@@ -218,11 +231,15 @@ const SeatingArea = ({
           <span className="text-sm">空桌</span>
         </div>
         <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-purple-200 border border-purple-400 rounded-full"></div>
+          <div className="w-4 h-4 bg-green-200 border-green-400 rounded-full"></div>
+          <span className="text-sm">入座</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <div className="w-4 h-4 bg-purple-200 border-purple-400 rounded-full"></div>
           <span className="text-sm">用餐中</span>
         </div>
         <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-yellow-200 border border-yellow-400 rounded-full animate-pulse"></div>
+          <div className="w-4 h-4 bg-yellow-200 border-yellow-400 rounded-full animate-pulse"></div>
           <span className="text-sm">待清理</span>
         </div>
       </div>

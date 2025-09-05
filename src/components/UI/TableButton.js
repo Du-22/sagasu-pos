@@ -15,10 +15,13 @@ const TableButton = ({ table, status, onClick, startTime }) => {
     }
   };
 
+  // 新增入座狀態顏色
   const getTableColor = (status) => {
     switch (status) {
       case "available":
         return "bg-blue-200 border-blue-400 hover:bg-blue-300";
+      case "seated":
+        return "bg-green-200 border-green-400 hover:bg-green-300";
       case "occupied":
         return "bg-purple-200 border-purple-400 hover:bg-purple-300";
       case "ready-to-clean":
@@ -28,10 +31,13 @@ const TableButton = ({ table, status, onClick, startTime }) => {
     }
   };
 
+  // 新增入座狀態文字
   const getStatusText = (status) => {
     switch (status) {
       case "available":
         return "空桌";
+      case "seated":
+        return "入座";
       case "occupied":
         return "用餐中";
       case "ready-to-clean":
