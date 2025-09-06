@@ -5,24 +5,24 @@ import Timer from "../UI/Timer";
 const seatingData = {
   // 1F: 矩形房間，外帶區在左上角，桌子沿著牆邊排列
   "1F": [
-    { id: "1F-1", x: 12, y: 40, size: "medium" }, // 左上角
-    { id: "1F-2", x: 12, y: 78, size: "medium" }, // 左下角
-    { id: "1F-3", x: 37, y: 78, size: "medium" }, // 2桌右邊
-    { id: "1F-4", x: 62, y: 78, size: "medium" }, // 3桌右邊
-    { id: "1F-5", x: 87, y: 78, size: "medium" }, // 最右下角
+    { id: "1F-S1", x: 12, y: 40, size: "medium" }, // 左上角
+    { id: "1F-S2", x: 12, y: 78, size: "medium" }, // 左下角
+    { id: "1F-S3", x: 37, y: 78, size: "medium" }, // 2桌右邊
+    { id: "1F-S4", x: 62, y: 78, size: "medium" }, // 3桌右邊
+    { id: "1F-S5", x: 87, y: 78, size: "medium" }, // 最右下角
   ],
   // 2F: 分兩房間
   "2F": [
     // 左房間：中間1桌，三邊各1桌，總共4桌
-    { id: "2F-1", x: 25, y: 25, size: "medium" }, // 中央桌
-    { id: "2F-2", x: 10, y: 45, size: "medium" }, // 左邊牆
-    { id: "2F-3", x: 25, y: 70, size: "medium" }, // 下邊牆
-    { id: "2F-4", x: 40, y: 45, size: "medium" }, // 右邊牆
+    { id: "2F-A0", x: 25, y: 70, size: "medium" }, // 下邊牆
+    { id: "2F-A1", x: 10, y: 45, size: "medium" }, // 左邊牆
+    { id: "2F-A2", x: 25, y: 25, size: "medium" }, // 中央桌
+    { id: "2F-A3", x: 40, y: 45, size: "medium" }, // 右邊牆
 
     // 右房間：4、5桌對齊，6桌是大桌
-    { id: "2F-5", x: 60, y: 45, size: "medium" }, // 右房間左側，貼牆
-    { id: "2F-6", x: 75, y: 45, size: "medium" }, // 右房間中間，與5桌對齊
-    { id: "2F-7", x: 90, y: 45, size: "large" }, // 右房間大桌，間隔較大
+    { id: "2F-B1", x: 60, y: 45, size: "medium" }, // 右房間左側，貼牆
+    { id: "2F-C1", x: 75, y: 45, size: "medium" }, // 右房間中間，與5桌對齊
+    { id: "2F-翔", x: 90, y: 45, size: "medium" }, // 右房間大桌，間隔較大
   ],
 };
 
