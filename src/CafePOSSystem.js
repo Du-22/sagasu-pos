@@ -24,10 +24,7 @@ const CafePOSSystem = () => {
   const [showSeatConfirmModal, setShowSeatConfirmModal] = useState(false);
   const [pendingSeatTable, setPendingSeatTable] = useState(null);
 
-  useEffect(() => {
-    console.log("currentView 已變更為:", currentView);
-    console.log("selectedTable:", selectedTable);
-  }, [currentView, selectedTable]);
+  useEffect(() => {}, [currentView, selectedTable]);
 
   useEffect(() => {
     const savedHistory = localStorage.getItem("cafeSalesHistory");
@@ -83,14 +80,12 @@ const CafePOSSystem = () => {
     .flat()
     .map((table) => table.id);
 
-  // 新增：換桌邏輯
+  // 換桌邏輯
   const handleMoveTable = (fromTable, toTable) => {
     if (!fromTable || !toTable || fromTable === toTable) return;
 
-    // 檢查目標桌狀態
     const targetTableStatus = getTableStatus(toTable);
 
-    // 只有 available 和 ready-to-clean 狀態可以換桌
     if (
       targetTableStatus !== "available" &&
       targetTableStatus !== "ready-to-clean"
@@ -99,7 +94,6 @@ const CafePOSSystem = () => {
       return;
     }
 
-    // 若原桌沒資料也不處理
     if (
       !orders[fromTable] ||
       !Array.isArray(orders[fromTable]) ||
@@ -111,18 +105,10 @@ const CafePOSSystem = () => {
 
     const newOrders = { ...orders };
 
-    // 如果目標桌是待清理狀態，先清理掉舊資料
-    if (targetTableStatus === "ready-to-clean") {
-      console.log(`清理目標桌 ${toTable} 的舊資料`);
-      // 這裡不需要特別處理，直接覆蓋即可
-    }
-
-    // 搬移訂單
     newOrders[toTable] = newOrders[fromTable];
     delete newOrders[fromTable];
     saveOrders(newOrders);
 
-    // 搬移計時器
     const newTimers = { ...timers };
     if (newTimers[fromTable]) {
       newTimers[toTable] = newTimers[fromTable];
@@ -145,61 +131,135 @@ const CafePOSSystem = () => {
     return `H${dateStr}${timeStr}${randomStr}`;
   };
 
+  // 產生群組ID
+  const generateGroupId = () => {
+    const now = new Date();
+    const dateStr = now.toISOString().split("T")[0].replace(/-/g, "");
+    const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, "");
+    const randomStr = Math.random().toString(36).substr(2, 2).toUpperCase();
+    return `G${dateStr}${timeStr}${randomStr}`;
+  };
+
+  // 支援分開結帳
   const createHistoryRecord = (
     tableId,
     orderData,
     type = "dine-in",
-    paymentMethod = "cash"
+    paymentMethod = "cash",
+    isPartialPayment = false,
+    partialItems = null,
+    groupId = null
   ) => {
     const now = new Date();
     let items = [];
     let total = 0;
 
-    if (type === "takeout") {
-      // 外帶資料處理（合併所有批次）
-      if (orderData.batches && Array.isArray(orderData.batches)) {
-        orderData.batches.forEach((batch) => {
-          batch.forEach((item) => {
-            const existingItem = items.find((i) => i.id === item.id);
-            if (existingItem) {
-              existingItem.quantity += item.quantity;
-              existingItem.subtotal =
-                existingItem.price * existingItem.quantity;
-            } else {
-              items.push({
-                id: item.id,
-                name: item.name,
-                price: item.price,
-                quantity: item.quantity,
-                subtotal: item.price * item.quantity,
-                selectedCustom: item.selectedCustom || null,
+    if (isPartialPayment && partialItems) {
+      // 部分結帳：只處理選中的商品
+
+      if (type === "takeout") {
+        console.warn("外帶訂單目前不支援部分結帳");
+        return null;
+      } else {
+        // 內用部分結帳 - 只記錄這次選中的商品
+        if (orderData && Array.isArray(orderData)) {
+          orderData.forEach((batch, batchIndex) => {
+            if (Array.isArray(batch)) {
+              batch.forEach((item, itemIndex) => {
+                const key = `${batchIndex}-${itemIndex}`;
+
+                if (partialItems[key]) {
+                  // 找到相同商品（包括客製選項）進行合併
+                  const existingItem = items.find(
+                    (i) =>
+                      i.id === item.id &&
+                      JSON.stringify(i.selectedCustom) ===
+                        JSON.stringify(item.selectedCustom)
+                  );
+
+                  if (existingItem) {
+                    existingItem.quantity += item.quantity;
+                    existingItem.subtotal =
+                      existingItem.price * existingItem.quantity;
+                  } else {
+                    items.push({
+                      id: item.id,
+                      name: item.name,
+                      price: item.price,
+                      quantity: item.quantity,
+                      subtotal: item.price * item.quantity,
+                      selectedCustom: item.selectedCustom || null,
+                    });
+                  }
+                }
               });
             }
           });
-        });
+        }
+        total = items.reduce((sum, item) => sum + item.subtotal, 0);
       }
-      total = items.reduce((sum, item) => sum + item.subtotal, 0);
     } else {
-      // 內用資料處理 - 將所有批次合併
-      orderData.forEach((batch) => {
-        batch.forEach((item) => {
-          const existingItem = items.find((i) => i.id === item.id);
-          if (existingItem) {
-            existingItem.quantity += item.quantity;
-            existingItem.subtotal = existingItem.price * existingItem.quantity;
-          } else {
-            items.push({
-              id: item.id,
-              name: item.name,
-              price: item.price,
-              quantity: item.quantity,
-              subtotal: item.price * item.quantity,
-              selectedCustom: item.selectedCustom || null,
+      // 全部結帳的邏輯
+      if (type === "takeout") {
+        // 外帶資料處理（合併所有批次）
+        if (orderData.batches && Array.isArray(orderData.batches)) {
+          orderData.batches.forEach((batch) => {
+            batch.forEach((item) => {
+              const existingItem = items.find(
+                (i) =>
+                  i.id === item.id &&
+                  JSON.stringify(i.selectedCustom) ===
+                    JSON.stringify(item.selectedCustom)
+              );
+              if (existingItem) {
+                existingItem.quantity += item.quantity;
+                existingItem.subtotal =
+                  existingItem.price * existingItem.quantity;
+              } else {
+                items.push({
+                  id: item.id,
+                  name: item.name,
+                  price: item.price,
+                  quantity: item.quantity,
+                  subtotal: item.price * item.quantity,
+                  selectedCustom: item.selectedCustom || null,
+                });
+              }
             });
-          }
+          });
+        }
+        total = items.reduce((sum, item) => sum + item.subtotal, 0);
+      } else {
+        // 內用全部結帳 - 修正邏輯：只處理未付款的商品
+
+        orderData.forEach((batch, batchIndex) => {
+          batch.forEach((item, itemIndex) => {
+            if (item.paid !== true) {
+              const existingItem = items.find(
+                (i) =>
+                  i.id === item.id &&
+                  JSON.stringify(i.selectedCustom) ===
+                    JSON.stringify(item.selectedCustom)
+              );
+              if (existingItem) {
+                existingItem.quantity += item.quantity;
+                existingItem.subtotal =
+                  existingItem.price * existingItem.quantity;
+              } else {
+                items.push({
+                  id: item.id,
+                  name: item.name,
+                  price: item.price,
+                  quantity: item.quantity,
+                  subtotal: item.price * item.quantity,
+                  selectedCustom: item.selectedCustom || null,
+                });
+              }
+            }
+          });
         });
-      });
-      total = items.reduce((sum, item) => sum + item.subtotal, 0);
+        total = items.reduce((sum, item) => sum + item.subtotal, 0);
+      }
     }
 
     const parts = now
@@ -210,8 +270,12 @@ const CafePOSSystem = () => {
       "0"
     )}-${parts[2].padStart(2, "0")}`;
 
-    return {
+    items.forEach((item, index) => {});
+
+    // 修正：創建正確的歷史記錄物件
+    const finalRecord = {
       id: generateHistoryId(),
+      groupId: groupId || generateGroupId(),
       date: taiwanDateStr,
       time: now.toTimeString().slice(0, 8),
       timestamp: now.getTime(),
@@ -221,12 +285,63 @@ const CafePOSSystem = () => {
       total: total,
       itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
       paymentMethod,
+      isPartialPayment: isPartialPayment,
+      partialPaymentInfo: isPartialPayment
+        ? {
+            totalItems: partialItems ? Object.keys(partialItems).length : 0,
+            selectedItems: partialItems
+              ? Object.values(partialItems).filter(Boolean).length
+              : 0,
+            note: "此為部分結帳，僅顯示本次結帳的商品",
+          }
+        : null,
     };
+
+    return finalRecord;
   };
 
   const saveSalesHistory = (newHistory) => {
     setSalesHistory(newHistory);
     localStorage.setItem("cafeSalesHistory", JSON.stringify(newHistory));
+  };
+
+  // 處理退款的函數 - 放在 saveSalesHistory 之後
+  const handleRefund = (recordId) => {
+    const recordIndex = salesHistory.findIndex(
+      (record) => record.id === recordId
+    );
+
+    if (recordIndex === -1) {
+      alert("找不到該訂單記錄");
+      return;
+    }
+
+    const record = salesHistory[recordIndex];
+
+    const newSalesHistory = [...salesHistory];
+    newSalesHistory[recordIndex] = {
+      ...record,
+      isRefunded: true,
+      refundDate: (() => {
+        const now = new Date();
+        const parts = now
+          .toLocaleDateString("zh-TW", { timeZone: "Asia/Taipei" })
+          .split("/");
+        return `${parts[0]}-${parts[1].padStart(2, "0")}-${parts[2].padStart(
+          2,
+          "0"
+        )}`;
+      })(),
+      refundTime: new Date().toTimeString().slice(0, 8),
+      refundTimestamp: Date.now(),
+    };
+
+    saveSalesHistory(newSalesHistory);
+    alert(`訂單 ${record.table} (${record.time}) 已成功退款 $${record.total}`);
+  };
+
+  const handleMenuSelect = (menuId) => {
+    setCurrentView(menuId);
   };
 
   const handleNewTakeout = () => {
@@ -259,14 +374,8 @@ const CafePOSSystem = () => {
     localStorage.setItem("cafeTimers", JSON.stringify(newTimers));
   };
 
-  // ====== 入座功能相關 ======
-
-  // 新增：入座確認 Modal 狀態與流程
-  // 已在 useState 最上方加 showSeatConfirmModal, pendingSeatTable
-
-  // 新增：入座確認
+  // 入座確認
   const handleSeatConfirm = () => {
-    // 用一個特殊的 __seated 標記在 orders 裡
     const newOrders = {
       ...orders,
       [pendingSeatTable]: [[{ __seated: true }]],
@@ -293,7 +402,6 @@ const CafePOSSystem = () => {
 
     const tableBatches = orders[tableId];
 
-    // 新增：如果有 __seated 標記，回傳 seated
     if (
       tableBatches &&
       Array.isArray(tableBatches) &&
@@ -333,7 +441,6 @@ const CafePOSSystem = () => {
     return "available";
   };
 
-  // 修改 handleTableClick，支援入座
   const handleTableClick = (tableId) => {
     const status = getTableStatus(tableId);
     if (status === "available") {
@@ -352,7 +459,6 @@ const CafePOSSystem = () => {
     }
   };
 
-  // 修改 submitOrder，送出第一筆餐點時移除 __seated 標記
   const submitOrder = () => {
     if (currentOrder.length === 0) return;
 
@@ -461,7 +567,6 @@ const CafePOSSystem = () => {
     }
   };
 
-  // 釋放座位時，移除 __seated 標記
   const handleReleaseSeat = (tableId) => {
     const newOrders = { ...orders };
     delete newOrders[tableId];
@@ -472,8 +577,6 @@ const CafePOSSystem = () => {
     setCurrentView("seating");
     setSelectedTable(null);
   };
-
-  // 其餘函式、流程、UI、props 全部保留
 
   const addToOrder = (item) => {
     const existingItem = currentOrder.find(
@@ -517,7 +620,6 @@ const CafePOSSystem = () => {
         // 外帶項目的刪除邏輯
         const takeoutData = takeoutOrders[selectedTable];
         if (takeoutData && takeoutData.batches) {
-          // 找到正在編輯的批次和項目
           const batchIndex = removingItem.originalBatchIndex ?? 0;
           const itemIndex = removingItem.originalItemIndex;
           const updatedBatches = takeoutData.batches.map((batch, idx) =>
@@ -558,13 +660,17 @@ const CafePOSSystem = () => {
     setCurrentOrder(currentOrder.filter((item) => item.id !== itemId));
   };
 
-  const checkout = (paymentMethod = "cash") => {
+  //支援分開結帳
+  const checkout = (paymentMethod = "cash", partialItems = null) => {
     if (!selectedTable) return;
 
+    const isPartialCheckout =
+      partialItems && Object.values(partialItems).some(Boolean);
+
     if (selectedTable.startsWith("T")) {
+      // 外帶訂單邏輯（暫時不支援部分結帳）
       let takeoutData = takeoutOrders[selectedTable];
 
-      // 如果還沒送出訂單，但 currentOrder 有內容
       if (!takeoutData && currentOrder.length > 0) {
         const newBatch = currentOrder.map((item) => ({
           ...item,
@@ -615,37 +721,199 @@ const CafePOSSystem = () => {
       return;
     }
 
+    // 內用訂單邏輯
     if (selectedTable) {
       const tableOrder = orders[selectedTable];
-      if (tableOrder && !tableOrder.paid) {
-        const historyRecord = createHistoryRecord(
-          selectedTable,
-          tableOrder,
-          "table",
-          paymentMethod
-        );
-        const newHistory = [...salesHistory, historyRecord];
-        saveSalesHistory(newHistory);
 
-        const paidBatches = tableOrder.map((batch) =>
-          batch.map((item) => ({ ...item, paid: true }))
-        );
-        const newOrders = {
-          ...orders,
-          [selectedTable]: paidBatches,
-        };
-        setOrders(newOrders);
-        localStorage.setItem("cafeOrders", JSON.stringify(newOrders));
+      if (tableOrder && !tableOrder.paid) {
+        // 檢查是否為同桌的第二次以上結帳（從 orders 狀態查找）
+        let existingGroupId = null;
+        const tableOrder = orders[selectedTable];
+        if (tableOrder && Array.isArray(tableOrder) && tableOrder.length > 0) {
+          // 從已有的訂單中找第一個有 groupId 的項目
+          for (const batch of tableOrder) {
+            if (Array.isArray(batch)) {
+              for (const item of batch) {
+                if (item.groupId) {
+                  existingGroupId = item.groupId;
+
+                  break;
+                }
+              }
+              if (existingGroupId) break;
+            }
+          }
+        }
+
+        if (isPartialCheckout) {
+          // 構建和前端顯示相同的過濾後資料，但保留原始索引信息
+          const filteredBatches = [];
+          const indexMapping = {}; // 映射表：過濾後索引 -> 原始索引
+          const tableBatches = Array.isArray(tableOrder) ? [...tableOrder] : [];
+
+          for (
+            let batchIndex = 0;
+            batchIndex < tableBatches.length;
+            batchIndex++
+          ) {
+            const batch = tableBatches[batchIndex];
+            if (Array.isArray(batch)) {
+              const unpaidItems = [];
+              let filteredItemIndex = 0;
+
+              batch.forEach((item, originalItemIndex) => {
+                if (item.paid === false) {
+                  unpaidItems.push(item);
+                  // 記錄映射關係
+                  indexMapping[
+                    `0-${filteredItemIndex}`
+                  ] = `${batchIndex}-${originalItemIndex}`;
+                  filteredItemIndex++;
+                }
+              });
+
+              if (unpaidItems.length > 0) {
+                filteredBatches.push(unpaidItems);
+              }
+            }
+          }
+
+          //將前端的選擇項目轉換為原始索引
+          const mappedPartialItems = {};
+          Object.entries(partialItems).forEach(([filteredKey, isSelected]) => {
+            const originalKey = indexMapping[filteredKey];
+            if (originalKey && isSelected) {
+              mappedPartialItems[originalKey] = true;
+            }
+          });
+
+          //使用過濾後的資料來創建歷史記錄
+          const historyRecord = createHistoryRecord(
+            selectedTable,
+            tableOrder,
+            "table",
+            paymentMethod,
+            true,
+            mappedPartialItems,
+            existingGroupId
+          );
+
+          //更新訂單狀態也使用映射後的索引
+          if (historyRecord) {
+            const newHistory = [...salesHistory, historyRecord];
+            saveSalesHistory(newHistory);
+
+            // 將選中的商品標記為已付款
+            const newOrders = { ...orders };
+            const updatedTableOrder = [...tableOrder];
+
+            Object.entries(mappedPartialItems).forEach(([key, isSelected]) => {
+              if (isSelected) {
+                const [batchIndex, itemIndex] = key.split("-").map(Number);
+
+                if (
+                  updatedTableOrder[batchIndex] &&
+                  updatedTableOrder[batchIndex][itemIndex]
+                ) {
+                  updatedTableOrder[batchIndex][itemIndex] = {
+                    ...updatedTableOrder[batchIndex][itemIndex],
+                    paid: true,
+                    // 如果是第一次結帳，同時加入 groupId
+                    ...(!existingGroupId && historyRecord.groupId
+                      ? { groupId: historyRecord.groupId }
+                      : {}),
+                  };
+                }
+              }
+            });
+
+            // 如果是第一次結帳，將 groupId 寫回所有商品（包含未付款的）
+            if (!existingGroupId && historyRecord.groupId) {
+              for (
+                let batchIndex = 0;
+                batchIndex < updatedTableOrder.length;
+                batchIndex++
+              ) {
+                for (
+                  let itemIndex = 0;
+                  itemIndex < updatedTableOrder[batchIndex].length;
+                  itemIndex++
+                ) {
+                  if (!updatedTableOrder[batchIndex][itemIndex].groupId) {
+                    updatedTableOrder[batchIndex][itemIndex] = {
+                      ...updatedTableOrder[batchIndex][itemIndex],
+                      groupId: historyRecord.groupId,
+                    };
+                  }
+                }
+              }
+            }
+
+            newOrders[selectedTable] = updatedTableOrder;
+            saveOrders(newOrders);
+          }
+        } else {
+          // 全部結帳
+          // 先創建歷史記錄（使用當前未付款的商品）
+          const historyRecord = createHistoryRecord(
+            selectedTable,
+            tableOrder,
+            "table",
+            paymentMethod,
+            false, // isPartialPayment
+            null,
+            existingGroupId
+          );
+
+          if (historyRecord) {
+            const newHistory = [...salesHistory, historyRecord];
+            saveSalesHistory(newHistory);
+
+            // 如果是第一次結帳，將 groupId 寫回 orders 狀態
+            if (!existingGroupId && historyRecord.groupId) {
+              // 將所有未付款商品標記為已付款，同時加入 groupId
+              const paidBatches = tableOrder.map((batch) =>
+                batch.map((item) => ({
+                  ...item,
+                  paid: true,
+                  groupId: historyRecord.groupId,
+                }))
+              );
+              const newOrders = {
+                ...orders,
+                [selectedTable]: paidBatches,
+              };
+              saveOrders(newOrders);
+            } else {
+              // 原有邏輯：只標記為已付款
+              const paidBatches = tableOrder.map((batch) =>
+                batch.map((item) => ({
+                  ...item,
+                  paid: true,
+                }))
+              );
+              const newOrders = {
+                ...orders,
+                [selectedTable]: paidBatches,
+              };
+              saveOrders(newOrders);
+            }
+
+            // 全部結帳完成後才清空狀態
+            setCurrentOrder([]);
+            setSelectedTable(null);
+            setCurrentView("main");
+
+            // 只有在全部結帳時才移除計時器
+            if (timers[selectedTable]) {
+              const newTimers = { ...timers };
+              delete newTimers[selectedTable];
+              setTimers(newTimers);
+              localStorage.setItem("cafeTimers", JSON.stringify(newTimers));
+            }
+          }
+        }
       }
-      setCurrentOrder([]);
-      setSelectedTable(null);
-      setCurrentView("main");
-    }
-    if (timers[selectedTable]) {
-      const newTimers = { ...timers };
-      delete newTimers[selectedTable];
-      setTimers(newTimers);
-      localStorage.setItem("cafeTimers", JSON.stringify(newTimers));
     }
   };
 
@@ -740,10 +1008,6 @@ const CafePOSSystem = () => {
     setCurrentOrder([]);
   };
 
-  const handleMenuSelect = (menuId) => {
-    setCurrentView(menuId);
-  };
-
   if (currentView === "menuedit") {
     return (
       <MenuEditorPage
@@ -760,6 +1024,7 @@ const CafePOSSystem = () => {
         salesHistory={salesHistory}
         onBack={() => setCurrentView("seating")}
         onMenuSelect={handleMenuSelect}
+        onRefundOrder={handleRefund} // 新增退款功能
       />
     );
   }
@@ -784,13 +1049,6 @@ const CafePOSSystem = () => {
           }
         }
       }
-    }
-
-    {
-      allTableIds.forEach((tid) => {
-        console.log(tid, getTableStatus(tid));
-        console.log("allTableIds:", allTableIds, "test");
-      });
     }
 
     return (
@@ -866,7 +1124,6 @@ const CafePOSSystem = () => {
           onEditConfirmedItem={editConfirmedItem}
           menuData={menuData}
           onReleaseSeat={handleReleaseSeat}
-          // 新增：換桌功能
           onMoveTable={() => setShowMoveTableModal(true)}
         />
       </>

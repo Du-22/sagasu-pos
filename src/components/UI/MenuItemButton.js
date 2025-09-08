@@ -6,7 +6,6 @@ const MenuItemButton = ({ item, onAddToOrder }) => {
 
   // 點擊按鈕時
   const handleClick = () => {
-    console.log(item.customOptions);
     if (item.customOptions && item.customOptions.length > 0) {
       setShowCustomModal(true);
     } else {
@@ -19,7 +18,6 @@ const MenuItemButton = ({ item, onAddToOrder }) => {
     onAddToOrder({ ...item, selectedCustom });
     setShowCustomModal(false);
     setSelectedCustom({});
-    console.log(selectedCustom);
   };
 
   return (

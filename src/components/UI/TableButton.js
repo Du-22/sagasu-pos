@@ -99,7 +99,6 @@ const TableButton = ({ table, status, onClick, startTime }) => {
           />
         </div>
       )}
-      {console.log(table.id, status, startTime)}
     </div>
   );
 };
