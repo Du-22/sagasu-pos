@@ -19,12 +19,12 @@ const Header = ({
         return <Coffee className="w-5 h-5" />;
       case "history":
         return <span className="text-lg">📊</span>;
-      case "statistics":
-        return <span className="text-lg">📈</span>;
+      // case "statistics":
+      //   return <span className="text-lg">📈</span>;
       case "settings":
         return <span className="text-lg">⚙️</span>;
-      case "export":
-        return <span className="text-lg">📤</span>;
+      // case "export":
+      //   return <span className="text-lg">📤</span>;
       default:
         return <Coffee className="w-5 h-5" />;
     }
@@ -33,9 +33,9 @@ const Header = ({
   const menuItems = [
     { id: "seating", label: "座位管理", icon: <Coffee className="w-5 h-5" /> },
     { id: "history", label: "營業記錄", icon: "📊" },
-    { id: "statistics", label: "統計分析", icon: "📈" },
+    // { id: "statistics", label: "統計分析", icon: "📈" },
     { id: "menuedit", label: "菜單編輯", icon: "📝" },
-    { id: "export", label: "資料匯出", icon: "📤" },
+    // { id: "export", label: "資料匯出", icon: "📤" },
   ];
 
   const handleMenuClick = (menuId) => {
