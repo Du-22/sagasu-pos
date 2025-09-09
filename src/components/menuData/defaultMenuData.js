@@ -302,6 +302,16 @@ const defaultMenuData = [
       { type: "續杯", options: ["否", "是"] },
     ],
   },
+  {
+    id: "Gua Zi Rou Rice-apple_black_tea",
+    category: "非咖啡",
+    name: "瓜仔飯的蘋果紅茶",
+    price: 100,
+    customOptions: [
+      { type: "冰量", options: ["少冰"] },
+      { type: "順序", options: ["後上"] },
+    ],
+  },
 
   // 小食
   {
@@ -415,6 +425,13 @@ const defaultMenuData = [
       },
       { type: "順序", options: ["後上"] },
     ],
+  },
+  {
+    id: "Gua Zi Rou Rice",
+    category: "小食",
+    name: "瓜仔飯",
+    price: 120,
+    customOptions: [{ type: "蔥", options: ["不蔥", "少蔥"] }],
   },
   {
     id: "plastic_bag",
