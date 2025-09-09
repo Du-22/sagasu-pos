@@ -1,4 +1,4 @@
-// src/firebase/operations.js
+// src/firebase/operations.js - 改良版本
 import {
   collection,
   doc,
@@ -14,19 +14,16 @@ import {
 } from "firebase/firestore";
 import { db } from "./config";
 
-// 產生店家 ID（可以是固定值或動態產生）
-const STORE_ID = "default_store"; // 你可以改成你的店家識別碼
+const STORE_ID = "default_store";
 
 // ==================== 菜單相關操作 ====================
-
-// 獲取菜單
 export const getMenuData = async () => {
   try {
-    const menuRef = doc(db, "stores", STORE_ID, "settings", "menu");
-    const menuSnap = await getDocs(collection(menuRef, "items"));
+    const menuRef = collection(db, "stores", STORE_ID, "menu");
+    const menuSnap = await getDocs(menuRef);
 
     if (menuSnap.empty) {
-      return null; // 返回 null 表示需要使用預設菜單
+      return null;
     }
 
     const menuItems = [];
@@ -41,28 +38,18 @@ export const getMenuData = async () => {
   }
 };
 
-// 儲存菜單
 export const saveMenuData = async (menuData) => {
   try {
-    const batch = [];
-    const menuRef = collection(
-      db,
-      "stores",
-      STORE_ID,
-      "settings",
-      "menu",
-      "items"
-    );
-
-    // 刪除舊的菜單項目（簡化處理）
+    // 清除舊菜單
+    const menuRef = collection(db, "stores", STORE_ID, "menu");
     const oldItems = await getDocs(menuRef);
     const deletePromises = oldItems.docs.map((doc) => deleteDoc(doc.ref));
     await Promise.all(deletePromises);
 
-    // 新增新的菜單項目
+    // 新增菜單項目
     const addPromises = menuData.map((item) => {
       const { id, ...itemData } = item;
-      return addDoc(menuRef, itemData);
+      return setDoc(doc(menuRef, id), itemData);
     });
 
     await Promise.all(addPromises);
@@ -73,58 +60,70 @@ export const saveMenuData = async (menuData) => {
   }
 };
 
-// ==================== 訂單相關操作 ====================
+// ==================== 桌位狀態相關操作 ====================
 
-// 獲取所有訂單
-export const getOrders = async () => {
+// 獲取所有桌位狀態（包含訂單、時間、狀態）
+export const getTableStates = async () => {
   try {
-    const ordersRef = collection(db, "stores", STORE_ID, "orders");
-    const ordersSnap = await getDocs(ordersRef);
+    const tablesRef = collection(db, "stores", STORE_ID, "tables");
+    const tablesSnap = await getDocs(tablesRef);
 
-    const orders = {};
-    ordersSnap.forEach((doc) => {
-      orders[doc.id] = doc.data().batches;
+    const tableStates = {};
+    tablesSnap.forEach((doc) => {
+      tableStates[doc.id] = doc.data();
     });
 
-    return orders;
+    return tableStates;
   } catch (error) {
-    console.error("獲取訂單失敗:", error);
+    console.error("獲取桌位狀態失敗:", error);
     return {};
   }
 };
 
-// 儲存訂單
-export const saveOrders = async (orders) => {
+// 儲存單一桌位狀態
+export const saveTableState = async (tableId, tableData) => {
   try {
-    const promises = Object.entries(orders).map(([tableId, batches]) => {
-      const orderRef = doc(db, "stores", STORE_ID, "orders", tableId);
-      return setDoc(orderRef, {
-        batches,
+    const tableRef = doc(db, "stores", STORE_ID, "tables", tableId);
+    await setDoc(
+      tableRef,
+      {
+        ...tableData,
         updatedAt: new Date().toISOString(),
-      });
-    });
-
-    await Promise.all(promises);
+      },
+      { merge: true }
+    );
   } catch (error) {
-    console.error("儲存訂單失敗:", error);
+    console.error(`儲存桌位 ${tableId} 失敗:`, error);
     throw error;
   }
 };
 
-// 刪除訂單
-export const deleteOrder = async (tableId) => {
+// 更新桌位狀態（部分更新）
+export const updateTableState = async (tableId, updates) => {
   try {
-    const orderRef = doc(db, "stores", STORE_ID, "orders", tableId);
-    await deleteDoc(orderRef);
+    const tableRef = doc(db, "stores", STORE_ID, "tables", tableId);
+    await updateDoc(tableRef, {
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    });
   } catch (error) {
-    console.error("刪除訂單失敗:", error);
+    console.error(`更新桌位 ${tableId} 失敗:`, error);
+    throw error;
+  }
+};
+
+// 刪除桌位狀態
+export const deleteTableState = async (tableId) => {
+  try {
+    const tableRef = doc(db, "stores", STORE_ID, "tables", tableId);
+    await deleteDoc(tableRef);
+  } catch (error) {
+    console.error(`刪除桌位 ${tableId} 失敗:`, error);
     throw error;
   }
 };
 
 // ==================== 外帶訂單相關操作 ====================
-
-// 獲取外帶訂單
 export const getTakeoutOrders = async () => {
   try {
     const takeoutRef = collection(db, "stores", STORE_ID, "takeout");
@@ -142,7 +141,6 @@ export const getTakeoutOrders = async () => {
   }
 };
 
-// 儲存外帶訂單
 export const saveTakeoutOrders = async (takeoutOrders) => {
   try {
     const promises = Object.entries(takeoutOrders).map(
@@ -162,7 +160,6 @@ export const saveTakeoutOrders = async (takeoutOrders) => {
   }
 };
 
-// 刪除外帶訂單
 export const deleteTakeoutOrder = async (takeoutId) => {
   try {
     const takeoutRef = doc(db, "stores", STORE_ID, "takeout", takeoutId);
@@ -173,58 +170,7 @@ export const deleteTakeoutOrder = async (takeoutId) => {
   }
 };
 
-// ==================== 計時器相關操作 ====================
-
-// 獲取計時器
-export const getTimers = async () => {
-  try {
-    const timersRef = collection(db, "stores", STORE_ID, "timers");
-    const timersSnap = await getDocs(timersRef);
-
-    const timers = {};
-    timersSnap.forEach((doc) => {
-      timers[doc.id] = doc.data().startTime;
-    });
-
-    return timers;
-  } catch (error) {
-    console.error("獲取計時器失敗:", error);
-    return {};
-  }
-};
-
-// 儲存計時器
-export const saveTimers = async (timers) => {
-  try {
-    const promises = Object.entries(timers).map(([tableId, startTime]) => {
-      const timerRef = doc(db, "stores", STORE_ID, "timers", tableId);
-      return setDoc(timerRef, {
-        startTime,
-        updatedAt: new Date().toISOString(),
-      });
-    });
-
-    await Promise.all(promises);
-  } catch (error) {
-    console.error("儲存計時器失敗:", error);
-    throw error;
-  }
-};
-
-// 刪除計時器
-export const deleteTimer = async (tableId) => {
-  try {
-    const timerRef = doc(db, "stores", STORE_ID, "timers", tableId);
-    await deleteDoc(timerRef);
-  } catch (error) {
-    console.error("刪除計時器失敗:", error);
-    throw error;
-  }
-};
-
 // ==================== 銷售歷史相關操作 ====================
-
-// 獲取銷售歷史
 export const getSalesHistory = async () => {
   try {
     const salesRef = collection(db, "stores", STORE_ID, "sales");
@@ -243,11 +189,11 @@ export const getSalesHistory = async () => {
   }
 };
 
-// 新增銷售記錄
 export const addSalesRecord = async (record) => {
   try {
     const salesRef = collection(db, "stores", STORE_ID, "sales");
-    await addDoc(salesRef, {
+    // 使用 record.id 作為文檔 ID
+    await setDoc(doc(salesRef, record.id), {
       ...record,
       createdAt: new Date().toISOString(),
     });
@@ -257,7 +203,6 @@ export const addSalesRecord = async (record) => {
   }
 };
 
-// 更新銷售記錄（用於退款）
 export const updateSalesRecord = async (recordId, updates) => {
   try {
     const recordRef = doc(db, "stores", STORE_ID, "sales", recordId);
@@ -273,21 +218,21 @@ export const updateSalesRecord = async (recordId, updates) => {
 
 // ==================== 實時監聽功能 ====================
 
-// 監聽訂單變化（可用於多裝置同步）
-export const subscribeToOrders = (callback) => {
-  const ordersRef = collection(db, "stores", STORE_ID, "orders");
+// 監聽桌位狀態變化
+export const subscribeToTables = (callback) => {
+  const tablesRef = collection(db, "stores", STORE_ID, "tables");
 
   return onSnapshot(
-    ordersRef,
+    tablesRef,
     (snapshot) => {
-      const orders = {};
+      const tables = {};
       snapshot.forEach((doc) => {
-        orders[doc.id] = doc.data().batches;
+        tables[doc.id] = doc.data();
       });
-      callback(orders);
+      callback(tables);
     },
     (error) => {
-      console.error("監聽訂單失敗:", error);
+      console.error("監聽桌位失敗:", error);
     }
   );
 };
