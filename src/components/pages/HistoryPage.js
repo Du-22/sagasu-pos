@@ -270,7 +270,7 @@ const HistoryPage = ({ salesHistory, onBack, onMenuSelect, onRefundOrder }) => {
           <div className="bg-white rounded-lg p-4">
             <h3 className="text-lg font-bold mb-3">熱門商品 TOP 5</h3>
             {popularItems.length === 0 ? (
-              <div className="text-center text-gray-500 py-4">æš«ç„¡æ•¸æ“š</div>
+              <div className="text-center text-gray-500 py-4">暫無資料</div>
             ) : (
               <div className="space-y-3">
                 {popularItems.map((item, index) => (
