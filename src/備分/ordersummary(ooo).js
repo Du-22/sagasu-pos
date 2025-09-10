@@ -21,58 +21,11 @@ const OrderSummary = ({
   ]);
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showCheckoutTypeModal, setShowCheckoutTypeModal] = useState(false);
+  const [showCheckoutTypeModal, setShowCheckoutTypeModal] = useState(false); // 新增：選擇結帳類型
   const [showPartialCheckoutModal, setShowPartialCheckoutModal] =
-    useState(false);
-  const [selectedItems, setSelectedItems] = useState({});
+    useState(false); // 新增：部分結帳商品選擇
+  const [selectedItems, setSelectedItems] = useState({}); // 新增：選中的商品
   const [paymentMethod, setPaymentMethod] = useState("cash");
-
-  // 修正：將扁平化的訂單按時間分組，模擬批次顯示
-  const groupOrdersByTime = (flatOrders) => {
-    if (!Array.isArray(flatOrders) || flatOrders.length === 0) {
-      return [];
-    }
-
-    // 依據timestamp分組
-    const groups = [];
-    const timeGroups = {};
-
-    flatOrders.forEach((item, index) => {
-      if (item && !item.__seated) {
-        const timestamp = item.timestamp;
-        if (!timeGroups[timestamp]) {
-          timeGroups[timestamp] = [];
-        }
-        timeGroups[timestamp].push({ ...item, originalIndex: index });
-      }
-    });
-
-    // 按時間排序並轉為陣列
-    const sortedTimestamps = Object.keys(timeGroups).sort();
-    return sortedTimestamps.map((timestamp) => timeGroups[timestamp]);
-  };
-
-  // 修正：處理確認訂單的顯示
-  const getProcessedConfirmedOrders = () => {
-    if (confirmedOrdersBatches.length === 0) return [];
-
-    // 如果是已經分組的批次格式，直接使用
-    if (
-      Array.isArray(confirmedOrdersBatches[0]) &&
-      Array.isArray(confirmedOrdersBatches[0][0])
-    ) {
-      return confirmedOrdersBatches[0]; // 取出實際的批次陣列
-    }
-
-    // 如果是扁平化格式，需要重新分組
-    if (Array.isArray(confirmedOrdersBatches[0])) {
-      return groupOrdersByTime(confirmedOrdersBatches[0]);
-    }
-
-    return [];
-  };
-
-  const processedBatches = getProcessedConfirmedOrders();
 
   // 計算相關函數保持不變
   const calculateCurrentTotal = () => {
@@ -90,12 +43,14 @@ const OrderSummary = ({
           .map((item) => item.originalItemIndex)
       );
 
-      const total = processedBatches.flat().reduce((total, item, index) => {
-        if (editingPositions.has(index)) {
-          return total;
-        }
-        return total + getItemSubtotal(item);
-      }, 0);
+      const total = confirmedOrdersBatches
+        .flat()
+        .reduce((total, item, index) => {
+          if (editingPositions.has(index)) {
+            return total;
+          }
+          return total + getItemSubtotal(item);
+        }, 0);
 
       return total;
     } else {
@@ -105,18 +60,21 @@ const OrderSummary = ({
           .map((item) => `${item.originalBatchIndex}-${item.originalItemIndex}`)
       );
 
-      const total = processedBatches.reduce((batchTotal, batch, batchIndex) => {
-        return (
-          batchTotal +
-          batch.reduce((itemTotal, item, itemIndex) => {
-            const positionKey = `${batchIndex}-${itemIndex}`;
-            if (editingPositions.has(positionKey)) {
-              return itemTotal;
-            }
-            return itemTotal + getItemSubtotal(item);
-          }, 0)
-        );
-      }, 0);
+      const total = confirmedOrdersBatches.reduce(
+        (batchTotal, batch, batchIndex) => {
+          return (
+            batchTotal +
+            batch.reduce((itemTotal, item, itemIndex) => {
+              const positionKey = `${batchIndex}-${itemIndex}`;
+              if (editingPositions.has(positionKey)) {
+                return itemTotal;
+              }
+              return itemTotal + getItemSubtotal(item);
+            }, 0)
+          );
+        },
+        0
+      );
 
       return total;
     }
@@ -136,20 +94,20 @@ const OrderSummary = ({
     return currentTotal + confirmedTotal;
   };
 
-  // 計算部分結帳總額
+  // 新增：計算部分結帳總額
   const calculatePartialTotal = () => {
     let total = 0;
     Object.entries(selectedItems).forEach(([key, isSelected]) => {
       if (isSelected) {
         const [batchIndex, itemIndex] = key.split("-").map(Number);
-        const item = processedBatches[batchIndex][itemIndex];
+        const item = confirmedOrdersBatches[batchIndex][itemIndex];
         total += getItemSubtotal(item);
       }
     });
     return total;
   };
 
-  // 獲取所有可結帳的商品（排除正在編輯的）
+  // 新增：獲取所有可結帳的商品（排除正在編輯的）
   const getCheckoutableItems = () => {
     const editingPositions = new Set(
       currentOrder
@@ -158,7 +116,7 @@ const OrderSummary = ({
     );
 
     const items = [];
-    processedBatches.forEach((batch, batchIndex) => {
+    confirmedOrdersBatches.forEach((batch, batchIndex) => {
       batch.forEach((item, itemIndex) => {
         const positionKey = `${batchIndex}-${itemIndex}`;
         // 檢查是否已付款
@@ -186,42 +144,29 @@ const OrderSummary = ({
     return `${item.name} $${item.price} x ${item.quantity} ${dots} $${subtotal}`;
   };
 
-  // 格式化時間顯示
-  const formatTimestamp = (timestamp) => {
-    if (!timestamp) return "未知時間";
-    try {
-      const date = new Date(timestamp);
-      return date.toLocaleTimeString("zh-TW", {
-        hour12: false,
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      });
-    } catch {
-      return "未知時間";
-    }
-  };
-
-  // 處理結帳按鈕點擊
+  // 新增：處理結帳按鈕點擊
   const handleCheckoutClick = () => {
     const checkoutableItems = getCheckoutableItems();
 
+    // 如果只有當前訂單或者已確認商品少於2個，直接跳到付款選擇
     if (checkoutableItems.length <= 1) {
       setShowPaymentModal(true);
     } else {
+      // 有多個已確認商品，先選擇結帳類型
       setShowCheckoutTypeModal(true);
     }
   };
 
-  // 處理全部結帳
+  // 新增：處理全部結帳
   const handleFullCheckout = () => {
     setShowCheckoutTypeModal(false);
     setShowPaymentModal(true);
   };
 
-  // 處理部分結帳
+  // 新增：處理部分結帳
   const handlePartialCheckout = () => {
     setShowCheckoutTypeModal(false);
+    // 初始化選中狀態
     const initialSelection = {};
     getCheckoutableItems().forEach((item) => {
       initialSelection[item.key] = false;
@@ -230,7 +175,7 @@ const OrderSummary = ({
     setShowPartialCheckoutModal(true);
   };
 
-  // 確認部分結帳選擇
+  // 新增：確認部分結帳選擇
   const handleConfirmPartialSelection = () => {
     const hasSelection = Object.values(selectedItems).some(Boolean);
     if (!hasSelection) {
@@ -241,10 +186,11 @@ const OrderSummary = ({
     setShowPaymentModal(true);
   };
 
-  // 處理付款確認，支援部分結帳
+  // 修改：處理付款確認，支援部分結帳
   const handleConfirmPayment = () => {
     const methodName = paymentMethod === "cash" ? "現金" : "Line Pay";
 
+    // 檢查是否為部分結帳
     const hasPartialSelection =
       Object.keys(selectedItems).length > 0 &&
       Object.values(selectedItems).some(Boolean);
@@ -255,7 +201,7 @@ const OrderSummary = ({
         `確定要以 ${methodName} 結帳選中的商品，總額 $${total} 嗎？`
       );
       if (confirmed) {
-        onCheckout(paymentMethod, selectedItems);
+        onCheckout(paymentMethod, selectedItems); // 傳遞選中的商品
         setShowPaymentModal(false);
         setSelectedItems({});
       }
@@ -294,32 +240,20 @@ const OrderSummary = ({
           </div>
 
           <div className="flex-1 p-4 overflow-y-auto">
-            {/* 已確認的訂單區域 - 修正顯示邏輯 */}
-            {processedBatches.length > 0 ? (
+            {/* 已確認的訂單區域 - 按批次顯示 */}
+            {confirmedOrdersBatches.length > 0 ? (
               <div className="mb-4">
                 <div className="text-sm text-green-600 mb-2">
-                  有 {processedBatches.length} 次點餐紀錄
+                  有 {confirmedOrdersBatches.length} 次點餐紀錄
                 </div>
-                {processedBatches.map((batch, batchIndex) => {
-                  // 獲取該批次的時間（取第一個商品的時間）
-                  const batchTime =
-                    batch.length > 0 ? batch[0].timestamp : null;
-
+                {confirmedOrdersBatches.map((batch, batchIndex) => {
                   return (
-                    <div
-                      key={`batch-${batchIndex}-${batchTime}`}
-                      className="mb-4"
-                    >
+                    <div key={`batch-${batchIndex}`} className="mb-4">
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="text-sm font-medium text-gray-600">
                           {batchIndex === 0
                             ? "首次點餐"
                             : `第${batchIndex + 1}次追加`}
-                          {batchTime && (
-                            <span className="ml-2 text-xs text-gray-500">
-                              ({formatTimestamp(batchTime)})
-                            </span>
-                          )}
                         </h3>
                         <span className="text-sm text-gray-500">
                           $
@@ -335,7 +269,7 @@ const OrderSummary = ({
                         {Array.isArray(batch) ? (
                           batch.map((item, itemIndex) => (
                             <div
-                              key={`confirmed-${batchIndex}-${item.id}-${itemIndex}-${item.timestamp}`}
+                              key={`confirmed-${batchIndex}-${item.id}-${itemIndex}`}
                               className="flex items-center justify-between py-1"
                             >
                               <div className="flex-1">
@@ -359,9 +293,7 @@ const OrderSummary = ({
                                   onEditConfirmedItem(
                                     item,
                                     batchIndex,
-                                    item.originalIndex !== undefined
-                                      ? item.originalIndex
-                                      : itemIndex
+                                    itemIndex
                                   )
                                 }
                                 className="ml-2 p-1 text-gray-400 hover:text-blue-500"
@@ -411,7 +343,7 @@ const OrderSummary = ({
 
           {/* 總計和按鈕區域 */}
           <div className="p-4 border-t">
-            {processedBatches.length > 0 && (
+            {confirmedOrdersBatches.length > 0 && (
               <div className="text-sm text-gray-600 mb-2">
                 <div className="flex justify-between">
                   <span>已確認:</span>
@@ -459,7 +391,7 @@ const OrderSummary = ({
         </div>
       </div>
 
-      {/* 結帳類型選擇 Modal */}
+      {/* 新增：結帳類型選擇 Modal */}
       {showCheckoutTypeModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl">
@@ -504,7 +436,7 @@ const OrderSummary = ({
         </div>
       )}
 
-      {/* 部分結帳商品選擇 Modal */}
+      {/* 新增：部分結帳商品選擇 Modal */}
       {showPartialCheckoutModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-xl p-6 max-w-lg w-full mx-4 shadow-2xl max-h-[80vh] overflow-y-auto">
