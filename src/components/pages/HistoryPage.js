@@ -48,12 +48,7 @@ const HistoryPage = ({ salesHistory, onBack, onMenuSelect, onRefundOrder }) => {
 
   // 群組訂單按桌號
   const groupRecordsByTable = (records) => {
-    console.log("=== 群組化除錯 ===");
-    records.forEach((record, index) => {
-      console.log(
-        `記錄 ${index}: 桌號=${record.table}, groupId=${record.groupId}, 時間=${record.time}`
-      );
-    });
+    records.forEach((record, index) => {});
 
     const groups = {};
 

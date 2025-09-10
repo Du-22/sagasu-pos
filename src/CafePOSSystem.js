@@ -50,19 +50,10 @@ const CafePOSSystem = () => {
 
   // 輔助函數：為了相容性，提供 timers 格式給 UI 組件
   const getTimersForDisplay = () => {
-    console.log("🔄 重新計算 TimersForDisplay, 當前 tableStates:", tableStates);
-
     const timersForDisplay = {};
     Object.entries(tableStates).forEach(([tableId, tableState]) => {
       if (tableState.startTime) {
         const currentStatus = getTableStatus(tableId);
-
-        console.log(`🕐 桌位 ${tableId} 計時器檢查:`, {
-          hasStartTime: !!tableState.startTime,
-          status: currentStatus,
-          shouldShowTimer:
-            currentStatus !== "ready-to-clean" && currentStatus !== "available",
-        });
 
         // 只有在用餐中或入座狀態才顯示計時器
         if (currentStatus === "occupied" || currentStatus === "seated") {
@@ -71,19 +62,14 @@ const CafePOSSystem = () => {
       }
     });
 
-    console.log("🕐 最終計時器顯示資料:", timersForDisplay);
     return timersForDisplay;
   };
 
   // 輔助函數：為了相容性，提供 orders 格式給 UI 組件
   const getOrdersForDisplay = () => {
-    console.log("🔄 重新計算 OrdersForDisplay, 當前 tableStates:", tableStates);
-
     const ordersForDisplay = {};
     Object.entries(tableStates).forEach(([tableId, tableState]) => {
       if (tableState.orders && Array.isArray(tableState.orders)) {
-        console.log(`🔍 處理桌位 ${tableId} 的訂單顯示:`, tableState.orders);
-
         // 檢查是否只有入座標記
         const onlySeatedMarker =
           tableState.orders.length === 1 &&
@@ -91,7 +77,6 @@ const CafePOSSystem = () => {
           tableState.orders[0].__seated;
 
         if (onlySeatedMarker) {
-          console.log(`🪑 桌位 ${tableId} 只有入座標記，傳入特殊標記`);
           ordersForDisplay[tableId] = [{ __seated_only: true }];
           return;
         }
@@ -101,15 +86,12 @@ const CafePOSSystem = () => {
           return item && typeof item === "object" && !item.__seated;
         });
 
-        console.log(`📋 桌位 ${tableId} 的真實訂單:`, realOrders);
-
         if (realOrders.length > 0) {
           ordersForDisplay[tableId] = [realOrders];
         }
       }
     });
 
-    console.log("📋 最終訂單顯示資料:", ordersForDisplay);
     return ordersForDisplay;
   };
 
@@ -120,8 +102,6 @@ const CafePOSSystem = () => {
       setLoadError(null);
 
       try {
-        console.log("🔄 開始載入數據...");
-
         // 同時載入所有數據
         const [
           firebaseMenuData,
@@ -137,11 +117,6 @@ const CafePOSSystem = () => {
 
         // 設置菜單數據
         if (firebaseMenuData && firebaseMenuData.length > 0) {
-          console.log(
-            "📋 從 Firebase 載入菜單:",
-            firebaseMenuData.length,
-            "項"
-          );
           setMenuData(firebaseMenuData);
         } else {
           console.log("📋 首次使用，儲存預設菜單到 Firebase");
@@ -150,27 +125,15 @@ const CafePOSSystem = () => {
         }
 
         // 設置桌位狀態（新的整合數據）
-        console.log(
-          "🪑 載入桌位狀態:",
-          Object.keys(firebaseTableStates || {}).length,
-          "桌"
-        );
+
         setTableStates(firebaseTableStates || {});
 
         // 設置外帶訂單
-        console.log(
-          "📦 載入外帶訂單:",
-          Object.keys(firebaseTakeoutOrders || {}).length,
-          "筆"
-        );
+
         setTakeoutOrders(firebaseTakeoutOrders || {});
 
         // 設置銷售歷史
-        console.log(
-          "💰 載入銷售歷史:",
-          firebaseSalesHistory?.length || 0,
-          "筆"
-        );
+
         setSalesHistory(firebaseSalesHistory || []);
 
         console.log("✅ 所有數據載入完成");
@@ -187,8 +150,6 @@ const CafePOSSystem = () => {
   }, []);
 
   useEffect(() => {
-    console.log("🔄 tableStates 已更新:", tableStates);
-
     // 特別檢查有入座標記的桌位
     Object.entries(tableStates).forEach(([tableId, state]) => {
       if (state.orders && state.orders.length > 0) {
@@ -197,7 +158,6 @@ const CafePOSSystem = () => {
           (firstBatch && firstBatch.__seated) ||
           (Array.isArray(firstBatch) && firstBatch[0] && firstBatch[0].__seated)
         ) {
-          console.log(`🪑 發現入座桌位 ${tableId}:`, state);
         }
       }
     });
@@ -206,8 +166,6 @@ const CafePOSSystem = () => {
   // 備用：從 localStorage 載入數據
   const loadFromLocalStorage = () => {
     try {
-      console.log("📦 嘗試從 localStorage 載入備份數據");
-
       const savedHistory = localStorage.getItem("cafeSalesHistory");
       if (savedHistory) {
         setSalesHistory(JSON.parse(savedHistory));
@@ -236,8 +194,6 @@ const CafePOSSystem = () => {
       if (savedTakeoutOrders) {
         setTakeoutOrders(JSON.parse(savedTakeoutOrders));
       }
-
-      console.log("📦 從 localStorage 載入備份數據完成");
     } catch (error) {
       console.error("載入 localStorage 備份數據失敗:", error);
     }
@@ -426,9 +382,6 @@ const CafePOSSystem = () => {
     }
 
     try {
-      console.log("🔄 開始換桌操作:", { fromTable, toTable });
-      console.log("🔄 原桌狀態:", fromTableState);
-
       // 1. 複製桌位狀態到新桌位
       await saveTableStateToFirebase(toTable, {
         orders: fromTableState.orders,
@@ -454,7 +407,6 @@ const CafePOSSystem = () => {
         // 刪除原桌位
         delete newStates[fromTable];
 
-        console.log("🔄 換桌後的新狀態:", newStates);
         return newStates;
       });
 
@@ -468,8 +420,6 @@ const CafePOSSystem = () => {
 
       // 6. 返回座位視圖
       setCurrentView("seating");
-
-      console.log("✅ 換桌操作完成");
     } catch (error) {
       console.error("❌ 換桌操作失敗:", error);
       alert("換桌失敗，請稍後再試");
@@ -727,8 +677,6 @@ const CafePOSSystem = () => {
       status: "seated",
     };
 
-    console.log("🪑 準備儲存的 seatData:", JSON.stringify(seatData, null, 2));
-
     await saveTableStateToFirebase(pendingSeatTable, seatData);
     setShowSeatConfirmModal(false);
     setPendingSeatTable(null);
@@ -746,25 +694,15 @@ const CafePOSSystem = () => {
 
     const tableState = tableStates[tableId];
 
-    console.log(`🔍 CafePOSSystem getTableStatus ${tableId}:`, {
-      hasTableState: !!tableState,
-      orders: tableState?.orders,
-      ordersLength: tableState?.orders?.length,
-      firstOrder: tableState?.orders?.[0],
-    });
-
     if (!tableState || !tableState.orders || tableState.orders.length === 0) {
-      console.log(`📋 桌位 ${tableId}: 空桌 (無狀態)`);
       return "available";
     }
 
     // 詳細檢查入座狀態
     for (let i = 0; i < tableState.orders.length; i++) {
       const item = tableState.orders[i];
-      console.log(`🔍 檢查項目 ${i}:`, item);
 
       if (item && typeof item === "object" && item.__seated === true) {
-        console.log(`✅ 桌位 ${tableId}: 發現入座標記，返回 seated`);
         return "seated";
       }
     }
@@ -777,24 +715,19 @@ const CafePOSSystem = () => {
       if (item && typeof item === "object" && !item.__seated) {
         if (item.paid === false) {
           hasUnpaidItems = true;
-          console.log(`🍽️ 發現未付款項目:`, item.name);
         } else if (item.paid === true) {
           hasPaidItems = true;
-          console.log(`💰 發現已付款項目:`, item.name);
         }
       }
     }
 
     if (hasUnpaidItems) {
-      console.log(`📋 桌位 ${tableId}: 用餐中 (有未付款項目)`);
       return "occupied";
     }
     if (hasPaidItems) {
-      console.log(`📋 桌位 ${tableId}: 待清理 (全部已付款)`);
       return "ready-to-clean";
     }
 
-    console.log(`📋 桌位 ${tableId}: 預設空桌`);
     return "available";
   };
 
@@ -829,14 +762,11 @@ const CafePOSSystem = () => {
 
     if (selectedTable.startsWith("T")) {
       // 外帶訂單 - 改為扁平化結構
-      console.log("📦 submitOrder 開始處理外帶訂單");
 
       const existingTakeoutData = takeoutOrders[selectedTable];
       let existingOrders = existingTakeoutData?.orders
         ? [...existingTakeoutData.orders]
         : [];
-
-      console.log("📦 原始外帶訂單:", JSON.stringify(existingOrders, null, 2));
 
       // 新增項目（直接加到扁平化陣列末尾）
       const newItems = currentOrder.map((item) => ({
@@ -848,14 +778,8 @@ const CafePOSSystem = () => {
       // 合併：扁平化結構，不要巢狀陣列
       const finalOrders = [...existingOrders, ...newItems];
 
-      console.log(
-        "📦 最終外帶訂單 (扁平化):",
-        JSON.stringify(finalOrders, null, 2)
-      );
-
       // 驗證：確保沒有巢狀陣列
       const hasNestedArrays = finalOrders.some((item) => Array.isArray(item));
-      console.log("⚠️ 外帶訂單是否有巢狀陣列:", hasNestedArrays);
 
       if (hasNestedArrays) {
         console.error("❌ 外帶訂單檢測到巢狀陣列，進行扁平化");
@@ -873,38 +797,22 @@ const CafePOSSystem = () => {
         },
       };
 
-      console.log(
-        "📦 準備儲存的外帶訂單:",
-        JSON.stringify(newTakeoutOrders[selectedTable], null, 2)
-      );
-
       await saveTakeoutOrdersToFirebase(newTakeoutOrders);
       setCurrentView("seating");
       setSelectedTable(null);
       setCurrentOrder([]);
     } else {
       // 內用訂單 - 使用扁平化結構
-      console.log("🔍 submitOrder 開始處理內用訂單");
 
       const currentTableState = tableStates[selectedTable] || {};
       let existingOrders = currentTableState.orders
         ? [...currentTableState.orders]
         : [];
 
-      console.log(
-        "🔍 原始 existingOrders:",
-        JSON.stringify(existingOrders, null, 2)
-      );
-
       // 移除入座標記
       existingOrders = existingOrders.filter((item) => {
         return !(item && item.__seated);
       });
-
-      console.log(
-        "🔍 移除入座標記後的 existingOrders:",
-        JSON.stringify(existingOrders, null, 2)
-      );
 
       // 處理編輯項目
       const hasEditingItems = currentOrder.some(
@@ -956,14 +864,8 @@ const CafePOSSystem = () => {
       // 合併：扁平化結構，不要巢狀陣列
       const finalOrders = [...existingOrders, ...newItems];
 
-      console.log(
-        "🔍 最終 finalOrders (扁平化):",
-        JSON.stringify(finalOrders, null, 2)
-      );
-
       // 驗證：確保沒有巢狀陣列
       const hasNestedArrays = finalOrders.some((item) => Array.isArray(item));
-      console.log("⚠️ 是否有巢狀陣列:", hasNestedArrays);
 
       if (hasNestedArrays) {
         console.error("❌ 檢測到巢狀陣列，進行扁平化");
@@ -976,8 +878,6 @@ const CafePOSSystem = () => {
         startTime: currentTableState.startTime || Date.now(),
         status: "occupied",
       };
-
-      console.log("🚀 準備儲存的狀態:", JSON.stringify(stateToSave, null, 2));
 
       await saveTableStateToFirebase(selectedTable, stateToSave);
 
@@ -1125,8 +1025,6 @@ const CafePOSSystem = () => {
       if (takeoutData && !takeoutData.paid) {
         if (isPartialCheckout) {
           // 部分結帳邏輯
-          console.log("外帶部分結帳，選中項目:", partialItems);
-
           // 將選中的項目標記為已付款
           const updatedOrders = takeoutData.orders.map((item, index) => {
             const key = `0-${index}`; // 外帶都在批次0
@@ -1533,8 +1431,6 @@ const CafePOSSystem = () => {
       const currentTableState = tableStates[selectedTable] || {};
       const flatOrders = currentTableState.orders || [];
 
-      console.log("🔍 點餐頁面 - 原始扁平化訂單:", flatOrders);
-
       // 過濾掉入座標記，只保留真正的餐點
       const realOrders = flatOrders.filter(
         (item) =>
@@ -1544,14 +1440,10 @@ const CafePOSSystem = () => {
           item.paid === false
       );
 
-      console.log("🔍 點餐頁面 - 過濾後的真實訂單:", realOrders);
-
       // 將扁平化訂單重新組織為批次格式（為了相容現有的 UI）
       if (realOrders.length > 0) {
         confirmedOrdersBatches = [realOrders]; // 包成一個批次
       }
-
-      console.log("🔍 點餐頁面 - 最終批次格式:", confirmedOrdersBatches);
     }
 
     return (

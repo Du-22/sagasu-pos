@@ -54,7 +54,6 @@ export const saveMenuData = async (menuData) => {
     });
 
     await Promise.all(addPromises);
-    console.log("菜單儲存成功");
   } catch (error) {
     console.error("儲存菜單失敗:", error);
     throw error;
@@ -127,8 +126,6 @@ export const deleteTableState = async (tableId) => {
 // Debug 版本：保存桌位狀態
 export const debugSaveTableState = async (tableId, tableData) => {
   try {
-    console.log("🔄 嘗試儲存桌位狀態:", tableId, tableData);
-
     const tableRef = doc(db, "stores", STORE_ID, "tables", tableId);
 
     const dataToSave = {
@@ -137,16 +134,11 @@ export const debugSaveTableState = async (tableId, tableData) => {
       debugTime: Date.now(),
     };
 
-    console.log("📤 準備儲存的數據:", dataToSave);
-
     await setDoc(tableRef, dataToSave, { merge: true });
-
-    console.log("✅ 桌位狀態儲存成功:", tableId);
 
     // 立即讀取驗證
     const savedDoc = await getDoc(tableRef);
     if (savedDoc.exists()) {
-      console.log("✅ 驗證：數據已成功寫入 Firebase:", savedDoc.data());
     } else {
       console.error("❌ 驗證失敗：數據沒有寫入 Firebase");
     }
@@ -161,20 +153,14 @@ export const debugSaveTableState = async (tableId, tableData) => {
 // ==================== Debug 版本：讀取桌位狀態 ====================
 export const debugGetTableStates = async () => {
   try {
-    console.log("🔄 嘗試讀取所有桌位狀態...");
-
     const tablesRef = collection(db, "stores", STORE_ID, "tables");
     const tablesSnap = await getDocs(tablesRef);
 
-    console.log("📊 找到桌位數量:", tablesSnap.size);
-
     const tableStates = {};
     tablesSnap.forEach((doc) => {
-      console.log("📋 桌位資料:", doc.id, doc.data());
       tableStates[doc.id] = doc.data();
     });
 
-    console.log("✅ 所有桌位狀態:", tableStates);
     return tableStates;
   } catch (error) {
     console.error("❌ 讀取桌位狀態失敗:", error);
