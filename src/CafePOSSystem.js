@@ -947,51 +947,79 @@ const CafePOSSystem = () => {
 
     if (removingItem && removingItem.isEditing) {
       if (removingItem.isTakeout) {
-        // 外帶項目邏輯保持不變
+        // 外帶項目邏輯
         const takeoutData = takeoutOrders[selectedTable];
-        if (takeoutData && takeoutData.batches) {
-          const batchIndex = removingItem.originalBatchIndex ?? 0;
-          const itemIndex = removingItem.originalItemIndex;
-          const updatedBatches = takeoutData.batches.map((batch, idx) =>
-            idx === batchIndex ? batch.filter((_, i) => i !== itemIndex) : batch
-          );
-          const filteredBatches = updatedBatches.filter(
-            (batch) => batch.length > 0
-          );
-          const newTakeoutOrders = {
-            ...takeoutOrders,
-            [selectedTable]: {
-              ...takeoutData,
-              batches: filteredBatches,
-            },
-          };
-          await saveTakeoutOrdersToFirebase(newTakeoutOrders);
+        if (
+          takeoutData &&
+          takeoutData.orders &&
+          Array.isArray(takeoutData.orders)
+        ) {
+          // 使用扁平化結構
+          const originalIndex = removingItem.originalItemIndex;
+
+          // 確保索引有效
+          if (originalIndex >= 0 && originalIndex < takeoutData.orders.length) {
+            const updatedOrders = [...takeoutData.orders];
+            updatedOrders.splice(originalIndex, 1);
+
+            const newTakeoutOrders = {
+              ...takeoutOrders,
+              [selectedTable]: {
+                ...takeoutData,
+                orders: updatedOrders,
+              },
+            };
+            await saveTakeoutOrdersToFirebase(newTakeoutOrders);
+          }
         }
       } else {
         // 內用項目（使用新數據結構）
         const currentTableState = tableStates[selectedTable] || {};
-        const batches = currentTableState.orders
+        const flatOrders = currentTableState.orders
           ? [...currentTableState.orders]
           : [];
-        const { originalBatchIndex, originalItemIndex } = removingItem;
 
-        if (batches[originalBatchIndex]) {
-          batches[originalBatchIndex].splice(originalItemIndex, 1);
-          const filteredBatches = batches.filter((batch) => batch.length > 0);
+        // 從 originalItemIndex 獲取在扁平化陣列中的實際位置
+        const actualIndex = removingItem.originalItemIndex;
 
-          if (filteredBatches.length > 0) {
+        console.log("🔧 Debug removeFromOrder:", {
+          flatOrders,
+          actualIndex,
+          removingItem,
+          flatOrdersLength: flatOrders.length,
+          itemAtIndex: flatOrders[actualIndex],
+        });
+
+        // 確保索引有效且該位置有項目
+        if (actualIndex >= 0 && actualIndex < flatOrders.length) {
+          // 直接從扁平化陣列中移除項目
+          flatOrders.splice(actualIndex, 1);
+
+          if (flatOrders.length > 0) {
+            // 過濾掉可能的空值或無效項目
+            const validOrders = flatOrders.filter(
+              (item) =>
+                item && typeof item === "object" && (item.__seated || item.name)
+            );
+
             await saveTableStateToFirebase(selectedTable, {
               ...currentTableState,
-              orders: filteredBatches,
+              orders: validOrders,
             });
           } else {
             // 如果沒有訂單了，刪除整個桌位狀態
             await deleteTableStateFromFirebase(selectedTable);
           }
+        } else {
+          console.warn("⚠️ 無效的索引或項目不存在:", {
+            actualIndex,
+            flatOrdersLength: flatOrders.length,
+          });
         }
       }
     }
 
+    // 從當前訂單中移除項目
     setCurrentOrder(currentOrder.filter((item) => item.id !== itemId));
   };
 
@@ -1258,22 +1286,27 @@ const CafePOSSystem = () => {
 
   const editConfirmedItem = (item, batchIndex, itemIndex) => {
     if (selectedTable.startsWith("T")) {
-      // 外帶項目編輯邏輯保持不變
+      // 外帶項目編輯邏輯
       const takeoutData = takeoutOrders[selectedTable];
       if (
         !takeoutData ||
-        !takeoutData.batches ||
-        !takeoutData.batches[batchIndex] ||
-        !takeoutData.batches[batchIndex][itemIndex]
-      )
+        !takeoutData.orders ||
+        !Array.isArray(takeoutData.orders)
+      ) {
+        console.warn("⚠️ 外帶訂單數據無效");
         return;
+      }
 
-      const editingItem = { ...takeoutData.batches[batchIndex][itemIndex] };
+      if (itemIndex < 0 || itemIndex >= takeoutData.orders.length) {
+        console.warn("⚠️ 外帶項目索引無效:", itemIndex);
+        return;
+      }
+
+      const editingItem = { ...takeoutData.orders[itemIndex] };
 
       const isAlreadyEditing = currentOrder.some(
         (orderItem) =>
           orderItem.isEditing &&
-          orderItem.originalBatchIndex === batchIndex &&
           orderItem.originalItemIndex === itemIndex &&
           orderItem.isTakeout === true
       );
@@ -1284,7 +1317,6 @@ const CafePOSSystem = () => {
             (orderItem) =>
               !(
                 orderItem.isEditing &&
-                orderItem.originalBatchIndex === batchIndex &&
                 orderItem.originalItemIndex === itemIndex &&
                 orderItem.isTakeout === true
               )
@@ -1297,7 +1329,7 @@ const CafePOSSystem = () => {
             ...editingItem,
             isEditing: true,
             isTakeout: true,
-            originalBatchIndex: batchIndex,
+            originalBatchIndex: 0, // 外帶都是批次0
             originalItemIndex: itemIndex,
           },
         ]);
@@ -1307,32 +1339,66 @@ const CafePOSSystem = () => {
       const currentTableState = tableStates[selectedTable] || {};
       const flatOrders = currentTableState.orders || [];
 
-      // 在扁平化結構中，batchIndex 應該是 0（因為我們包裝成一個批次）
-      // itemIndex 就是在扁平化陣列中的實際位置
-      const realOrders = flatOrders.filter((item) => item && !item.__seated);
+      // 過濾掉入座標記，獲取真正的餐點
+      const realOrders = flatOrders.filter(
+        (item) => item && typeof item === "object" && !item.__seated
+      );
 
-      if (!realOrders[itemIndex]) return;
+      console.log("🔧 Debug editConfirmedItem:", {
+        batchIndex,
+        itemIndex,
+        flatOrders,
+        realOrders,
+        flatOrdersLength: flatOrders.length,
+        realOrdersLength: realOrders.length,
+      });
+
+      // 檢查索引是否有效
+      if (itemIndex < 0 || itemIndex >= realOrders.length) {
+        console.warn("⚠️ 內用項目索引無效:", {
+          itemIndex,
+          realOrdersLength: realOrders.length,
+        });
+        return;
+      }
 
       const editingItem = { ...realOrders[itemIndex] };
 
-      // 計算在原始扁平化陣列中的實際位置
-      let actualFlatIndex = 0;
-      let foundIndex = 0;
+      // 找到在原始扁平化陣列中的實際位置
+      let actualFlatIndex = -1;
+      let realItemCount = 0;
+
       for (let i = 0; i < flatOrders.length; i++) {
-        if (flatOrders[i] && !flatOrders[i].__seated) {
-          if (foundIndex === itemIndex) {
+        const currentItem = flatOrders[i];
+        if (
+          currentItem &&
+          typeof currentItem === "object" &&
+          !currentItem.__seated
+        ) {
+          if (realItemCount === itemIndex) {
             actualFlatIndex = i;
             break;
           }
-          foundIndex++;
+          realItemCount++;
         }
+      }
+
+      console.log("🔧 計算實際索引:", {
+        itemIndex,
+        actualFlatIndex,
+        editingItem: editingItem.name,
+      });
+
+      if (actualFlatIndex === -1) {
+        console.warn("⚠️ 無法找到項目在扁平化陣列中的位置");
+        return;
       }
 
       const isAlreadyEditing = currentOrder.some(
         (orderItem) =>
           orderItem.isEditing &&
-          orderItem.originalBatchIndex === batchIndex &&
-          orderItem.originalItemIndex === itemIndex
+          orderItem.originalItemIndex === actualFlatIndex &&
+          !orderItem.isTakeout
       );
 
       if (isAlreadyEditing) {
@@ -1341,8 +1407,8 @@ const CafePOSSystem = () => {
             (orderItem) =>
               !(
                 orderItem.isEditing &&
-                orderItem.originalBatchIndex === batchIndex &&
-                orderItem.originalItemIndex === itemIndex
+                orderItem.originalItemIndex === actualFlatIndex &&
+                !orderItem.isTakeout
               )
           )
         );
@@ -1353,7 +1419,7 @@ const CafePOSSystem = () => {
             ...editingItem,
             isEditing: true,
             originalBatchIndex: 0, // 在顯示時總是批次0
-            originalItemIndex: actualFlatIndex, // 但在實際編輯時使用扁平化索引
+            originalItemIndex: actualFlatIndex, // 使用在扁平化陣列中的實際位置
           },
         ]);
       }
