@@ -46,6 +46,14 @@ const CafePOSSystem = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
+  const calculateItemSubtotal = (item) => {
+    let discount = 0;
+    if (item.selectedCustom && item.selectedCustom["續杯"] === "是") {
+      discount = 20;
+    }
+    return Math.max(item.price - discount, 0) * item.quantity;
+  };
+
   useEffect(() => {}, [currentView, selectedTable]);
 
   // 輔助函數：為了相容性，提供 timers 格式給 UI 組件
@@ -477,15 +485,14 @@ const CafePOSSystem = () => {
 
                   if (existingItem) {
                     existingItem.quantity += item.quantity;
-                    existingItem.subtotal =
-                      existingItem.price * existingItem.quantity;
+                    existingItem.subtotal = calculateItemSubtotal(existingItem); // 使用共用函數
                   } else {
                     items.push({
                       id: item.id,
                       name: item.name,
                       price: item.price,
                       quantity: item.quantity,
-                      subtotal: item.price * item.quantity,
+                      subtotal: calculateItemSubtotal(item), // 使用共用函數
                       selectedCustom: item.selectedCustom || null,
                     });
                   }
@@ -509,15 +516,14 @@ const CafePOSSystem = () => {
               );
               if (existingItem) {
                 existingItem.quantity += item.quantity;
-                existingItem.subtotal =
-                  existingItem.price * existingItem.quantity;
+                existingItem.subtotal = calculateItemSubtotal(existingItem); // 使用共用函數
               } else {
                 items.push({
                   id: item.id,
                   name: item.name,
                   price: item.price,
                   quantity: item.quantity,
-                  subtotal: item.price * item.quantity,
+                  subtotal: calculateItemSubtotal(item), // 使用共用函數
                   selectedCustom: item.selectedCustom || null,
                 });
               }
@@ -537,15 +543,14 @@ const CafePOSSystem = () => {
               );
               if (existingItem) {
                 existingItem.quantity += item.quantity;
-                existingItem.subtotal =
-                  existingItem.price * existingItem.quantity;
+                existingItem.subtotal = calculateItemSubtotal(existingItem); // 使用共用函數
               } else {
                 items.push({
                   id: item.id,
                   name: item.name,
                   price: item.price,
                   quantity: item.quantity,
-                  subtotal: item.price * item.quantity,
+                  subtotal: calculateItemSubtotal(item), // 使用共用函數
                   selectedCustom: item.selectedCustom || null,
                 });
               }

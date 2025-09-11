@@ -27,6 +27,15 @@ const OrderSummary = ({
   const [selectedItems, setSelectedItems] = useState({});
   const [paymentMethod, setPaymentMethod] = useState("cash");
 
+  // 修正：使用與 CafePOSSystem 相同的價格計算邏輯
+  const getItemSubtotal = (item) => {
+    let discount = 0;
+    if (item.selectedCustom && item.selectedCustom["續杯"] === "是") {
+      discount = 20;
+    }
+    return Math.max(item.price - discount, 0) * item.quantity;
+  };
+
   // 修正：將扁平化的訂單按時間分組，模擬批次顯示
   const groupOrdersByTime = (flatOrders) => {
     if (!Array.isArray(flatOrders) || flatOrders.length === 0) {
@@ -120,14 +129,6 @@ const OrderSummary = ({
 
       return total;
     }
-  };
-
-  const getItemSubtotal = (item) => {
-    let discount = 0;
-    if (item.selectedCustom && item.selectedCustom["續杯"] === "是") {
-      discount = 20;
-    }
-    return Math.max(item.price - discount, 0) * item.quantity;
   };
 
   const calculateGrandTotal = () => {
