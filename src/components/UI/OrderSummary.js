@@ -65,17 +65,17 @@ const OrderSummary = ({
   const getProcessedConfirmedOrders = () => {
     if (confirmedOrdersBatches.length === 0) return [];
 
-    // 如果是已經分組的批次格式，直接使用
-    if (
-      Array.isArray(confirmedOrdersBatches[0]) &&
-      Array.isArray(confirmedOrdersBatches[0][0])
-    ) {
-      return confirmedOrdersBatches[0]; // 取出實際的批次陣列
-    }
-
-    // 如果是扁平化格式，需要重新分組
+    // 無論是批次格式還是扁平化格式，都統一處理為時間分組的批次結構（僅用於顯示）
     if (Array.isArray(confirmedOrdersBatches[0])) {
-      return groupOrdersByTime(confirmedOrdersBatches[0]);
+      const flatOrders = confirmedOrdersBatches[0];
+
+      // 如果是扁平化結構，按時間分組來模擬批次顯示
+      if (flatOrders.length > 0 && !Array.isArray(flatOrders[0])) {
+        return groupOrdersByTime(flatOrders);
+      }
+
+      // 如果已經是批次結構，直接返回
+      return confirmedOrdersBatches[0];
     }
 
     return [];
@@ -137,16 +137,52 @@ const OrderSummary = ({
     return currentTotal + confirmedTotal;
   };
 
+  const formatOrderItem = (item) => {
+    const subtotal = getItemSubtotal(item);
+    const dots = "·".repeat(Math.max(5, 20 - item.name.length));
+    return `${item.name} $${item.price} x ${item.quantity} ${dots} $${subtotal}`;
+  };
+
   // 計算部分結帳總額
   const calculatePartialTotal = () => {
     let total = 0;
+    const checkoutableItems = getCheckoutableItems();
+
+    console.log("🔧 calculatePartialTotal 開始:", {
+      selectedItems,
+      checkoutableItems: checkoutableItems.map((item) => ({
+        key: item.key,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+    });
+
     Object.entries(selectedItems).forEach(([key, isSelected]) => {
       if (isSelected) {
-        const [batchIndex, itemIndex] = key.split("-").map(Number);
-        const item = processedBatches[batchIndex][itemIndex];
-        total += getItemSubtotal(item);
+        const item = checkoutableItems.find((item) => item.key === key);
+        if (item) {
+          const itemSubtotal = getItemSubtotal(item);
+          total += itemSubtotal;
+          console.log("🔧 計算項目:", {
+            key,
+            item: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            subtotal: itemSubtotal,
+            runningTotal: total,
+          });
+        } else {
+          console.warn("⚠️ 找不到選中的項目:", key);
+          console.log(
+            "🔧 可用的項目 keys:",
+            checkoutableItems.map((item) => item.key)
+          );
+        }
       }
     });
+
+    console.log("🔧 部分結帳總額:", total);
     return total;
   };
 
@@ -155,36 +191,82 @@ const OrderSummary = ({
     const editingPositions = new Set(
       currentOrder
         .filter((item) => item.isEditing && !item.isTakeout)
-        .map((item) => `${item.originalBatchIndex}-${item.originalItemIndex}`)
+        .map((item) => `0-${item.originalItemIndex}`) // 統一使用 0- 前綴
     );
 
     const items = [];
-    processedBatches.forEach((batch, batchIndex) => {
-      batch.forEach((item, itemIndex) => {
-        const positionKey = `${batchIndex}-${itemIndex}`;
+
+    console.log("🔧 Debug getCheckoutableItems:", {
+      processedBatches,
+      editingPositions: Array.from(editingPositions),
+      selectedTable,
+    });
+
+    // 統一處理：無論是扁平化還是批次結構，都使用統一的索引格式
+    if (processedBatches.length === 0) {
+      return items;
+    }
+
+    // 檢查是否為扁平化結構
+    const isFlat =
+      processedBatches.length === 1 &&
+      Array.isArray(processedBatches[0]) &&
+      processedBatches[0].length > 0 &&
+      !Array.isArray(processedBatches[0][0]);
+
+    if (isFlat) {
+      // 扁平化結構：統一使用 0-0, 0-1, 0-2 索引
+      const flatItems = processedBatches[0];
+      flatItems.forEach((item, itemIndex) => {
+        const positionKey = `0-${itemIndex}`;
+
         // 檢查是否已付款
         if (item.paid === true) {
           return;
         }
 
+        // 檢查是否正在編輯
         if (!editingPositions.has(positionKey)) {
           items.push({
             ...item,
-            batchIndex,
-            itemIndex,
+            batchIndex: 0,
+            itemIndex: itemIndex,
             key: positionKey,
           });
         }
       });
-    });
+    } else {
+      // 批次結構：轉換為統一索引格式
+      let globalIndex = 0;
+      processedBatches.forEach((batch, batchIndex) => {
+        if (Array.isArray(batch)) {
+          batch.forEach((item, itemIndex) => {
+            const positionKey = `0-${globalIndex}`; // 統一使用 0- 前綴和全局索引
 
+            // 檢查是否已付款
+            if (item.paid === true) {
+              globalIndex++;
+              return;
+            }
+
+            if (!editingPositions.has(positionKey)) {
+              items.push({
+                ...item,
+                batchIndex: 0, // 統一設為 0
+                itemIndex: globalIndex, // 使用全局索引
+                key: positionKey,
+                originalBatchIndex: batchIndex, // 保留原始批次信息供調試
+                originalItemIndex: itemIndex,
+              });
+            }
+            globalIndex++;
+          });
+        }
+      });
+    }
+
+    console.log("🔧 可結帳項目:", items);
     return items;
-  };
-
-  const formatOrderItem = (item) => {
-    const subtotal = getItemSubtotal(item);
-    const dots = "·".repeat(Math.max(5, 20 - item.name.length));
-    return `${item.name} $${item.price} x ${item.quantity} ${dots} $${subtotal}`;
   };
 
   // 格式化時間顯示
@@ -238,6 +320,13 @@ const OrderSummary = ({
       alert("請至少選擇一個商品");
       return;
     }
+
+    const total = calculatePartialTotal();
+    if (total === 0) {
+      alert("選中商品的總額為 $0，請檢查是否正確選擇商品");
+      return;
+    }
+
     setShowPartialCheckoutModal(false);
     setShowPaymentModal(true);
   };
@@ -246,22 +335,40 @@ const OrderSummary = ({
   const handleConfirmPayment = () => {
     const methodName = paymentMethod === "cash" ? "現金" : "Line Pay";
 
+    // 修正：正確定義 hasPartialSelection
     const hasPartialSelection =
       Object.keys(selectedItems).length > 0 &&
       Object.values(selectedItems).some(Boolean);
 
     if (hasPartialSelection) {
       const total = calculatePartialTotal();
+
+      if (total === 0) {
+        alert("選中商品的總額為0，請重新選擇");
+        return;
+      }
+
+      const selectedCount = Object.values(selectedItems).filter(Boolean).length;
       const confirmed = window.confirm(
-        `確定要以 ${methodName} 結帳選中的商品，總額 $${total} 嗎？`
+        `確定要以 ${methodName} 結帳選中的 ${selectedCount} 項商品，總額 $${total} 嗎？`
       );
+
       if (confirmed) {
+        console.log("🔧 執行部分結帳:", {
+          paymentMethod,
+          selectedItems,
+          total,
+        });
         onCheckout(paymentMethod, selectedItems);
         setShowPaymentModal(false);
         setSelectedItems({});
       }
     } else {
-      const confirmed = window.confirm(`確定要以 ${methodName} 結帳嗎？`);
+      // 全部結帳
+      const total = calculateGrandTotal();
+      const confirmed = window.confirm(
+        `確定要以 ${methodName} 結帳全部商品，總額 $${total} 嗎？`
+      );
       if (confirmed) {
         onCheckout(paymentMethod);
         setShowPaymentModal(false);

@@ -54,11 +54,30 @@ const TakeoutPanel = ({
         ) : (
           <div className="space-y-3">
             {Object.entries(takeoutOrders).map(([takeoutId, orderData]) => {
-              const total = (orderData.items || []).reduce(
-                (sum, item) => sum + item.price * item.quantity,
+              // 修復：計算未付款項目的總金額和數量
+              const unpaidItems = (orderData.orders || []).filter(
+                (item) => item && item.paid === false
+              );
+
+              const total = unpaidItems.reduce((sum, item) => {
+                // 使用相同的價格計算邏輯
+                let discount = 0;
+                if (
+                  item.selectedCustom &&
+                  item.selectedCustom["續杯"] === "是"
+                ) {
+                  discount = 20;
+                }
+                const itemPrice = Math.max(item.price - discount, 0);
+                return sum + itemPrice * item.quantity;
+              }, 0);
+
+              const itemCount = unpaidItems.reduce(
+                (sum, item) => sum + item.quantity,
                 0
               );
-              const isPaid = orderData.paid;
+
+              const isPaid = orderData.paid || unpaidItems.length === 0;
 
               return (
                 <div
@@ -87,10 +106,27 @@ const TakeoutPanel = ({
                   </div>
 
                   <div className="mt-2 text-sm text-gray-600">
-                    {(orderData.items || []).length} 項商品
+                    {isPaid
+                      ? `${(orderData.orders || []).length} 項商品 (已完成)`
+                      : `${itemCount} 項商品`}
                   </div>
 
-                  <div className="mt-1 font-bold text-orange-600">${total}</div>
+                  <div className="mt-1 font-bold text-orange-600">
+                    $
+                    {isPaid
+                      ? (orderData.orders || []).reduce((sum, item) => {
+                          let discount = 0;
+                          if (
+                            item.selectedCustom &&
+                            item.selectedCustom["續杯"] === "是"
+                          ) {
+                            discount = 20;
+                          }
+                          const itemPrice = Math.max(item.price - discount, 0);
+                          return sum + itemPrice * item.quantity;
+                        }, 0)
+                      : total}
+                  </div>
 
                   <div className="mt-1 text-xs text-gray-500">
                     {new Date(orderData.timestamp).toLocaleTimeString()}
