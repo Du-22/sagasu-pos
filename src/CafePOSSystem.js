@@ -47,11 +47,28 @@ const CafePOSSystem = () => {
   const [loadError, setLoadError] = useState(null);
 
   const calculateItemSubtotal = (item) => {
-    let discount = 0;
-    if (item.selectedCustom && item.selectedCustom["續杯"] === "是") {
-      discount = 20;
+    let basePrice = item.price;
+    let adjustment = 0;
+
+    if (item.selectedCustom) {
+      // 續杯折扣 -20 元
+      if (item.selectedCustom["續杯"] === "是") {
+        adjustment -= 20;
+      }
+
+      // 加濃縮 +20 元
+      if (item.selectedCustom["濃縮"] === "加濃縮") {
+        adjustment += 20;
+      }
+
+      // 換燕麥奶 +20 元
+      if (item.selectedCustom["奶"] === "換燕麥奶") {
+        adjustment += 20;
+      }
     }
-    return Math.max(item.price - discount, 0) * item.quantity;
+
+    const finalPrice = Math.max(basePrice + adjustment, 0);
+    return finalPrice * item.quantity;
   };
 
   useEffect(() => {}, [currentView, selectedTable]);

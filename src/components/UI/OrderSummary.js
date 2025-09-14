@@ -27,13 +27,30 @@ const OrderSummary = ({
   const [selectedItems, setSelectedItems] = useState({});
   const [paymentMethod, setPaymentMethod] = useState("cash");
 
-  // 修正：使用與 CafePOSSystem 相同的價格計算邏輯
+  // 使用與 CafePOSSystem 相同的價格計算邏輯
   const getItemSubtotal = (item) => {
-    let discount = 0;
-    if (item.selectedCustom && item.selectedCustom["續杯"] === "是") {
-      discount = 20;
+    let basePrice = item.price;
+    let adjustment = 0;
+
+    if (item.selectedCustom) {
+      // 續杯折扣 -20 元
+      if (item.selectedCustom["續杯"] === "是") {
+        adjustment -= 20;
+      }
+
+      // 加濃縮 +20 元
+      if (item.selectedCustom["濃縮"] === "加濃縮") {
+        adjustment += 20;
+      }
+
+      // 換燕麥奶 +20 元
+      if (item.selectedCustom["奶"] === "換燕麥奶") {
+        adjustment += 20;
+      }
     }
-    return Math.max(item.price - discount, 0) * item.quantity;
+
+    const finalPrice = Math.max(basePrice + adjustment, 0);
+    return finalPrice * item.quantity;
   };
 
   // 修正：將扁平化的訂單按時間分組，模擬批次顯示
@@ -138,9 +155,58 @@ const OrderSummary = ({
   };
 
   const formatOrderItem = (item) => {
-    const subtotal = getItemSubtotal(item);
-    const dots = "·".repeat(Math.max(5, 20 - item.name.length));
-    return `${item.name} $${item.price} x ${item.quantity} ${dots} $${subtotal}`;
+    // 計算價格調整
+    let adjustment = 0;
+    const adjustmentDetails = [];
+
+    if (item.selectedCustom) {
+      // 續杯折扣 -20 元
+      if (item.selectedCustom["續杯"] === "是") {
+        adjustment -= 20;
+        adjustmentDetails.push("續杯-$20");
+      }
+
+      // 加濃縮 +20 元
+      if (item.selectedCustom["濃縮"] === "加濃縮") {
+        adjustment += 20;
+        adjustmentDetails.push("加濃縮+$20");
+      }
+
+      // 換燕麥奶 +20 元
+      if (item.selectedCustom["奶"] === "換燕麥奶") {
+        adjustment += 20;
+        adjustmentDetails.push("燕麥奶+$20");
+      }
+    }
+
+    const finalPrice = Math.max(item.price + adjustment, 0);
+    const subtotal = finalPrice * item.quantity;
+
+    // 構建顯示字串
+    let displayText = `${item.name}`;
+
+    if (adjustment !== 0) {
+      displayText += ` $${item.price}`;
+      if (adjustment > 0) {
+        displayText += `+$${adjustment}`;
+      } else {
+        displayText += `-$${Math.abs(adjustment)}`;
+      }
+      displayText += `=$${finalPrice}`;
+    } else {
+      displayText += ` $${item.price}`;
+    }
+
+    displayText += ` x ${item.quantity}`;
+
+    const dots = "·".repeat(Math.max(5, 25 - displayText.length));
+    displayText += ` ${dots} $${subtotal}`;
+
+    if (adjustmentDetails.length > 0) {
+      displayText += ` (${adjustmentDetails.join(", ")})`;
+    }
+
+    return displayText;
   };
 
   // 計算部分結帳總額
@@ -444,39 +510,138 @@ const OrderSummary = ({
                           batch.map((item, itemIndex) => (
                             <div
                               key={`confirmed-${batchIndex}-${item.id}-${itemIndex}-${item.timestamp}`}
-                              className="flex items-center justify-between py-1"
+                              className="py-2 border-b border-gray-200 last:border-b-0"
                             >
-                              <div className="flex-1">
-                                <div className="text-sm font-mono text-gray-700">
-                                  {formatOrderItem(item)}
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex-1">
+                                  <div className="text-sm font-medium text-gray-700">
+                                    {item.name}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    基本價格 ${item.price} × {item.quantity}
+                                  </div>
                                 </div>
-                                {item.selectedCustom &&
-                                  Object.entries(item.selectedCustom).map(
-                                    ([type, value]) => (
-                                      <div
-                                        key={type}
-                                        className="text-xs text-gray-500 ml-2"
-                                      >
-                                        {type}: {value}
-                                      </div>
+                                <button
+                                  onClick={() =>
+                                    onEditConfirmedItem(
+                                      item,
+                                      batchIndex,
+                                      item.originalIndex !== undefined
+                                        ? item.originalIndex
+                                        : itemIndex
                                     )
-                                  )}
+                                  }
+                                  className="ml-2 p-1 text-gray-400 hover:text-blue-500"
+                                  title="修改此項目"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
                               </div>
-                              <button
-                                onClick={() =>
-                                  onEditConfirmedItem(
-                                    item,
-                                    batchIndex,
-                                    item.originalIndex !== undefined
-                                      ? item.originalIndex
-                                      : itemIndex
-                                  )
-                                }
-                                className="ml-2 p-1 text-gray-400 hover:text-blue-500"
-                                title="修改此項目"
-                              >
-                                <Edit3 className="w-3 h-3" />
-                              </button>
+
+                              {/* 客製選項和價格調整 */}
+                              {item.selectedCustom &&
+                                Object.entries(item.selectedCustom).length >
+                                  0 && (
+                                  <div className="ml-4 mb-2">
+                                    {Object.entries(item.selectedCustom).map(
+                                      ([type, value]) => {
+                                        // 計算價格調整
+                                        let adjustment = null;
+                                        if (type === "續杯" && value === "是") {
+                                          adjustment = {
+                                            type: "續杯折扣",
+                                            amount: -20,
+                                          };
+                                        } else if (
+                                          type === "濃縮" &&
+                                          value === "加濃縮"
+                                        ) {
+                                          adjustment = {
+                                            type: "加濃縮",
+                                            amount: 20,
+                                          };
+                                        } else if (
+                                          type === "奶" &&
+                                          value === "換燕麥奶"
+                                        ) {
+                                          adjustment = {
+                                            type: "換燕麥奶",
+                                            amount: 20,
+                                          };
+                                        }
+
+                                        return (
+                                          <div
+                                            key={type}
+                                            className="text-xs text-gray-600 flex justify-between"
+                                          >
+                                            <span>
+                                              {type}: {value}
+                                            </span>
+                                            {adjustment && (
+                                              <span
+                                                className={`font-medium ${
+                                                  adjustment.amount > 0
+                                                    ? "text-red-600"
+                                                    : "text-green-600"
+                                                }`}
+                                              >
+                                                {adjustment.amount > 0
+                                                  ? "+"
+                                                  : ""}
+                                                ${adjustment.amount}
+                                              </span>
+                                            )}
+                                          </div>
+                                        );
+                                      }
+                                    )}
+                                  </div>
+                                )}
+
+                              {/* 價格小計 */}
+                              <div className="ml-4 mt-1 pt-1 border-t border-gray-100">
+                                <div className="flex justify-between items-center">
+                                  <div className="text-xs text-gray-600">
+                                    {(() => {
+                                      const subtotal = getItemSubtotal(item);
+                                      const finalUnitPrice =
+                                        subtotal / item.quantity;
+                                      const adjustment =
+                                        finalUnitPrice - item.price;
+
+                                      if (adjustment !== 0) {
+                                        return (
+                                          <span>
+                                            ${item.price}
+                                            <span
+                                              className={`mx-1 ${
+                                                adjustment > 0
+                                                  ? "text-red-600"
+                                                  : "text-green-600"
+                                              }`}
+                                            >
+                                              {adjustment > 0 ? "+" : ""}$
+                                              {adjustment}
+                                            </span>
+                                            = ${finalUnitPrice} ×{" "}
+                                            {item.quantity}
+                                          </span>
+                                        );
+                                      } else {
+                                        return (
+                                          <span>
+                                            ${item.price} × {item.quantity}
+                                          </span>
+                                        );
+                                      }
+                                    })()}
+                                  </div>
+                                  <div className="text-sm font-bold text-green-600">
+                                    小計: ${getItemSubtotal(item)}
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           ))
                         ) : (
