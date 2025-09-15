@@ -47,11 +47,69 @@ const CafePOSSystem = () => {
   const [loadError, setLoadError] = useState(null);
 
   const calculateItemSubtotal = (item) => {
-    let discount = 0;
-    if (item.selectedCustom && item.selectedCustom["續杯"] === "是") {
-      discount = 20;
+    let basePrice = item.price || 0;
+    let totalAdjustment = 0;
+
+    console.log(`🔧 計算 ${item.name} 的價格:`, {
+      basePrice,
+      selectedCustom: item.selectedCustom,
+      customOptions: item.customOptions,
+    });
+
+    // 檢查新格式的價格調整
+    if (item.selectedCustom && item.customOptions) {
+      Object.entries(item.selectedCustom).forEach(
+        ([optionType, selectedValue]) => {
+          if (!selectedValue) return;
+
+          // 找到對應的客製選項設定
+          const customOption = item.customOptions.find(
+            (opt) => opt.type === optionType
+          );
+
+          if (
+            customOption &&
+            customOption.priceAdjustments &&
+            customOption.priceAdjustments[selectedValue]
+          ) {
+            const adjustment = customOption.priceAdjustments[selectedValue];
+            totalAdjustment += adjustment;
+            console.log(
+              `💰 價格調整: ${optionType}=${selectedValue} 調整${adjustment}元`
+            );
+          }
+        }
+      );
     }
-    return Math.max(item.price - discount, 0) * item.quantity;
+
+    // 向下相容：如果沒有新格式設定，使用舊的續杯邏輯
+    if (
+      totalAdjustment === 0 &&
+      item.selectedCustom &&
+      item.selectedCustom["續杯"] === "是"
+    ) {
+      // 檢查是否已經在新系統中處理過續杯
+      const renewalOption = item.customOptions?.find(
+        (opt) => opt.type === "續杯"
+      );
+      if (
+        !renewalOption ||
+        !renewalOption.priceAdjustments ||
+        !renewalOption.priceAdjustments["是"]
+      ) {
+        totalAdjustment = -20;
+        console.log(`💰 使用舊邏輯: 續杯折扣20元`);
+      }
+    }
+
+    const finalPrice = Math.max(basePrice + totalAdjustment, 0);
+    const subtotal = finalPrice * item.quantity;
+
+    console.log(
+      `💰 最終價格: 基本價格${basePrice} + 調整${totalAdjustment} = ${finalPrice} × ${item.quantity} = ${subtotal}`
+    );
+
+    return subtotal;
   };
 
   useEffect(() => {}, [currentView, selectedTable]);
@@ -511,6 +569,7 @@ const CafePOSSystem = () => {
                     quantity: item.quantity,
                     subtotal: calculateItemSubtotal(item),
                     selectedCustom: item.selectedCustom || null,
+                    customOptions: item.customOptions || null,
                   });
                 }
 
@@ -829,6 +888,7 @@ const CafePOSSystem = () => {
         ...item,
         timestamp: new Date().toISOString(),
         paid: false,
+        customOptions: item.customOptions,
       }));
 
       // 合併：扁平化結構，不要巢狀陣列
@@ -976,7 +1036,10 @@ const CafePOSSystem = () => {
         )
       );
     } else {
-      setCurrentOrder([...currentOrder, { ...item, quantity: 1 }]);
+      setCurrentOrder([
+        ...currentOrder,
+        { ...item, quantity: 1, customOptions: item.customOptions },
+      ]);
     }
   };
 
@@ -1097,6 +1160,7 @@ const CafePOSSystem = () => {
           ...item,
           timestamp: new Date().toISOString(),
           paid: false,
+          customOptions: item.customOptions,
         }));
 
         takeoutData = {
@@ -1538,6 +1602,7 @@ const CafePOSSystem = () => {
             isTakeout: true,
             originalBatchIndex: 0, // 外帶都是批次0
             originalItemIndex: itemIndex,
+            customOptions: editingItem.customOptions,
           },
         ]);
       }
@@ -1627,6 +1692,7 @@ const CafePOSSystem = () => {
             isEditing: true,
             originalBatchIndex: 0, // 在顯示時總是批次0
             originalItemIndex: actualFlatIndex, // 使用在扁平化陣列中的實際位置
+            customOptions: editingItem.customOptions,
           },
         ]);
       }

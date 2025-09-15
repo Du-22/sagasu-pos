@@ -60,16 +60,29 @@ const TakeoutPanel = ({
               );
 
               const total = unpaidItems.reduce((sum, item) => {
-                // 使用相同的價格計算邏輯
-                let discount = 0;
-                if (
-                  item.selectedCustom &&
-                  item.selectedCustom["續杯"] === "是"
-                ) {
-                  discount = 20;
+                // 使用完整的價格計算邏輯
+                let basePrice = item.price;
+                let adjustment = 0;
+
+                if (item.selectedCustom) {
+                  // 續杯折扣 -20 元
+                  if (item.selectedCustom["續杯"] === "是") {
+                    adjustment -= 20;
+                  }
+
+                  // 加濃縮 +20 元
+                  if (item.selectedCustom["濃縮"] === "加濃縮") {
+                    adjustment += 20;
+                  }
+
+                  // 換燕麥奶 +20 元
+                  if (item.selectedCustom["奶"] === "換燕麥奶") {
+                    adjustment += 20;
+                  }
                 }
-                const itemPrice = Math.max(item.price - discount, 0);
-                return sum + itemPrice * item.quantity;
+
+                const finalPrice = Math.max(basePrice + adjustment, 0);
+                return sum + finalPrice * item.quantity;
               }, 0);
 
               const itemCount = unpaidItems.reduce(
@@ -115,15 +128,31 @@ const TakeoutPanel = ({
                     $
                     {isPaid
                       ? (orderData.orders || []).reduce((sum, item) => {
-                          let discount = 0;
-                          if (
-                            item.selectedCustom &&
-                            item.selectedCustom["續杯"] === "是"
-                          ) {
-                            discount = 20;
+                          let basePrice = item.price;
+                          let adjustment = 0;
+
+                          if (item.selectedCustom) {
+                            // 續杯折扣 -20 元
+                            if (item.selectedCustom["續杯"] === "是") {
+                              adjustment -= 20;
+                            }
+
+                            // 加濃縮 +20 元
+                            if (item.selectedCustom["濃縮"] === "加濃縮") {
+                              adjustment += 20;
+                            }
+
+                            // 換燕麥奶 +20 元
+                            if (item.selectedCustom["奶"] === "換燕麥奶") {
+                              adjustment += 20;
+                            }
                           }
-                          const itemPrice = Math.max(item.price - discount, 0);
-                          return sum + itemPrice * item.quantity;
+
+                          const finalPrice = Math.max(
+                            basePrice + adjustment,
+                            0
+                          );
+                          return sum + finalPrice * item.quantity;
                         }, 0)
                       : total}
                   </div>
@@ -150,7 +179,7 @@ const SeatingArea = ({
   onTakeoutClick,
   onNewTakeout,
 }) => {
-  // 新增：入座狀態判斷
+  // 新增入座狀態判斷
   const getTableStatus = (tableId) => {
     const tableBatches = orders[tableId];
 
@@ -224,15 +253,6 @@ const SeatingArea = ({
       <div className={containerClass + " flex-1 flex"}>
         {/* 座位區域 */}
         <div className={seatingClass} style={{ overflowY: "auto" }}>
-          {/* 1F 外帶區域標示 */}
-          {/* {currentFloor === "1F" && (
-            <div className="absolute top-4 left-4 w-20 h-12 border-2 border-orange-400 rounded flex items-center justify-center bg-orange-50">
-              <div className="text-xs text-center font-medium text-orange-600">
-                外帶
-              </div>
-            </div>
-          )} */}
-
           <div className="relative w-full h-[600px] bg-white">
             {/* 這裡渲染所有 TableButton */}
             {seatingData[currentFloor].map((table) => (
