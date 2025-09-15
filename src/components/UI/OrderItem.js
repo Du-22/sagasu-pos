@@ -1,135 +1,137 @@
 import React from "react";
-import { Trash2 } from "lucide-react";
 
 const OrderItem = ({ item, onUpdateQuantity, onRemove }) => {
-  // 計算價格調整
-  const calculatePriceAdjustments = (item) => {
-    const adjustments = [];
+  // 計算調整後的單價
+  const calculateAdjustedPrice = (item) => {
+    let basePrice = item.price || 0;
     let totalAdjustment = 0;
 
-    if (item.selectedCustom) {
-      // 續杯折扣 -20 元
-      if (item.selectedCustom["續杯"] === "是") {
-        adjustments.push({ type: "續杯折扣", amount: -20 });
-        totalAdjustment -= 20;
-      }
+    if (item.selectedCustom && item.customOptions) {
+      Object.entries(item.selectedCustom).forEach(
+        ([optionType, selectedValue]) => {
+          if (!selectedValue) return;
+          const customOption = item.customOptions.find(
+            (opt) => opt.type === optionType
+          );
+          if (
+            customOption &&
+            customOption.priceAdjustments &&
+            customOption.priceAdjustments[selectedValue]
+          ) {
+            totalAdjustment += customOption.priceAdjustments[selectedValue];
+          }
+        }
+      );
+    }
 
-      // 加濃縮 +20 元
-      if (item.selectedCustom["濃縮"] === "加濃縮") {
-        adjustments.push({ type: "加濃縮", amount: 20 });
-        totalAdjustment += 20;
-      }
-
-      // 換燕麥奶 +20 元
-      if (item.selectedCustom["奶"] === "換燕麥奶") {
-        adjustments.push({ type: "換燕麥奶", amount: 20 });
-        totalAdjustment += 20;
+    // 向下相容舊的續杯邏輯
+    if (
+      totalAdjustment === 0 &&
+      item.selectedCustom &&
+      item.selectedCustom["續杯"] === "是"
+    ) {
+      const renewalOption = item.customOptions?.find(
+        (opt) => opt.type === "續杯"
+      );
+      if (
+        !renewalOption ||
+        !renewalOption.priceAdjustments ||
+        !renewalOption.priceAdjustments["是"]
+      ) {
+        totalAdjustment = -20;
       }
     }
 
-    const finalPrice = Math.max(item.price + totalAdjustment, 0);
-    return { adjustments, totalAdjustment, finalPrice };
+    return Math.max(basePrice + totalAdjustment, 0);
   };
 
-  const { adjustments, totalAdjustment, finalPrice } =
-    calculatePriceAdjustments(item);
-  const itemSubtotal = finalPrice * item.quantity;
+  const adjustedPrice = calculateAdjustedPrice(item);
+  const originalPrice = item.price;
+  const hasAdjustment = adjustedPrice !== originalPrice;
 
   return (
-    <div className="py-3 border-b">
-      {/* 商品基本資訊 */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex-1">
-          <div className="font-medium text-sm">{item.name}</div>
-          <div className="text-xs text-gray-600">基本價格 ${item.price}</div>
-        </div>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-            className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-sm"
-          >
-            -
-          </button>
-          <span className="w-8 text-center text-sm">{item.quantity}</span>
-          <button
-            onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-            className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-sm"
-          >
-            +
-          </button>
-          <button
-            onClick={() => onRemove(item.id)}
-            className={`w-6 h-6 rounded-full flex items-center justify-center text-sm ${
-              item.isEditing
-                ? "bg-red-200 hover:bg-red-300 text-red-600"
-                : "bg-red-200 hover:bg-red-300"
-            }`}
-            title={item.isEditing ? "刪除此餐點" : "移除"}
-          >
-            🗑️
-          </button>
-        </div>
-      </div>
+    <div className="flex items-center justify-between py-2 border-b">
+      <div className="flex-1">
+        <div className="font-medium text-sm">{item.name}</div>
 
-      {/* 客製選項和價格調整 */}
-      {item.selectedCustom && Object.keys(item.selectedCustom).length > 0 && (
-        <div className="ml-4 mb-2">
-          {Object.entries(item.selectedCustom).map(([type, value]) => {
-            // 找到對應的價格調整
-            const adjustment = adjustments.find(
-              (adj) =>
-                (type === "續杯" && adj.type === "續杯折扣") ||
-                (type === "濃縮" && adj.type === "加濃縮") ||
-                (type === "奶" && adj.type === "換燕麥奶")
-            );
+        {/* 價格顯示 */}
+        <div className="text-xs text-gray-600">
+          {hasAdjustment ? (
+            <div className="flex items-center space-x-2">
+              <span className="line-through text-gray-400">
+                ${originalPrice}
+              </span>
+              <span className="font-medium text-green-600">
+                ${adjustedPrice}
+              </span>
+              <span className="text-xs text-blue-600">
+                ({adjustedPrice > originalPrice ? "+" : ""}$
+                {adjustedPrice - originalPrice})
+              </span>
+            </div>
+          ) : (
+            <span>${originalPrice}</span>
+          )}
+        </div>
+
+        {/* 客製選項顯示 */}
+        {item.selectedCustom &&
+          Object.entries(item.selectedCustom).map(([type, value]) => {
+            // 查找價格調整信息
+            let adjustmentInfo = "";
+            if (item.customOptions) {
+              const option = item.customOptions.find(
+                (opt) => opt.type === type
+              );
+              if (
+                option &&
+                option.priceAdjustments &&
+                option.priceAdjustments[value]
+              ) {
+                const adj = option.priceAdjustments[value];
+                adjustmentInfo =
+                  adj > 0
+                    ? ` (+$${adj})`
+                    : adj < 0
+                    ? ` (-$${Math.abs(adj)})`
+                    : "";
+              }
+            }
 
             return (
-              <div
-                key={type}
-                className="text-xs text-gray-600 flex justify-between"
-              >
-                <span>
-                  {type}: {value}
-                </span>
-                {adjustment && (
-                  <span
-                    className={`font-medium ${
-                      adjustment.amount > 0 ? "text-red-600" : "text-green-600"
-                    }`}
-                  >
-                    {adjustment.amount > 0 ? "+" : ""}${adjustment.amount}
-                  </span>
-                )}
+              <div key={type} className="text-xs text-gray-500">
+                {type}: {value}
+                {adjustmentInfo}
               </div>
             );
           })}
-        </div>
-      )}
+      </div>
 
-      {/* 價格小計 */}
-      <div className="ml-4 mt-2 pt-2 border-t border-gray-100">
-        <div className="flex justify-between items-center">
-          <div className="text-sm">
-            {totalAdjustment !== 0 ? (
-              <span>
-                ${item.price}
-                <span
-                  className={`mx-1 ${
-                    totalAdjustment > 0 ? "text-red-600" : "text-green-600"
-                  }`}
-                >
-                  {totalAdjustment > 0 ? "+" : ""}${totalAdjustment}
-                </span>
-                = ${finalPrice} × {item.quantity}
-              </span>
-            ) : (
-              <span>
-                ${item.price} × {item.quantity}
-              </span>
-            )}
-          </div>
-          <div className="font-bold text-blue-600">小計: ${itemSubtotal}</div>
-        </div>
+      <div className="flex items-center space-x-2">
+        <button
+          onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+          className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-sm"
+        >
+          -
+        </button>
+        <span className="w-8 text-center text-sm">{item.quantity}</span>
+        <button
+          onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+          className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-sm"
+        >
+          +
+        </button>
+        <button
+          onClick={() => onRemove(item.id)}
+          className={`w-6 h-6 rounded-full flex items-center justify-center text-sm ${
+            item.isEditing
+              ? "bg-red-200 hover:bg-red-300 text-red-600"
+              : "bg-red-200 hover:bg-red-300"
+          }`}
+          title={item.isEditing ? "刪除此餐點" : "移除"}
+        >
+          🗑️
+        </button>
       </div>
     </div>
   );

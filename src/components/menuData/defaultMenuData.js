@@ -1,6 +1,6 @@
 import { type } from "@testing-library/user-event/dist/type";
 
-// 可放在 defaultMenuData.js 或 CafePOSSystem.js 的 menuData state
+//固定菜單 order改為各類別排序
 const defaultMenuData = [
   // 義式咖啡
   {
@@ -11,7 +11,11 @@ const defaultMenuData = [
     order: 1,
     customOptions: [
       { type: "順序", options: ["後上"] },
-      { type: "續杯", options: ["否", "是"] },
+      {
+        type: "續杯",
+        options: ["否", "是"],
+        priceAdjustments: { 是: -20 }, // 續杯 -20元
+      },
     ],
   },
   {
@@ -22,9 +26,17 @@ const defaultMenuData = [
     order: 2,
     customOptions: [
       { type: "冰量", options: ["少冰", "冰", "熱"] },
-      { type: "濃縮", options: ["加濃縮"] },
+      {
+        type: "濃縮",
+        options: ["加濃縮"],
+        priceAdjustments: { 加濃縮: 20 }, // 加濃縮 +20元
+      },
       { type: "順序", options: ["後上"] },
-      { type: "續杯", options: ["否", "是"] },
+      {
+        type: "續杯",
+        options: ["否", "是"],
+        priceAdjustments: { 是: -20 }, // 續杯 -20元
+      },
     ],
   },
   {
@@ -35,10 +47,22 @@ const defaultMenuData = [
     order: 3,
     customOptions: [
       { type: "冰量", options: ["少冰", "冰", "熱"] },
-      { type: "濃縮", options: ["加濃縮"] },
-      { type: "奶", options: ["換燕麥奶"] },
+      {
+        type: "濃縮",
+        options: ["加濃縮"],
+        priceAdjustments: { 加濃縮: 20 }, // 加濃縮 +20元
+      },
+      {
+        type: "奶",
+        options: ["換燕麥奶"],
+        priceAdjustments: { 換燕麥奶: 20 }, // 燕麥奶 +20元
+      },
       { type: "順序", options: ["後上"] },
-      { type: "續杯", options: ["否", "是"] },
+      {
+        type: "續杯",
+        options: ["否", "是"],
+        priceAdjustments: { 是: -20 }, // 續杯 -20元
+      },
     ],
   },
   {
@@ -48,9 +72,9 @@ const defaultMenuData = [
     price: 120,
     order: 4,
     customOptions: [
-      { type: "奶", options: ["換燕麥奶"] },
+      { type: "奶", options: ["換燕麥奶"], priceAdjustments: { 換燕麥奶: 20 } }, // 燕麥奶 +20元
       { type: "順序", options: ["後上"] },
-      { type: "續杯", options: ["否", "是"] },
+      { type: "續杯", options: ["否", "是"], priceAdjustments: { 是: -20 } }, // 續杯 -20元
     ],
   },
   {
@@ -61,10 +85,22 @@ const defaultMenuData = [
     order: 5,
     customOptions: [
       { type: "冰量", options: ["少冰", "冰", "熱"] },
-      { type: "濃縮", options: ["加濃縮"] },
-      { type: "奶", options: ["換燕麥奶"] },
+      {
+        type: "濃縮",
+        options: ["加濃縮"],
+        priceAdjustments: { 加濃縮: 20 }, // 加濃縮 +20元
+      },
+      {
+        type: "奶",
+        options: ["換燕麥奶"],
+        priceAdjustments: { 換燕麥奶: 20 }, // 燕麥奶 +20元
+      },
       { type: "順序", options: ["後上"] },
-      { type: "續杯", options: ["否", "是"] },
+      {
+        type: "續杯",
+        options: ["否", "是"],
+        priceAdjustments: { 是: -20 }, // 續杯 -20元
+      },
     ],
   },
   {
@@ -75,7 +111,11 @@ const defaultMenuData = [
     order: 6,
     customOptions: [
       { type: "順序", options: ["後上"] },
-      { type: "續杯", options: ["否", "是"] },
+      {
+        type: "續杯",
+        options: ["否", "是"],
+        priceAdjustments: { 是: -20 }, // 續杯 -20元
+      },
     ],
   },
   {
@@ -87,7 +127,11 @@ const defaultMenuData = [
     customOptions: [
       { type: "冰量", options: ["少冰", "冰"] },
       { type: "順序", options: ["後上"] },
-      { type: "續杯", options: ["否", "是"] },
+      {
+        type: "續杯",
+        options: ["否", "是"],
+        priceAdjustments: { 是: -20 }, // 續杯 -20元
+      },
     ],
   },
   {
@@ -99,7 +143,11 @@ const defaultMenuData = [
     customOptions: [
       { type: "冰量", options: ["少冰", "冰"] },
       { type: "順序", options: ["後上"] },
-      { type: "續杯", options: ["否", "是"] },
+      {
+        type: "續杯",
+        options: ["否", "是"],
+        priceAdjustments: { 是: -20 }, // 續杯 -20元
+      },
     ],
   },
   {
@@ -111,7 +159,11 @@ const defaultMenuData = [
     customOptions: [
       { type: "冰量", options: ["少冰", "冰"] },
       { type: "順序", options: ["後上"] },
-      { type: "續杯", options: ["否", "是"] },
+      {
+        type: "續杯",
+        options: ["否", "是"],
+        priceAdjustments: { 是: -20 }, // 續杯 -20元
+      },
     ],
   },
   {
@@ -123,7 +175,11 @@ const defaultMenuData = [
     customOptions: [
       { type: "冰量", options: ["少冰", "冰"] },
       { type: "順序", options: ["後上"] },
-      { type: "續杯", options: ["否", "是"] },
+      {
+        type: "續杯",
+        options: ["否", "是"],
+        priceAdjustments: { 是: -20 }, // 續杯 -20元
+      },
     ],
   },
 
@@ -133,11 +189,15 @@ const defaultMenuData = [
     category: "手沖",
     name: "SAGASU配方",
     price: 160,
-    order: 11,
+    order: 1,
     customOptions: [
       { type: "冰量", options: ["少冰", "冰", "熱"] },
       { type: "順序", options: ["後上"] },
-      { type: "續杯", options: ["否", "是"] },
+      {
+        type: "續杯",
+        options: ["否", "是"],
+        priceAdjustments: { 是: -20 }, // 續杯 -20元
+      },
     ],
   },
   {
@@ -145,11 +205,11 @@ const defaultMenuData = [
     category: "手沖",
     name: "哥倫比亞 品種花園 粉紅波旁",
     price: 190,
-    order: 12,
+    order: 2,
     customOptions: [
       { type: "冰量", options: ["少冰", "冰", "熱"] },
       { type: "順序", options: ["後上"] },
-      { type: "續杯", options: ["否", "是"] },
+      { type: "續杯", options: ["否", "是"], priceAdjustments: { 是: -20 } }, // 續杯 -20元
     ],
   },
   {
@@ -157,11 +217,11 @@ const defaultMenuData = [
     category: "手沖",
     name: "哥斯大黎加 多卡產區",
     price: 170,
-    order: 13,
+    order: 3,
     customOptions: [
       { type: "冰量", options: ["少冰", "冰", "熱"] },
       { type: "順序", options: ["後上"] },
-      { type: "續杯", options: ["否", "是"] },
+      { type: "續杯", options: ["否", "是"], priceAdjustments: { 是: -20 } }, // 續杯 -20元
     ],
   },
   {
@@ -169,11 +229,11 @@ const defaultMenuData = [
     category: "手沖",
     name: "衣索比亞 耶加雪菲 果丁丁",
     price: 180,
-    order: 14,
+    order: 4,
     customOptions: [
       { type: "冰量", options: ["少冰", "冰", "熱"] },
       { type: "順序", options: ["後上"] },
-      { type: "續杯", options: ["否", "是"] },
+      { type: "續杯", options: ["否", "是"], priceAdjustments: { 是: -20 } }, // 續杯 -20元
     ],
   },
   {
@@ -181,11 +241,11 @@ const defaultMenuData = [
     category: "手沖",
     name: "衣索比亞 耶加雪菲 阿梅德萊落 孔加村",
     price: 180,
-    order: 15,
+    order: 5,
     customOptions: [
       { type: "冰量", options: ["少冰", "冰", "熱"] },
       { type: "順序", options: ["後上"] },
-      { type: "續杯", options: ["否", "是"] },
+      { type: "續杯", options: ["否", "是"], priceAdjustments: { 是: -20 } }, // 續杯 -20元
     ],
   },
   {
@@ -193,11 +253,11 @@ const defaultMenuData = [
     category: "手沖",
     name: "期間限定",
     price: 190,
-    order: 16,
+    order: 6,
     customOptions: [
       { type: "冰量", options: ["少冰", "冰", "熱"] },
       { type: "順序", options: ["後上"] },
-      { type: "續杯", options: ["否", "是"] },
+      { type: "續杯", options: ["否", "是"], priceAdjustments: { 是: -20 } }, // 續杯 -20元
     ],
   },
 
@@ -207,7 +267,7 @@ const defaultMenuData = [
     category: "非咖啡",
     name: "鮮奶茶",
     price: 110,
-    order: 17,
+    order: 1,
     customOptions: [
       {
         type: "冰量",
@@ -216,9 +276,10 @@ const defaultMenuData = [
       {
         type: "奶",
         options: ["換燕麥奶"],
+        priceAdjustments: { 換燕麥奶: 20 }, // 燕麥奶 +20元
       },
       { type: "順序", options: ["後上"] },
-      { type: "續杯", options: ["否", "是"] },
+      { type: "續杯", options: ["否", "是"], priceAdjustments: { 是: -20 } }, // 續杯 -20元
     ],
   },
   {
@@ -226,14 +287,14 @@ const defaultMenuData = [
     category: "非咖啡",
     name: "蘋果紅茶",
     price: 120,
-    order: 18,
+    order: 2,
     customOptions: [
       {
         type: "冰量",
         options: ["少冰", "冰"],
       },
       { type: "順序", options: ["後上"] },
-      { type: "續杯", options: ["否", "是"] },
+      { type: "續杯", options: ["否", "是"], priceAdjustments: { 是: -20 } }, // 續杯 -20元
     ],
   },
   {
@@ -241,7 +302,7 @@ const defaultMenuData = [
     category: "非咖啡",
     name: "黑糖牛奶",
     price: 130,
-    order: 19,
+    order: 3,
     customOptions: [
       {
         type: "冰量",
@@ -250,9 +311,10 @@ const defaultMenuData = [
       {
         type: "奶",
         options: ["換燕麥奶"],
+        priceAdjustments: { 換燕麥奶: 20 }, // 燕麥奶 +20元
       },
       { type: "順序", options: ["後上"] },
-      { type: "續杯", options: ["否", "是"] },
+      { type: "續杯", options: ["否", "是"], priceAdjustments: { 是: -20 } }, // 續杯 -20元
     ],
   },
   {
@@ -260,7 +322,7 @@ const defaultMenuData = [
     category: "非咖啡",
     name: "抹茶牛奶",
     price: 140,
-    order: 20,
+    order: 4,
     customOptions: [
       {
         type: "冰量",
@@ -269,9 +331,10 @@ const defaultMenuData = [
       {
         type: "奶",
         options: ["換燕麥奶"],
+        priceAdjustments: { 換燕麥奶: 20 }, // 燕麥奶 +20元
       },
       { type: "順序", options: ["後上"] },
-      { type: "續杯", options: ["否", "是"] },
+      { type: "續杯", options: ["否", "是"], priceAdjustments: { 是: -20 } }, // 續杯 -20元
     ],
   },
   {
@@ -279,14 +342,15 @@ const defaultMenuData = [
     category: "非咖啡",
     name: "芝麻牛奶",
     price: 140,
-    order: 21,
+    order: 5,
     customOptions: [
       {
         type: "奶",
         options: ["換燕麥奶"],
+        priceAdjustments: { 換燕麥奶: 20 }, // 燕麥奶 +20元
       },
       { type: "順序", options: ["後上"] },
-      { type: "續杯", options: ["否", "是"] },
+      { type: "續杯", options: ["否", "是"], priceAdjustments: { 是: -20 } }, // 續杯 -20元
     ],
   },
   {
@@ -294,7 +358,7 @@ const defaultMenuData = [
     category: "非咖啡",
     name: "紫蘇梅氣泡",
     price: 120,
-    order: 22,
+    order: 6,
     customOptions: [
       {
         type: "冰量",
@@ -309,7 +373,7 @@ const defaultMenuData = [
     category: "非咖啡",
     name: "國寶茶",
     price: 120,
-    order: 23,
+    order: 7,
     customOptions: [
       { type: "順序", options: ["後上"] },
       { type: "續杯", options: ["否", "是"] },
@@ -320,7 +384,7 @@ const defaultMenuData = [
     category: "非咖啡",
     name: "洋甘菊花草茶",
     price: 180,
-    order: 24,
+    order: 8,
     customOptions: [
       { type: "順序", options: ["後上"] },
       { type: "續杯", options: ["否", "是"] },
@@ -331,7 +395,7 @@ const defaultMenuData = [
     category: "非咖啡",
     name: "瓜仔飯的蘋果紅茶",
     price: 100,
-    order: 25,
+    order: 9,
     customOptions: [
       { type: "冰量", options: ["少冰"] },
       { type: "順序", options: ["後上"] },
@@ -344,7 +408,7 @@ const defaultMenuData = [
     category: "小食",
     name: "香草巴斯克",
     price: 130,
-    order: 26,
+    order: 1,
     customOptions: [{ type: "順序", options: ["後上"] }],
   },
   {
@@ -352,7 +416,7 @@ const defaultMenuData = [
     category: "小食",
     name: "芝麻巴斯克",
     price: 130,
-    order: 27,
+    order: 2,
     customOptions: [{ type: "順序", options: ["後上"] }],
   },
   {
@@ -360,7 +424,7 @@ const defaultMenuData = [
     category: "小食",
     name: "鹹蛋黃巴斯克",
     price: 160,
-    order: 28,
+    order: 3,
     customOptions: [{ type: "順序", options: ["後上"] }],
   },
   {
@@ -368,7 +432,7 @@ const defaultMenuData = [
     category: "小食",
     name: "香草可麗露",
     price: 100,
-    order: 29,
+    order: 4,
     customOptions: [{ type: "順序", options: ["後上"] }],
   },
   {
@@ -376,7 +440,7 @@ const defaultMenuData = [
     category: "小食",
     name: "可麗露",
     price: 110,
-    order: 30,
+    order: 5,
     customOptions: [{ type: "順序", options: ["後上"] }],
   },
   {
@@ -384,7 +448,7 @@ const defaultMenuData = [
     category: "小食",
     name: "達克瓦茲",
     price: 130,
-    order: 31,
+    order: 6,
     customOptions: [{ type: "順序", options: ["後上"] }],
   },
   {
@@ -392,7 +456,7 @@ const defaultMenuData = [
     category: "小食",
     name: "費南雪",
     price: 120,
-    order: 32,
+    order: 7,
     customOptions: [{ type: "順序", options: ["後上"] }],
   },
   {
@@ -400,7 +464,7 @@ const defaultMenuData = [
     category: "小食",
     name: "香草熱狗堡",
     price: 140,
-    order: 33,
+    order: 8,
     customOptions: [
       {
         type: "番茄",
@@ -426,7 +490,7 @@ const defaultMenuData = [
     category: "小食",
     name: "熱狗堡",
     price: 130,
-    order: 34,
+    order: 9,
     customOptions: [
       {
         type: "番茄",
@@ -452,7 +516,7 @@ const defaultMenuData = [
     category: "小食",
     name: "蛋沙拉堡",
     price: 120,
-    order: 35,
+    order: 10,
     customOptions: [
       {
         type: "辣度",
@@ -466,7 +530,7 @@ const defaultMenuData = [
     category: "小食",
     name: "瓜仔飯",
     price: 120,
-    order: 36,
+    order: 11,
     customOptions: [{ type: "蔥", options: ["不蔥", "少蔥"] }],
   },
   {

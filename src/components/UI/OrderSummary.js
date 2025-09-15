@@ -29,27 +29,50 @@ const OrderSummary = ({
 
   // 使用與 CafePOSSystem 相同的價格計算邏輯
   const getItemSubtotal = (item) => {
-    let basePrice = item.price;
-    let adjustment = 0;
+    let basePrice = item.price || 0;
+    let totalAdjustment = 0;
 
-    if (item.selectedCustom) {
-      // 續杯折扣 -20 元
-      if (item.selectedCustom["續杯"] === "是") {
-        adjustment -= 20;
-      }
+    // 檢查新格式的價格調整
+    if (item.selectedCustom && item.customOptions) {
+      Object.entries(item.selectedCustom).forEach(
+        ([optionType, selectedValue]) => {
+          if (!selectedValue) return;
 
-      // 加濃縮 +20 元
-      if (item.selectedCustom["濃縮"] === "加濃縮") {
-        adjustment += 20;
-      }
+          const customOption = item.customOptions.find(
+            (opt) => opt.type === optionType
+          );
 
-      // 換燕麥奶 +20 元
-      if (item.selectedCustom["奶"] === "換燕麥奶") {
-        adjustment += 20;
+          if (
+            customOption &&
+            customOption.priceAdjustments &&
+            customOption.priceAdjustments[selectedValue]
+          ) {
+            const adjustment = customOption.priceAdjustments[selectedValue];
+            totalAdjustment += adjustment;
+          }
+        }
+      );
+    }
+
+    // 向下相容：續杯邏輯
+    if (
+      totalAdjustment === 0 &&
+      item.selectedCustom &&
+      item.selectedCustom["續杯"] === "是"
+    ) {
+      const renewalOption = item.customOptions?.find(
+        (opt) => opt.type === "續杯"
+      );
+      if (
+        !renewalOption ||
+        !renewalOption.priceAdjustments ||
+        !renewalOption.priceAdjustments["是"]
+      ) {
+        totalAdjustment = -20;
       }
     }
 
-    const finalPrice = Math.max(basePrice + adjustment, 0);
+    const finalPrice = Math.max(basePrice + totalAdjustment, 0);
     return finalPrice * item.quantity;
   };
 
