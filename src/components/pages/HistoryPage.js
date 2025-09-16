@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Header from "../UI/Header";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 const HistoryPage = ({ salesHistory, onBack, onMenuSelect, onRefundOrder }) => {
   const [selectedDate, setSelectedDate] = useState(
@@ -248,6 +249,38 @@ const HistoryPage = ({ salesHistory, onBack, onMenuSelect, onRefundOrder }) => {
     setSelectedRefundRecord(null);
   };
 
+  const testCSVFunction = async () => {
+    try {
+      const functions = getFunctions();
+      const testCSV = httpsCallable(functions, "testCSV");
+
+      const result = await testCSV();
+      console.log("CSV 測試結果:", result.data);
+      alert(`成功！轉換了 ${result.data.csvRowCount} 行 CSV 數據`);
+    } catch (error) {
+      console.error("測試失敗:", error);
+      alert("測試失敗: " + error.message);
+    }
+  };
+
+  const testEmailFunction = async () => {
+    try {
+      const functions = getFunctions();
+      const sendCSVReport = httpsCallable(functions, "sendCSVReport");
+
+      const result = await sendCSVReport({
+        reportType: "測試報表",
+        recipientEmail: "du88215@gmail.com",
+      });
+
+      console.log("Email 測試結果:", result.data);
+      alert(`Email 功能測試：${result.data.message}`);
+    } catch (error) {
+      console.error("Email 測試失敗:", error);
+      alert("Email 測試失敗: " + error.message);
+    }
+  };
+
   const popularItems = getPopularItems(allPeriodRecords);
   const groupedRecords = groupRecordsByTable(displayRecords);
   const dailyBreakdown =
@@ -356,6 +389,22 @@ const HistoryPage = ({ salesHistory, onBack, onMenuSelect, onRefundOrder }) => {
             </div>
             <div className="text-sm text-gray-600">平均單價</div>
           </div>
+        </div>
+
+        {/* 測試按鈕 - 之後會移除 */}
+        <div className="mb-4">
+          <button
+            onClick={testCSVFunction}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            測試 CSV 轉換
+          </button>
+          <button
+            onClick={testEmailFunction}
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+          >
+            測試 Email 功能
+          </button>
         </div>
 
         {/* 週/月檢視的每日分析 */}
