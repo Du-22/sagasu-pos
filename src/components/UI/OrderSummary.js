@@ -25,6 +25,7 @@ const OrderSummary = ({
   const [showPartialCheckoutModal, setShowPartialCheckoutModal] =
     useState(false);
   const [selectedItems, setSelectedItems] = useState({});
+  const [selectedQuantities, setSelectedQuantities] = useState({}); // 記錄每個商品選擇的數量
   const [paymentMethod, setPaymentMethod] = useState("cash");
 
   // 使用與 CafePOSSystem 相同的價格計算邏輯
@@ -232,71 +233,20 @@ const OrderSummary = ({
     return displayText;
   };
 
-  // 計算部分結帳總額
-  const calculatePartialTotal = () => {
-    let total = 0;
-    const checkoutableItems = getCheckoutableItems();
-
-    console.log("🔧 calculatePartialTotal 開始:", {
-      selectedItems,
-      checkoutableItems: checkoutableItems.map((item) => ({
-        key: item.key,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-      })),
-    });
-
-    Object.entries(selectedItems).forEach(([key, isSelected]) => {
-      if (isSelected) {
-        const item = checkoutableItems.find((item) => item.key === key);
-        if (item) {
-          const itemSubtotal = getItemSubtotal(item);
-          total += itemSubtotal;
-          console.log("🔧 計算項目:", {
-            key,
-            item: item.name,
-            price: item.price,
-            quantity: item.quantity,
-            subtotal: itemSubtotal,
-            runningTotal: total,
-          });
-        } else {
-          console.warn("⚠️ 找不到選中的項目:", key);
-          console.log(
-            "🔧 可用的項目 keys:",
-            checkoutableItems.map((item) => item.key)
-          );
-        }
-      }
-    });
-
-    console.log("🔧 部分結帳總額:", total);
-    return total;
-  };
-
-  // 獲取所有可結帳的商品（排除正在編輯的）
+  // 獲取所有可結帳的商品，按數量拆分
   const getCheckoutableItems = () => {
     const editingPositions = new Set(
       currentOrder
         .filter((item) => item.isEditing && !item.isTakeout)
-        .map((item) => `0-${item.originalItemIndex}`) // 統一使用 0- 前綴
+        .map((item) => `0-${item.originalItemIndex}`)
     );
 
     const items = [];
 
-    console.log("🔧 Debug getCheckoutableItems:", {
-      processedBatches,
-      editingPositions: Array.from(editingPositions),
-      selectedTable,
-    });
-
-    // 統一處理：無論是扁平化還是批次結構，都使用統一的索引格式
     if (processedBatches.length === 0) {
       return items;
     }
 
-    // 檢查是否為扁平化結構
     const isFlat =
       processedBatches.length === 1 &&
       Array.isArray(processedBatches[0]) &&
@@ -304,35 +254,34 @@ const OrderSummary = ({
       !Array.isArray(processedBatches[0][0]);
 
     if (isFlat) {
-      // 扁平化結構：統一使用 0-0, 0-1, 0-2 索引
       const flatItems = processedBatches[0];
       flatItems.forEach((item, itemIndex) => {
         const positionKey = `0-${itemIndex}`;
 
-        // 檢查是否已付款
         if (item.paid === true) {
           return;
         }
 
-        // 檢查是否正在編輯
         if (!editingPositions.has(positionKey)) {
+          // 每個商品一個選項
           items.push({
             ...item,
             batchIndex: 0,
             itemIndex: itemIndex,
             key: positionKey,
+            itemId: `${item.id}-${JSON.stringify(
+              item.selectedCustom
+            )}-${itemIndex}`,
           });
         }
       });
     } else {
-      // 批次結構：轉換為統一索引格式
       let globalIndex = 0;
       processedBatches.forEach((batch, batchIndex) => {
         if (Array.isArray(batch)) {
           batch.forEach((item, itemIndex) => {
-            const positionKey = `0-${globalIndex}`; // 統一使用 0- 前綴和全局索引
+            const positionKey = `0-${globalIndex}`;
 
-            // 檢查是否已付款
             if (item.paid === true) {
               globalIndex++;
               return;
@@ -341,10 +290,13 @@ const OrderSummary = ({
             if (!editingPositions.has(positionKey)) {
               items.push({
                 ...item,
-                batchIndex: 0, // 統一設為 0
-                itemIndex: globalIndex, // 使用全局索引
+                batchIndex: 0,
+                itemIndex: globalIndex,
                 key: positionKey,
-                originalBatchIndex: batchIndex, // 保留原始批次信息供調試
+                itemId: `${item.id}-${JSON.stringify(
+                  item.selectedCustom
+                )}-${globalIndex}`,
+                originalBatchIndex: batchIndex,
                 originalItemIndex: itemIndex,
               });
             }
@@ -354,8 +306,50 @@ const OrderSummary = ({
       });
     }
 
-    console.log("🔧 可結帳項目:", items);
     return items;
+  };
+
+  // 按商品分組顯示的函數
+  const groupCheckoutableItems = (items) => {
+    const groups = {};
+
+    items.forEach((item) => {
+      const groupKey = item.itemId;
+      if (!groups[groupKey]) {
+        groups[groupKey] = {
+          ...item,
+          quantities: [],
+        };
+      }
+      groups[groupKey].quantities.push({
+        qty: item.displayQuantity,
+        key: item.key,
+      });
+    });
+
+    return Object.values(groups);
+  };
+
+  // 計算部分結帳總額（按選中數量計算）
+  const calculatePartialTotal = () => {
+    let total = 0;
+    const checkoutableItems = getCheckoutableItems();
+
+    Object.entries(selectedItems).forEach(([key, isSelected]) => {
+      if (isSelected) {
+        const selectedQty = selectedQuantities[key] || 1; // 預設為1
+        if (selectedQty > 0) {
+          const item = checkoutableItems.find((item) => item.key === key);
+          if (item) {
+            // 計算選中數量的總價
+            const unitPrice = getItemSubtotal({ ...item, quantity: 1 });
+            total += unitPrice * selectedQty;
+          }
+        }
+      }
+    });
+
+    return total;
   };
 
   // 格式化時間顯示
@@ -395,24 +389,31 @@ const OrderSummary = ({
   const handlePartialCheckout = () => {
     setShowCheckoutTypeModal(false);
     const initialSelection = {};
+    const initialQuantities = {};
+
     getCheckoutableItems().forEach((item) => {
       initialSelection[item.key] = false;
+      initialQuantities[item.key] = 0; // 預設選擇0個
     });
+
     setSelectedItems(initialSelection);
+    setSelectedQuantities(initialQuantities);
     setShowPartialCheckoutModal(true);
   };
 
   // 確認部分結帳選擇
   const handleConfirmPartialSelection = () => {
-    const hasSelection = Object.values(selectedItems).some(Boolean);
-    if (!hasSelection) {
-      alert("請至少選擇一個商品");
+    // 只要有勾選就有效，因為勾選必然有數量
+    const hasValidSelection = Object.values(selectedItems).some(Boolean);
+
+    if (!hasValidSelection) {
+      alert("請至少選擇一個商品並設定數量");
       return;
     }
 
     const total = calculatePartialTotal();
     if (total === 0) {
-      alert("選中商品的總額為 $0，請檢查是否正確選擇商品");
+      alert("選中商品的總額為 $0，請檢查是否正確選擇商品和數量");
       return;
     }
 
@@ -424,36 +425,36 @@ const OrderSummary = ({
   const handleConfirmPayment = () => {
     const methodName = paymentMethod === "cash" ? "現金" : "Line Pay";
 
-    // 修正：正確定義 hasPartialSelection
-    const hasPartialSelection =
-      Object.keys(selectedItems).length > 0 &&
-      Object.values(selectedItems).some(Boolean);
+    const hasPartialSelection = Object.values(selectedItems).some(Boolean);
 
     if (hasPartialSelection) {
       const total = calculatePartialTotal();
+      const selectedCount = Object.entries(selectedItems)
+        .filter(([key, isSelected]) => isSelected)
+        .reduce((sum, [key]) => sum + (selectedQuantities[key] || 1), 0); // 預設為1
 
-      if (total === 0) {
-        alert("選中商品的總額為0，請重新選擇");
+      if (total === 0 || selectedCount === 0) {
+        alert("選中商品的總額為0或數量為0，請重新選擇");
         return;
       }
 
-      const selectedCount = Object.values(selectedItems).filter(Boolean).length;
       const confirmed = window.confirm(
-        `確定要以 ${methodName} 結帳選中的 ${selectedCount} 項商品，總額 $${total} 嗎？`
+        `確定要以 ${methodName} 結帳選中的 ${selectedCount} 個商品，總額 $${total} 嗎？`
       );
 
       if (confirmed) {
-        console.log("🔧 執行部分結帳:", {
-          paymentMethod,
-          selectedItems,
-          total,
-        });
-        onCheckout(paymentMethod, selectedItems);
+        // 傳遞包含數量信息的選擇數據
+        const selectionWithQuantities = {
+          items: selectedItems,
+          quantities: selectedQuantities,
+        };
+        onCheckout(paymentMethod, selectionWithQuantities);
         setShowPaymentModal(false);
         setSelectedItems({});
+        setSelectedQuantities({});
       }
     } else {
-      // 全部結帳
+      // 全部結帳邏輯保持不變
       const total = calculateGrandTotal();
       const confirmed = window.confirm(
         `確定要以 ${methodName} 結帳全部商品，總額 $${total} 嗎？`
@@ -803,75 +804,264 @@ const OrderSummary = ({
       {/* 部分結帳商品選擇 Modal */}
       {showPartialCheckoutModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-xl p-6 max-w-lg w-full mx-4 shadow-2xl max-h-[80vh] overflow-y-auto">
+          <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 shadow-2xl max-h-[80vh] overflow-y-auto">
             <div className="mb-6">
               <h3 className="text-xl font-bold text-gray-800 mb-2">
-                選擇要結帳的餐點
+                選擇要結帳的餐點數量
               </h3>
-              <div className="text-sm text-gray-600">請勾選要結帳的商品</div>
+              <div className="text-sm text-gray-600">
+                勾選商品並選擇要結帳的數量
+              </div>
             </div>
 
-            <div className="space-y-3 mb-6">
-              {getCheckoutableItems().map((item, index) => {
+            <div className="space-y-4 mb-6">
+              {getCheckoutableItems().map((item) => {
+                const isSelected = selectedItems[item.key] || false;
+                const selectedQty = selectedQuantities[item.key] || 0;
+                const unitPrice = getItemSubtotal({ ...item, quantity: 1 });
+                const subtotal = unitPrice * selectedQty;
+
                 return (
-                  <label
+                  <div
                     key={item.key}
-                    className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition-colors ${
-                      selectedItems[item.key]
+                    className={`border-2 rounded-lg p-4 transition-all ${
+                      isSelected && selectedQty > 0
                         ? "border-blue-500 bg-blue-50"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
-                    <input
-                      type="checkbox"
-                      checked={selectedItems[item.key] || false}
-                      onChange={(e) => {
-                        setSelectedItems({
-                          ...selectedItems,
-                          [item.key]: e.target.checked,
-                        });
-                      }}
-                      className="mr-3 w-4 h-4"
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium">{item.name}</div>
-                      <div className="text-sm text-gray-600">
-                        ${item.price} x {item.quantity} = $
-                        {getItemSubtotal(item)}
+                    {/* 商品信息行 */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-3 flex-1">
+                        {/* 選擇框 */}
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              const newSelection = {
+                                ...selectedItems,
+                                [item.key]: e.target.checked,
+                              };
+                              setSelectedItems(newSelection);
+
+                              // 勾選時自動設為1，取消勾選時設為0
+                              if (e.target.checked) {
+                                setSelectedQuantities({
+                                  ...selectedQuantities,
+                                  [item.key]: 1, // 勾選時預設為1
+                                });
+                              } else {
+                                setSelectedQuantities({
+                                  ...selectedQuantities,
+                                  [item.key]: 0, // 取消勾選時設為0
+                                });
+                              }
+                            }}
+                            className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                          />
+                        </label>
+
+                        {/* 商品詳情 */}
+                        <div className="flex-1">
+                          <div className="font-medium text-lg">{item.name}</div>
+                          <div className="text-sm text-gray-600">
+                            單價：${item.price} | 總數量：{item.quantity} 個
+                          </div>
+                          {item.selectedCustom &&
+                            Object.entries(item.selectedCustom).map(
+                              ([type, value]) => (
+                                <div
+                                  key={type}
+                                  className="text-xs text-gray-500 mt-1"
+                                >
+                                  {type}: {value}
+                                </div>
+                              )
+                            )}
+                        </div>
+
+                        {/* 調整後單價 */}
+                        <div className="text-right">
+                          <div className="text-sm text-gray-500">
+                            調整後單價
+                          </div>
+                          <div className="font-bold text-green-600">
+                            ${unitPrice}
+                          </div>
+                        </div>
                       </div>
-                      {item.selectedCustom &&
-                        Object.entries(item.selectedCustom).map(
-                          ([type, value]) => (
-                            <div key={type} className="text-xs text-gray-500">
-                              {type}: {value}
-                            </div>
-                          )
-                        )}
                     </div>
-                  </label>
+
+                    {/* 數量選擇區 */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <label className="text-sm font-medium text-gray-700">
+                          選擇數量：
+                        </label>
+                        <select
+                          value={selectedQty > 0 ? selectedQty : 1} // 選中時最少顯示1
+                          onChange={(e) => {
+                            const newQty = parseInt(e.target.value) || 1;
+                            setSelectedQuantities({
+                              ...selectedQuantities,
+                              [item.key]: newQty,
+                            });
+                          }}
+                          disabled={!isSelected}
+                          className={`border rounded-lg px-3 py-2 text-sm min-w-[80px] ${
+                            isSelected
+                              ? "border-blue-300 bg-white"
+                              : "border-gray-300 bg-gray-100"
+                          }`}
+                        >
+                          {/* 移除0選項，從1開始 */}
+                          {Array.from(
+                            { length: item.quantity },
+                            (_, i) => i + 1
+                          ).map((num) => (
+                            <option key={num} value={num}>
+                              {num}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="text-sm text-gray-500">
+                          / {item.quantity}
+                        </span>
+                      </div>
+
+                      {/* 小計顯示 */}
+                      <div className="text-right">
+                        {isSelected && (
+                          <div className="text-sm text-gray-600">
+                            {selectedQty > 0 ? selectedQty : 1} × ${unitPrice} =
+                            <span className="font-bold text-blue-600 ml-1">
+                              ${unitPrice * (selectedQty > 0 ? selectedQty : 1)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 快速選擇按鈕 */}
+                    {item.quantity > 1 && (
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs text-gray-500">
+                            快速選擇：
+                          </span>
+                          {[
+                            { label: "全部", value: item.quantity },
+                            {
+                              label: "一半",
+                              value: Math.ceil(item.quantity / 2),
+                            },
+                            { label: "清空", value: 0 },
+                          ].map((option) => (
+                            <button
+                              key={option.label}
+                              onClick={() => {
+                                setSelectedQuantities({
+                                  ...selectedQuantities,
+                                  [item.key]: option.value,
+                                });
+                                setSelectedItems({
+                                  ...selectedItems,
+                                  [item.key]: option.value > 0,
+                                });
+                              }}
+                              className="px-2 py-1 text-xs rounded border border-gray-300 hover:bg-gray-50 transition-colors"
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
 
+            {/* 總計區域 */}
             <div className="border-t pt-4 mb-6">
               <div className="flex justify-between items-center">
                 <span className="text-lg font-bold">選中商品總計:</span>
-                <span className="text-xl font-bold text-blue-600">
+                <span className="text-2xl font-bold text-blue-600">
                   ${calculatePartialTotal()}
                 </span>
               </div>
+              <div className="text-sm text-gray-500 mt-1">
+                已選中{" "}
+                {Object.entries(selectedItems)
+                  .filter(
+                    ([key, isSelected]) =>
+                      isSelected && (selectedQuantities[key] || 0) > 0
+                  )
+                  .reduce(
+                    (sum, [key]) => sum + (selectedQuantities[key] || 0),
+                    0
+                  )}{" "}
+                個商品
+              </div>
+
+              {/* 詳細清單 */}
+              {Object.entries(selectedItems).some(
+                ([key, isSelected]) =>
+                  isSelected && (selectedQuantities[key] || 0) > 0
+              ) && (
+                <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                  <div className="text-sm font-medium text-blue-800 mb-2">
+                    結帳清單：
+                  </div>
+                  <div className="space-y-1">
+                    {Object.entries(selectedItems)
+                      .filter(
+                        ([key, isSelected]) =>
+                          isSelected && (selectedQuantities[key] || 0) > 0
+                      )
+                      .map(([key, isSelected]) => {
+                        const item = getCheckoutableItems().find(
+                          (i) => i.key === key
+                        );
+                        const qty = selectedQuantities[key] || 1; // 預設為1
+                        const unitPrice = getItemSubtotal({
+                          ...item,
+                          quantity: 1,
+                        });
+                        return (
+                          <div
+                            key={key}
+                            className="text-sm text-blue-700 flex justify-between"
+                          >
+                            <span>
+                              {item?.name} × {qty}
+                            </span>
+                            <span>${unitPrice * qty}</span>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
             </div>
 
+            {/* 操作按鈕 */}
             <div className="flex space-x-3">
               <button
-                onClick={() => setShowPartialCheckoutModal(false)}
+                onClick={() => {
+                  setShowPartialCheckoutModal(false);
+                  setSelectedItems({});
+                  setSelectedQuantities({});
+                }}
                 className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
               >
                 取消
               </button>
               <button
                 onClick={handleConfirmPartialSelection}
-                className="flex-1 py-3 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium transition-colors"
+                disabled={!Object.values(selectedItems).some(Boolean)}
+                className="flex-1 py-3 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 確認選擇
               </button>
