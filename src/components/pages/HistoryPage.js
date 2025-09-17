@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "../UI/Header";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 const HistoryPage = ({ salesHistory, onBack, onMenuSelect, onRefundOrder }) => {
   const [selectedDate, setSelectedDate] = useState(
@@ -24,30 +25,41 @@ const HistoryPage = ({ salesHistory, onBack, onMenuSelect, onRefundOrder }) => {
   const getWeekRange = (dateStr) => {
     const date = new Date(dateStr);
     const dayOfWeek = date.getDay();
-    const startDate = new Date(date);
-    startDate.setDate(date.getDate() - dayOfWeek); // 週日開始
-    const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + 6);
+    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
-    return {
-      start: startDate.toISOString().split("T")[0],
-      end: endDate.toISOString().split("T")[0],
-    };
+    // 計算週一
+    const monday = new Date(date);
+    monday.setDate(date.getDate() - daysFromMonday);
+
+    // 計算週日
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+
+    const start = `${monday.getFullYear()}-${String(
+      monday.getMonth() + 1
+    ).padStart(2, "0")}-${String(monday.getDate()).padStart(2, "0")}`;
+    const end = `${sunday.getFullYear()}-${String(
+      sunday.getMonth() + 1
+    ).padStart(2, "0")}-${String(sunday.getDate()).padStart(2, "0")}`;
+
+    return { start, end };
   };
 
   // 獲取月的開始和結束日期
   const getMonthRange = (dateStr) => {
     const date = new Date(dateStr);
     const year = date.getFullYear();
-    const month = date.getMonth();
+    const month = date.getMonth() + 1;
 
-    const startDate = new Date(year, month, 1);
-    const endDate = new Date(year, month + 1, 0);
+    // 計算當月最後一天
+    const lastDay = new Date(year, month, 0).getDate();
 
-    return {
-      start: startDate.toISOString().split("T")[0],
-      end: endDate.toISOString().split("T")[0],
-    };
+    const start = `${year}-${String(month).padStart(2, "0")}-01`;
+    const end = `${year}-${String(month).padStart(2, "0")}-${String(
+      lastDay
+    ).padStart(2, "0")}`;
+
+    return { start, end };
   };
 
   // 根據檢視模式過濾記錄
