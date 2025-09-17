@@ -5,6 +5,7 @@ import HistoryPage from "./components/pages/HistoryPage";
 import MenuEditorPage from "./components/pages/MenuEditorPage";
 import defaultMenuData from "./components/menuData/defaultMenuData";
 import { seatingData } from "./components/seatingData/SeatingArea";
+import ExportReportsPage from "./components/pages/ExportReportsPage";
 
 // Firebase 操作函數 imports - 使用新版本
 import {
@@ -1741,6 +1742,15 @@ const CafePOSSystem = () => {
       <MenuEditorPage
         menuData={menuData}
         setMenuData={saveMenuDataToFirebase}
+        onBack={() => setCurrentView("seating")}
+      />
+    );
+  }
+
+  if (currentView === "export") {
+    return (
+      <ExportReportsPage
+        onMenuSelect={handleMenuSelect}
         onBack={() => setCurrentView("seating")}
       />
     );
