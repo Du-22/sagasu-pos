@@ -51,12 +51,6 @@ const CafePOSSystem = () => {
     let basePrice = item.price || 0;
     let totalAdjustment = 0;
 
-    console.log(`🔧 計算 ${item.name} 的價格:`, {
-      basePrice,
-      selectedCustom: item.selectedCustom,
-      customOptions: item.customOptions,
-    });
-
     // 檢查新格式的價格調整
     if (item.selectedCustom && item.customOptions) {
       Object.entries(item.selectedCustom).forEach(
@@ -75,9 +69,6 @@ const CafePOSSystem = () => {
           ) {
             const adjustment = customOption.priceAdjustments[selectedValue];
             totalAdjustment += adjustment;
-            console.log(
-              `💰 價格調整: ${optionType}=${selectedValue} 調整${adjustment}元`
-            );
           }
         }
       );
@@ -99,16 +90,11 @@ const CafePOSSystem = () => {
         !renewalOption.priceAdjustments["是"]
       ) {
         totalAdjustment = -20;
-        console.log(`💰 使用舊邏輯: 續杯折扣20元`);
       }
     }
 
     const finalPrice = Math.max(basePrice + totalAdjustment, 0);
     const subtotal = finalPrice * item.quantity;
-
-    console.log(
-      `💰 最終價格: 基本價格${basePrice} + 調整${totalAdjustment} = ${finalPrice} × ${item.quantity} = ${subtotal}`
-    );
 
     return subtotal;
   };
@@ -527,78 +513,137 @@ const CafePOSSystem = () => {
     let items = [];
     let total = 0;
 
-    console.log("🔧 createHistoryRecord 開始:", {
-      tableId,
-      type,
-      isPartialPayment,
-      partialItems,
-      orderData,
-    });
-
     if (isPartialPayment && partialItems) {
       if (type === "takeout") {
-        console.warn("外帶訂單目前不支援部分結帳");
-        return null;
-      } else {
-        // 內用部分結帳 - 修正邏輯
-        console.log("🔧 處理內用部分結帳");
+        // 外帶部分結帳邏輯 - 新實作
 
-        if (orderData && Array.isArray(orderData) && orderData.length > 0) {
-          // orderData 是 [itemsToCheckout] 格式，直接使用傳入的商品陣列
-          const itemsToCheckout = orderData[0]; // 取出實際的商品陣列
+        const { items: selectedItems, quantities: selectedQuantities } =
+          partialItems;
 
-          console.log("🔧 要結帳的商品:", itemsToCheckout);
+        if (
+          orderData &&
+          orderData.batches &&
+          Array.isArray(orderData.batches)
+        ) {
+          const allUnpaidItems = orderData.batches[0]; // 外帶通常只有一個批次
 
-          if (Array.isArray(itemsToCheckout)) {
-            itemsToCheckout.forEach((item) => {
-              if (item && item.name) {
-                const existingItem = items.find(
-                  (i) =>
-                    i.id === item.id &&
-                    JSON.stringify(i.selectedCustom) ===
-                      JSON.stringify(item.selectedCustom)
-                );
+          // 處理下拉選單選擇的數據
+          Object.entries(selectedItems).forEach(([key, isSelected]) => {
+            if (isSelected) {
+              const selectedQty = selectedQuantities[key] || 1;
 
-                if (existingItem) {
-                  existingItem.quantity += item.quantity;
-                  existingItem.subtotal = calculateItemSubtotal(existingItem);
+              if (selectedQty > 0) {
+                // key 格式：0-itemIndex
+                const [batchIndex, itemIndexStr] = key.split("-");
+                const itemIndex = parseInt(itemIndexStr);
+
+                const originalItem = allUnpaidItems[itemIndex];
+
+                if (originalItem && selectedQty <= originalItem.quantity) {
+                  // 檢查是否已經存在相同的商品（包括客製化選項）
+                  const existingItem = items.find(
+                    (i) =>
+                      i.id === originalItem.id &&
+                      JSON.stringify(i.selectedCustom) ===
+                        JSON.stringify(originalItem.selectedCustom)
+                  );
+
+                  if (existingItem) {
+                    existingItem.quantity += selectedQty;
+                    existingItem.subtotal = calculateItemSubtotal(existingItem);
+                  } else {
+                    items.push({
+                      id: originalItem.id,
+                      name: originalItem.name,
+                      price: originalItem.price,
+                      quantity: selectedQty,
+                      subtotal: calculateItemSubtotal({
+                        ...originalItem,
+                        quantity: selectedQty,
+                      }),
+                      selectedCustom: originalItem.selectedCustom || null,
+                      customOptions: originalItem.customOptions || null,
+                    });
+                  }
                 } else {
-                  items.push({
-                    id: item.id,
-                    name: item.name,
-                    price: item.price,
-                    quantity: item.quantity,
-                    subtotal: calculateItemSubtotal(item),
-                    selectedCustom: item.selectedCustom || null,
-                    customOptions: item.customOptions || null,
+                  console.warn("⚠️ 外帶商品不存在或數量超出範圍:", {
+                    itemIndex,
+                    selectedQty,
+                    originalItem: originalItem ? originalItem.name : "不存在",
+                    maxQuantity: originalItem ? originalItem.quantity : 0,
                   });
                 }
+              }
+            }
+          });
 
-                console.log("🔧 加入結帳商品:", {
+          total = items.reduce((sum, item) => sum + item.subtotal, 0);
+        } else {
+          console.error("❌ 外帶 orderData 格式錯誤:", orderData);
+          return null;
+        }
+      } else {
+        // 內用部分結帳邏輯保持不變
+
+        const { items: selectedItems, quantities: selectedQuantities } =
+          partialItems;
+
+        if (orderData && Array.isArray(orderData) && orderData.length > 0) {
+          const allUnpaidItems = orderData[0];
+
+          const itemsToCheckout = [];
+
+          Object.entries(selectedItems).forEach(([key, isSelected]) => {
+            if (isSelected) {
+              const selectedQty = selectedQuantities[key] || 1;
+
+              if (selectedQty > 0) {
+                const [batchIndex, itemIndexStr] = key.split("-");
+                const itemIndex = parseInt(itemIndexStr);
+
+                const originalItem = allUnpaidItems[itemIndex];
+
+                if (originalItem && selectedQty <= originalItem.quantity) {
+                  itemsToCheckout.push({
+                    ...originalItem,
+                    quantity: selectedQty,
+                  });
+                }
+              }
+            }
+          });
+
+          itemsToCheckout.forEach((item) => {
+            if (item && item.name) {
+              const existingItem = items.find(
+                (i) =>
+                  i.id === item.id &&
+                  JSON.stringify(i.selectedCustom) ===
+                    JSON.stringify(item.selectedCustom)
+              );
+
+              if (existingItem) {
+                existingItem.quantity += item.quantity;
+                existingItem.subtotal = calculateItemSubtotal(existingItem);
+              } else {
+                items.push({
+                  id: item.id,
                   name: item.name,
                   price: item.price,
                   quantity: item.quantity,
                   subtotal: calculateItemSubtotal(item),
+                  selectedCustom: item.selectedCustom || null,
+                  customOptions: item.customOptions || null,
                 });
               }
-            });
-          } else {
-            console.error("❌ itemsToCheckout 不是陣列:", itemsToCheckout);
-          }
+            }
+          });
 
           total = items.reduce((sum, item) => sum + item.subtotal, 0);
-
-          console.log("🔧 部分結帳計算結果:", {
-            items,
-            total,
-            itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
-          });
-        } else {
-          console.error("❌ orderData 格式錯誤:", orderData);
         }
       }
     } else {
-      // 全部結帳邏輯
+      // 全部結帳邏輯保持不變
       if (type === "takeout") {
         if (orderData.batches && Array.isArray(orderData.batches)) {
           orderData.batches.forEach((batch) => {
@@ -629,7 +674,7 @@ const CafePOSSystem = () => {
       } else {
         // 內用全部結帳
         if (Array.isArray(orderData) && orderData.length > 0) {
-          const allItems = orderData[0]; // orderData 是 [allUnpaidItems] 格式
+          const allItems = orderData[0];
           if (Array.isArray(allItems)) {
             allItems.forEach((item) => {
               if (item && item.name && item.paid !== true) {
@@ -654,11 +699,7 @@ const CafePOSSystem = () => {
                 }
               }
             });
-          } else {
-            console.error("❌ 內用全部結帳：allItems 不是陣列:", allItems);
           }
-        } else {
-          console.error("❌ 內用全部結帳：orderData 格式錯誤:", orderData);
         }
         total = items.reduce((sum, item) => sum + item.subtotal, 0);
       }
@@ -693,16 +734,17 @@ const CafePOSSystem = () => {
       isPartialPayment: isPartialPayment,
       partialPaymentInfo: isPartialPayment
         ? {
-            totalItems: partialItems ? Object.keys(partialItems).length : 0,
+            totalItems: partialItems
+              ? Object.keys(partialItems.items || {}).length
+              : 0,
             selectedItems: partialItems
-              ? Object.values(partialItems).filter(Boolean).length
+              ? Object.values(partialItems.items || {}).filter(Boolean).length
               : 0,
             note: "此為部分結帳，僅顯示本次結帳的商品",
           }
         : null,
     };
 
-    console.log("🔧 最終歷史記錄:", finalRecord);
     return finalRecord;
   };
 
@@ -1097,14 +1139,6 @@ const CafePOSSystem = () => {
         // 從 originalItemIndex 獲取在扁平化陣列中的實際位置
         const actualIndex = removingItem.originalItemIndex;
 
-        console.log("🔧 Debug removeFromOrder:", {
-          flatOrders,
-          actualIndex,
-          removingItem,
-          flatOrdersLength: flatOrders.length,
-          itemAtIndex: flatOrders[actualIndex],
-        });
-
         // 確保索引有效且該位置有項目
         if (actualIndex >= 0 && actualIndex < flatOrders.length) {
           // 直接從扁平化陣列中移除項目
@@ -1148,16 +1182,237 @@ const CafePOSSystem = () => {
       (partialSelection.items || partialSelection.quantities) &&
       Object.values(partialSelection.items || {}).some(Boolean);
 
-    console.log("🔧 開始結帳:", {
-      selectedTable,
-      paymentMethod,
-      isPartialCheckout,
-      partialSelection,
-    });
-
     if (selectedTable.startsWith("T")) {
-      // 外帶訂單邏輯保持不變...
-      // (這部分可以之後套用相同的下拉選單邏輯)
+      // 外帶訂單邏輯 - 完整重寫
+      let takeoutData = takeoutOrders[selectedTable];
+
+      if (!takeoutData && currentOrder.length > 0) {
+        const newItems = currentOrder.map((item) => ({
+          ...item,
+          timestamp: new Date().toISOString(),
+          paid: false,
+          customOptions: item.customOptions,
+        }));
+
+        takeoutData = {
+          orders: newItems,
+          timestamp: new Date().toISOString(),
+          paid: false,
+        };
+
+        const newTakeoutOrders = {
+          ...takeoutOrders,
+          [selectedTable]: takeoutData,
+        };
+        await saveTakeoutOrdersToFirebase(newTakeoutOrders);
+      }
+
+      if (takeoutData && !takeoutData.paid) {
+        if (isPartialCheckout) {
+          // 外帶部分結帳邏輯 - 完整實作
+
+          const { items: selectedItems, quantities: selectedQuantities } =
+            partialSelection;
+
+          const allUnpaidItems = takeoutData.orders.filter(
+            (item) => item && item.paid === false
+          );
+
+          const itemsToCheckout = [];
+          const updateInstructions = [];
+
+          // 處理下拉選單選擇的數據
+          Object.entries(selectedItems).forEach(([key, isSelected]) => {
+            if (isSelected) {
+              const selectedQty = selectedQuantities[key] || 0;
+
+              if (selectedQty > 0) {
+                // key 格式：0-itemIndex
+                const [batchIndex, itemIndexStr] = key.split("-");
+                const itemIndex = parseInt(itemIndexStr);
+
+                const originalItem = allUnpaidItems[itemIndex];
+
+                if (originalItem && selectedQty <= originalItem.quantity) {
+                  // 創建結帳項目
+                  itemsToCheckout.push({
+                    ...originalItem,
+                    quantity: selectedQty,
+                  });
+
+                  // 找到該項目在原始訂單陣列中的實際位置
+                  const actualIndex = takeoutData.orders.findIndex(
+                    (orderItem) => orderItem === originalItem
+                  );
+
+                  if (actualIndex !== -1) {
+                    const remainingQuantity =
+                      originalItem.quantity - selectedQty;
+
+                    updateInstructions.push({
+                      actualIndex,
+                      originalQuantity: originalItem.quantity,
+                      selectedQty,
+                      remainingQuantity,
+                      shouldRemove: remainingQuantity === 0,
+                    });
+                  } else {
+                    console.error(
+                      "找不到外帶商品在訂單中的位置:",
+                      originalItem
+                    );
+                  }
+                } else {
+                  console.warn("外帶商品不存在或數量超出範圍:", {
+                    itemIndex,
+                    selectedQty,
+                    originalItem: originalItem ? originalItem.name : "不存在",
+                    maxQuantity: originalItem ? originalItem.quantity : 0,
+                  });
+                }
+              }
+            }
+          });
+
+          if (itemsToCheckout.length === 0) {
+            alert("沒有選中有效的項目");
+            return;
+          }
+
+          const batchFormatData = {
+            batches: [itemsToCheckout],
+          };
+
+          const historyRecord = createHistoryRecord(
+            selectedTable,
+            batchFormatData,
+            "takeout",
+            paymentMethod,
+            true,
+            partialSelection
+          );
+
+          if (!historyRecord) {
+            console.error("無法建立外帶部分結帳歷史記錄");
+            alert("建立結帳記錄失敗，請稍後再試");
+            return;
+          }
+
+          try {
+            await addSalesRecord(historyRecord);
+            const newHistory = [...salesHistory, historyRecord];
+            await saveSalesHistoryToFirebase(newHistory);
+
+            // 更新外帶訂單，處理數量變化
+            const updatedOrders = [...takeoutData.orders];
+
+            updateInstructions.forEach(
+              ({ actualIndex, remainingQuantity, shouldRemove }) => {
+                if (actualIndex >= 0 && actualIndex < updatedOrders.length) {
+                  if (shouldRemove || remainingQuantity <= 0) {
+                    // 標記為已付款
+                    updatedOrders[actualIndex] = {
+                      ...updatedOrders[actualIndex],
+                      paid: true,
+                    };
+                  } else {
+                    // 更新剩餘數量
+                    updatedOrders[actualIndex] = {
+                      ...updatedOrders[actualIndex],
+                      quantity: remainingQuantity,
+                    };
+                  }
+                }
+              }
+            );
+
+            const hasUnpaidItems = updatedOrders.some(
+              (item) => item.paid === false
+            );
+
+            const newTakeoutOrders = {
+              ...takeoutOrders,
+              [selectedTable]: {
+                ...takeoutData,
+                orders: updatedOrders,
+                paid: !hasUnpaidItems,
+              },
+            };
+            await saveTakeoutOrdersToFirebase(newTakeoutOrders);
+
+            if (hasUnpaidItems) {
+              setCurrentOrder([]);
+              alert(`外帶部分結帳成功！結帳金額：$${historyRecord.total}`);
+            } else {
+              setCurrentOrder([]);
+              setSelectedTable(null);
+              setCurrentView("main");
+              alert(`外帶全部結帳完成！結帳金額：$${historyRecord.total}`);
+            }
+          } catch (error) {
+            console.error("外帶下拉選單分開結帳失敗:", error);
+            alert("結帳失敗，請稍後再試");
+          }
+        } else {
+          // 外帶全部結帳邏輯
+          const allUnpaidItems = takeoutData.orders.filter(
+            (item) => item && item.paid === false
+          );
+
+          if (allUnpaidItems.length === 0) {
+            alert("沒有可結帳的項目");
+            return;
+          }
+
+          const batchFormatData = {
+            batches: [allUnpaidItems],
+          };
+
+          const historyRecord = createHistoryRecord(
+            selectedTable,
+            batchFormatData,
+            "takeout",
+            paymentMethod
+          );
+
+          if (!historyRecord) {
+            console.error("無法建立外帶全部結帳歷史記錄");
+            alert("建立結帳記錄失敗，請稍後再試");
+            return;
+          }
+
+          try {
+            await addSalesRecord(historyRecord);
+            const newHistory = [...salesHistory, historyRecord];
+            await saveSalesHistoryToFirebase(newHistory);
+
+            const paidOrders = takeoutData.orders.map((item) => ({
+              ...item,
+              paid: true,
+            }));
+
+            const newTakeoutOrders = {
+              ...takeoutOrders,
+              [selectedTable]: {
+                ...takeoutData,
+                orders: paidOrders,
+                paid: true,
+              },
+            };
+            await saveTakeoutOrdersToFirebase(newTakeoutOrders);
+
+            setCurrentOrder([]);
+            setSelectedTable(null);
+            setCurrentView("main");
+            alert(`外帶結帳成功！結帳金額：$${historyRecord.total}`);
+          } catch (error) {
+            console.error("外帶全部結帳失敗:", error);
+            alert("結帳失敗，請稍後再試");
+            return;
+          }
+        }
+      }
+      return; // 外帶邏輯結束，直接返回
     } else {
       // 內用邏輯
       const currentTableState = tableStates[selectedTable];
@@ -1193,7 +1448,6 @@ const CafePOSSystem = () => {
 
         if (isPartialCheckout) {
           // 處理下拉選單格式
-          console.log("🔧 執行下拉選單分開結帳...");
 
           const { items: selectedItems, quantities: selectedQuantities } =
             partialSelection;
@@ -1206,11 +1460,9 @@ const CafePOSSystem = () => {
           // 處理下拉選單選擇的數據
           Object.entries(selectedItems).forEach(([key, isSelected]) => {
             if (isSelected) {
-              const selectedQty = selectedQuantities[key] || 0;
+              const selectedQty = selectedQuantities[key] || 1;
 
               if (selectedQty > 0) {
-                console.log("🔧 處理選中項目:", { key, selectedQty });
-
                 // key 格式：0-itemIndex
                 const [batchIndex, itemIndexStr] = key.split("-");
                 const itemIndex = parseInt(itemIndexStr);
@@ -1218,13 +1470,6 @@ const CafePOSSystem = () => {
                 const originalItem = allUnpaidItems[itemIndex];
 
                 if (originalItem && selectedQty <= originalItem.quantity) {
-                  console.log("🔧 處理商品:", {
-                    itemIndex,
-                    itemName: originalItem.name,
-                    originalQuantity: originalItem.quantity,
-                    selectedQuantity: selectedQty,
-                  });
-
                   // 創建結帳項目
                   itemsToCheckout.push({
                     ...originalItem,
@@ -1247,14 +1492,6 @@ const CafePOSSystem = () => {
                       remainingQuantity,
                       shouldRemove: remainingQuantity === 0,
                     });
-
-                    console.log("🔧 更新指令:", {
-                      actualIndex,
-                      originalQuantity: originalItem.quantity,
-                      selectedQty,
-                      remainingQuantity,
-                      shouldRemove: remainingQuantity === 0,
-                    });
                   } else {
                     console.error("❌ 找不到商品在訂單中的位置:", originalItem);
                   }
@@ -1269,9 +1506,6 @@ const CafePOSSystem = () => {
               }
             }
           });
-
-          console.log("🔧 最終結帳項目:", itemsToCheckout);
-          console.log("🔧 更新指令:", updateInstructions);
 
           if (itemsToCheckout.length === 0) {
             alert("沒有選中有效的項目");
@@ -1310,20 +1544,12 @@ const CafePOSSystem = () => {
                         paid: true,
                         groupId: existingGroupId,
                       };
-                      console.log(
-                        "🔧 標記為已付款:",
-                        updatedOrders[actualIndex].name
-                      );
                     } else {
                       // 更新剩餘數量
                       updatedOrders[actualIndex] = {
                         ...updatedOrders[actualIndex],
                         quantity: remainingQuantity,
                       };
-                      console.log("🔧 更新數量:", {
-                        name: updatedOrders[actualIndex].name,
-                        newQuantity: remainingQuantity,
-                      });
                     }
                   }
                 }
@@ -1336,7 +1562,6 @@ const CafePOSSystem = () => {
                 status: getTableStatusFromOrders(updatedOrders),
               });
 
-              console.log("✅ 下拉選單分開結帳完成");
               setCurrentOrder([]);
             } catch (error) {
               console.error("❌ 下拉選單分開結帳失敗:", error);
@@ -1455,15 +1680,6 @@ const CafePOSSystem = () => {
         (item) => item && typeof item === "object" && !item.__seated
       );
 
-      console.log("🔧 Debug editConfirmedItem:", {
-        batchIndex,
-        itemIndex,
-        flatOrders,
-        realOrders,
-        flatOrdersLength: flatOrders.length,
-        realOrdersLength: realOrders.length,
-      });
-
       // 檢查索引是否有效
       if (itemIndex < 0 || itemIndex >= realOrders.length) {
         console.warn("⚠️ 內用項目索引無效:", {
@@ -1493,12 +1709,6 @@ const CafePOSSystem = () => {
           realItemCount++;
         }
       }
-
-      console.log("🔧 計算實際索引:", {
-        itemIndex,
-        actualFlatIndex,
-        editingItem: editingItem.name,
-      });
 
       if (actualFlatIndex === -1) {
         console.warn("⚠️ 無法找到項目在扁平化陣列中的位置");
