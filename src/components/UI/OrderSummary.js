@@ -372,10 +372,16 @@ const OrderSummary = ({
   const handleCheckoutClick = () => {
     const checkoutableItems = getCheckoutableItems();
 
-    if (checkoutableItems.length <= 1) {
-      setShowPaymentModal(true);
+    // 檢查是否有任何商品的數量大於1，或是有多種商品
+    const hasMultipleQuantity = checkoutableItems.some(
+      (item) => item.quantity > 1
+    );
+    const hasMultipleTypes = checkoutableItems.length > 1;
+
+    if (hasMultipleQuantity || hasMultipleTypes) {
+      setShowCheckoutTypeModal(true); // 顯示分開結帳選項
     } else {
-      setShowCheckoutTypeModal(true);
+      setShowPaymentModal(true); // 直接付款
     }
   };
 
