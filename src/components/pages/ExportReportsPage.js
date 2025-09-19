@@ -4,7 +4,9 @@ import Header from "../UI/Header";
 
 const ExportReportsPage = ({ onMenuSelect, onBack }) => {
   // State 管理
+
   const [reportEmail, setReportEmail] = useState(""); // 可填入email以加入常用信箱
+
   const [reportStartDate, setReportStartDate] = useState(() => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -444,7 +446,7 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
                 系統會自動在指定時間發送報表，無需手動操作。
               </p>
             </div>
-            <div className="flex space-x-3">
+            {/* <div className="flex space-x-3">
               <button
                 onClick={testWeeklyReport}
                 className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
@@ -457,7 +459,7 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
               >
                 測試月報
               </button>
-            </div>
+            </div> */}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
