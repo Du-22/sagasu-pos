@@ -4,7 +4,7 @@ import Header from "../UI/Header";
 
 const ExportReportsPage = ({ onMenuSelect, onBack }) => {
   // State 管理
-  const [reportEmail, setReportEmail] = useState("du88215@gmail.com"); // 改成你的預設信箱
+  const [reportEmail, setReportEmail] = useState(""); // 可填入email以加入常用信箱
   const [reportStartDate, setReportStartDate] = useState(() => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -16,7 +16,7 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
   });
   const [reportType, setReportType] = useState("營業報表");
   const [quickDateRange, setQuickDateRange] = useState("week");
-  const [savedEmails, setSavedEmails] = useState(["du88215@gmail.com"]);
+  const [savedEmails, setSavedEmails] = useState(["sagasucoffee@gmail.com"]);
   const [showAddEmailInput, setShowAddEmailInput] = useState(false);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [showDeleteEmailModal, setShowDeleteEmailModal] = useState(false);

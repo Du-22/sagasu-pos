@@ -2,7 +2,13 @@ import React, { useState, useEffect } from "react";
 import Header from "../UI/Header";
 import { getFunctions, httpsCallable } from "firebase/functions";
 
-const HistoryPage = ({ salesHistory, onBack, onMenuSelect, onRefundOrder }) => {
+const HistoryPage = ({
+  salesHistory,
+  onBack,
+  onMenuSelect,
+  onRefundOrder,
+  onLogout,
+}) => {
   const [selectedDate, setSelectedDate] = useState(
     (() => {
       const now = new Date();
@@ -272,6 +278,7 @@ const HistoryPage = ({ salesHistory, onBack, onMenuSelect, onRefundOrder }) => {
         subtitle="營業紀錄"
         currentPage="history"
         onMenuSelect={onMenuSelect}
+        onLogout={onLogout}
       />
 
       <div className="p-4 space-y-4">

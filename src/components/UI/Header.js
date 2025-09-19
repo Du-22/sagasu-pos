@@ -1,6 +1,6 @@
 // src/components/UI/Header.js
 import React, { useState } from "react";
-import { ArrowLeft, Coffee, Menu, X } from "lucide-react";
+import { ArrowLeft, Coffee, Menu, X, LogOut } from "lucide-react";
 
 const Header = ({
   title,
@@ -8,6 +8,7 @@ const Header = ({
   showBackButton,
   onBackClick,
   onMenuSelect,
+  onLogout,
   currentPage,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -36,12 +37,24 @@ const Header = ({
     // { id: "statistics", label: "統計分析", icon: "📈" },
     { id: "menuedit", label: "菜單編輯", icon: "📝" },
     { id: "export", label: "資料匯出", icon: "📤" },
+    { id: "account", label: "帳戶管理", icon: "👤" },
   ];
 
   const handleMenuClick = (menuId) => {
     setIsMenuOpen(false);
     if (onMenuSelect) {
       onMenuSelect(menuId);
+    }
+  };
+
+  const handleLogoutClick = () => {
+    setIsMenuOpen(false);
+    if (onLogout) {
+      // 可以加入確認對話框
+      const confirmed = window.confirm("確定要登出系統嗎？");
+      if (confirmed) {
+        onLogout();
+      }
     }
   };
 
@@ -102,6 +115,18 @@ const Header = ({
                     </span>
                   </button>
                 ))}
+
+                {/* 分隔線 */}
+                <hr className="my-2 border-gray-200" />
+
+                {/* 登出選項 */}
+                <button
+                  onClick={handleLogoutClick}
+                  className="w-full px-4 py-3 text-left hover:bg-red-50 flex items-center space-x-3 transition-colors text-red-600"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span className="font-medium">登出系統</span>
+                </button>
               </div>
             </div>
           )}

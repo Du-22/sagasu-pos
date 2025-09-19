@@ -19,6 +19,7 @@ const OrderingPage = ({
   menuData,
   onReleaseSeat,
   onMoveTable,
+  onLogout,
 }) => (
   <div className="min-h-screen bg-gray-100">
     <Header
@@ -28,6 +29,7 @@ const OrderingPage = ({
       showBackButton={true}
       onBackClick={onBack}
       onMenuSelect={onMenuSelect}
+      onLogout={onLogout}
     />
 
     <div className="flex ">
