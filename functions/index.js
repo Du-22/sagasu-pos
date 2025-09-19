@@ -551,7 +551,7 @@ exports.sendCSVReport = onCall(async (request) => {
     );
 
     const mailOptions = {
-      from: "du88215@gmail.com",
+      from: "sagasucoffee@gmail.com",
       to: recipientEmail,
       subject: `SAGASU 咖啡廳 - ${reportType} (${startDate} ~ ${endDate})`,
       html: emailContent,
@@ -793,7 +793,9 @@ exports.weeklyReport = onSchedule("0 11 * * 0", async () => {
     console.log(`週報期間: ${startDate} ~ ${endDate}`);
 
     // 設定收件人清單（可以從環境變數或固定設定讀取）
+
     const recipients = ["sagasucoffee@gmail.com"];
+
 
     // 對每個收件人發送週報
     const sendPromises = recipients.map((email) =>
@@ -846,7 +848,9 @@ exports.monthlyReport = onSchedule("0 11 28-31 * *", async () => {
       console.log(`月報期間: ${startDate} ~ ${endDate}`);
 
       // 設定收件人清單
+
       const recipients = ["sagasucoffee@gmail.com"];
+
 
       // 對每個收件人發送月報
       const sendPromises = recipients.map((email) =>
@@ -929,7 +933,7 @@ async function sendAutomaticReport(
     // 發送郵件
     const transporter = createEmailTransporter();
     const mailOptions = {
-      from: "du88215@gmail.com",
+      from: "sagasucoffee@gmail.com",
       to: recipientEmail,
       subject: `🤖 SAGASU 咖啡廳 - 自動${reportType} (${startDate} ~ ${endDate})`,
       html: emailContent,
@@ -1063,71 +1067,71 @@ function generateAutomaticReportEmail(
   `;
 }
 
-// ==================== 手動觸發自動報表（測試用）====================
+// // ==================== 手動觸發自動報表（測試用）====================
 
-/**
- * 手動觸發週報發送（測試用）
- */
-exports.triggerWeeklyReport = onCall(async (request) => {
-  try {
-    console.log("手動觸發週報測試...");
+// /**
+//  * 手動觸發週報發送（測試用）
+//  */
+// exports.triggerWeeklyReport = onCall(async (request) => {
+//   try {
+//     console.log("手動觸發週報測試...");
 
-    // 使用測試日期範圍（最近 7 天）
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(endDate.getDate() - 7);
+//     // 使用測試日期範圍（最近 7 天）
+//     const endDate = new Date();
+//     const startDate = new Date();
+//     startDate.setDate(endDate.getDate() - 7);
 
-    const startDateStr = startDate.toISOString().split("T")[0];
-    const endDateStr = endDate.toISOString().split("T")[0];
+//     const startDateStr = startDate.toISOString().split("T")[0];
+//     const endDateStr = endDate.toISOString().split("T")[0];
 
-    const result = await sendAutomaticReport(
-      "測試週報",
-      "du88215@gmail.com",
-      startDateStr,
-      endDateStr
-    );
+//     const result = await sendAutomaticReport(
+//       "測試週報",
+//       "du88215@gmail.com",
+//       startDateStr,
+//       endDateStr
+//     );
 
-    return {
-      success: true,
-      message: "手動週報測試發送完成",
-      result: result,
-    };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-});
+//     return {
+//       success: true,
+//       message: "手動週報測試發送完成",
+//       result: result,
+//     };
+//   } catch (error) {
+//     return { success: false, error: error.message };
+//   }
+// });
 
-/**
- * 手動觸發月報發送（測試用）
- */
-exports.triggerMonthlyReport = onCall(async (request) => {
-  try {
-    console.log("手動觸發月報測試...");
+// /**
+//  * 手動觸發月報發送（測試用）
+//  */
+// exports.triggerMonthlyReport = onCall(async (request) => {
+//   try {
+//     console.log("手動觸發月報測試...");
 
-    // 使用測試日期範圍（最近 30 天）
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(endDate.getDate() - 30);
+//     // 使用測試日期範圍（最近 30 天）
+//     const endDate = new Date();
+//     const startDate = new Date();
+//     startDate.setDate(endDate.getDate() - 30);
 
-    const startDateStr = startDate.toISOString().split("T")[0];
-    const endDateStr = endDate.toISOString().split("T")[0];
+//     const startDateStr = startDate.toISOString().split("T")[0];
+//     const endDateStr = endDate.toISOString().split("T")[0];
 
-    const result = await sendAutomaticReport(
-      "測試月報",
-      "du88215@gmail.com",
-      startDateStr,
-      endDateStr
-    );
+//     const result = await sendAutomaticReport(
+//       "測試月報",
+//       "du88215@gmail.com",
+//       startDateStr,
+//       endDateStr
+//     );
 
-    return {
-      success: true,
-      message: "手動月報測試發送完成",
-      result: result,
-    };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-});
+//     return {
+//       success: true,
+//       message: "手動月報測試發送完成",
+//       result: result,
+//     };
+//   } catch (error) {
+//     return { success: false, error: error.message };
+//   }
+// });
 
 // ==================== 統計測試函數 ====================
 
