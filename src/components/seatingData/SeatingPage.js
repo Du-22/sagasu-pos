@@ -14,6 +14,7 @@ const SeatingPage = ({
   onTakeoutClick,
   onNewTakeout,
   onMenuSelect,
+  onLogout,
 }) => (
   <div className="min-h-screen bg-gray-100 flex flex-col">
     <Header
@@ -21,6 +22,7 @@ const SeatingPage = ({
       subtitle="座位管理"
       currentPage="seating"
       onMenuSelect={onMenuSelect}
+      onLogout={onLogout}
     />
 
     <FloorTabs currentFloor={currentFloor} onFloorChange={onFloorChange} />

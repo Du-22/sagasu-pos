@@ -4,7 +4,9 @@ import Header from "../UI/Header";
 
 const ExportReportsPage = ({ onMenuSelect, onBack }) => {
   // State 管理
-  const [reportEmail, setReportEmail] = useState("sagasucoffee@gmail.com");
+
+  const [reportEmail, setReportEmail] = useState(""); // 可填入email以加入常用信箱
+
   const [reportStartDate, setReportStartDate] = useState(() => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);

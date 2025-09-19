@@ -793,10 +793,9 @@ exports.weeklyReport = onSchedule("0 11 * * 0", async () => {
     console.log(`週報期間: ${startDate} ~ ${endDate}`);
 
     // 設定收件人清單（可以從環境變數或固定設定讀取）
-    const recipients = [
-      "sagasucoffee@gmail.com",
-      // 可以加入更多收件人
-    ];
+
+    const recipients = ["sagasucoffee@gmail.com"];
+
 
     // 對每個收件人發送週報
     const sendPromises = recipients.map((email) =>
@@ -849,10 +848,9 @@ exports.monthlyReport = onSchedule("0 11 28-31 * *", async () => {
       console.log(`月報期間: ${startDate} ~ ${endDate}`);
 
       // 設定收件人清單
-      const recipients = [
-        "sagasucoffee@gmail.com",
-        // 可以加入更多收件人
-      ];
+
+      const recipients = ["sagasucoffee@gmail.com"];
+
 
       // 對每個收件人發送月報
       const sendPromises = recipients.map((email) =>

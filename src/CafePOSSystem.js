@@ -6,6 +6,12 @@ import MenuEditorPage from "./components/pages/MenuEditorPage";
 import defaultMenuData from "./components/menuData/defaultMenuData";
 import { seatingData } from "./components/seatingData/SeatingArea";
 import ExportReportsPage from "./components/pages/ExportReportsPage";
+import LoginPage from "./auth/LoginPage";
+import LoginFailurePage from "./auth/LoginFailurePage";
+import ChangePasswordPage from "./auth/ChangePasswordPage";
+import AccountManagementPage from "./components/pages/AccountManagementPage";
+import SetupSecurityQuestionPage from "./auth/SetupSecurityQuestionPage";
+import ForgotPasswordPage from "./auth/ForgotPasswordPage";
 
 // Firebase 操作函數 imports - 使用新版本
 import {
@@ -21,7 +27,18 @@ import {
   getSalesHistory,
   addSalesRecord,
   updateSalesRecord,
+  logLoginAttempt,
+  initializeDefaultPassword,
+  verifyPassword,
 } from "./firebase/operations";
+
+import {
+  checkLockStatus,
+  setAuthSuccess,
+  handleLoginFailure as handleLoginFailureUtil,
+  clearAuthData,
+  isTokenValid,
+} from "./auth/utils";
 
 const CafePOSSystem = () => {
   const [currentFloor, setCurrentFloor] = useState("1F");
@@ -44,113 +61,13 @@ const CafePOSSystem = () => {
   const [pendingSeatTable, setPendingSeatTable] = useState(null);
 
   // 載入狀態
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginState, setLoginState] = useState("login");
+  const [loginError, setLoginError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
-  const calculateItemSubtotal = (item) => {
-    let basePrice = item.price || 0;
-    let totalAdjustment = 0;
-
-    // 檢查新格式的價格調整
-    if (item.selectedCustom && item.customOptions) {
-      Object.entries(item.selectedCustom).forEach(
-        ([optionType, selectedValue]) => {
-          if (!selectedValue) return;
-
-          // 找到對應的客製選項設定
-          const customOption = item.customOptions.find(
-            (opt) => opt.type === optionType
-          );
-
-          if (
-            customOption &&
-            customOption.priceAdjustments &&
-            customOption.priceAdjustments[selectedValue]
-          ) {
-            const adjustment = customOption.priceAdjustments[selectedValue];
-            totalAdjustment += adjustment;
-          }
-        }
-      );
-    }
-
-    // 向下相容：如果沒有新格式設定，使用舊的續杯邏輯
-    if (
-      totalAdjustment === 0 &&
-      item.selectedCustom &&
-      item.selectedCustom["續杯"] === "是"
-    ) {
-      // 檢查是否已經在新系統中處理過續杯
-      const renewalOption = item.customOptions?.find(
-        (opt) => opt.type === "續杯"
-      );
-      if (
-        !renewalOption ||
-        !renewalOption.priceAdjustments ||
-        !renewalOption.priceAdjustments["是"]
-      ) {
-        totalAdjustment = -20;
-      }
-    }
-
-    const finalPrice = Math.max(basePrice + totalAdjustment, 0);
-    const subtotal = finalPrice * item.quantity;
-
-    return subtotal;
-  };
-
   useEffect(() => {}, [currentView, selectedTable]);
-
-  // 輔助函數：為了相容性，提供 timers 格式給 UI 組件
-  const getTimersForDisplay = () => {
-    const timersForDisplay = {};
-    Object.entries(tableStates).forEach(([tableId, tableState]) => {
-      if (tableState.startTime) {
-        const currentStatus = getTableStatus(tableId);
-
-        // 修改：讓計時器在用餐中、入座和待清理狀態都顯示
-        if (
-          currentStatus === "occupied" ||
-          currentStatus === "seated" ||
-          currentStatus === "ready-to-clean"
-        ) {
-          timersForDisplay[tableId] = tableState.startTime;
-        }
-      }
-    });
-
-    return timersForDisplay;
-  };
-
-  // 輔助函數：為了相容性，提供 orders 格式給 UI 組件
-  const getOrdersForDisplay = () => {
-    const ordersForDisplay = {};
-    Object.entries(tableStates).forEach(([tableId, tableState]) => {
-      if (tableState.orders && Array.isArray(tableState.orders)) {
-        // 檢查是否只有入座標記
-        const onlySeatedMarker =
-          tableState.orders.length === 1 &&
-          tableState.orders[0] &&
-          tableState.orders[0].__seated;
-
-        if (onlySeatedMarker) {
-          ordersForDisplay[tableId] = [{ __seated_only: true }];
-          return;
-        }
-
-        // 過濾掉入座標記，只顯示真正的訂單
-        const realOrders = tableState.orders.filter((item) => {
-          return item && typeof item === "object" && !item.__seated;
-        });
-
-        if (realOrders.length > 0) {
-          ordersForDisplay[tableId] = [realOrders];
-        }
-      }
-    });
-
-    return ordersForDisplay;
-  };
 
   // 從 Firebase 載入所有數據
   useEffect(() => {
@@ -159,6 +76,9 @@ const CafePOSSystem = () => {
       setLoadError(null);
 
       try {
+        //先初始化認證系統
+        await initializeAuth();
+
         // 同時載入所有數據
         const [
           firebaseMenuData,
@@ -219,6 +139,382 @@ const CafePOSSystem = () => {
       }
     });
   }, [tableStates]);
+
+  // ==================== 登入相關處理函數 ====================
+
+  /**
+   * 處理登入成功
+   * @param {string} password - 使用者輸入的密碼
+   */
+  const handleLoginSuccess = async (password) => {
+    try {
+      // 檢查是否被鎖定
+      const { isLocked, timeLeft } = checkLockStatus();
+      if (isLocked) {
+        setLoginError({
+          type: "locked",
+          attemptsLeft: 0,
+          lockUntil: Date.now() + timeLeft,
+          message: "連續錯誤3次，帳戶已鎖定5分鐘",
+          userMessage: "請等待鎖定時間結束後再試，或聯絡店長協助",
+        });
+        setLoginState("locked");
+        return;
+      }
+
+      // 驗證密碼
+      let isValid = false;
+      try {
+        isValid = await verifyPassword(password);
+      } catch (verifyError) {
+        console.error("❌ 密碼驗證過程發生錯誤:", verifyError);
+
+        // 根據錯誤類型提供具體訊息
+        if (
+          verifyError.message.includes("Firebase") ||
+          verifyError.code?.includes("firebase")
+        ) {
+          setLoginError({
+            type: "system",
+            message: "系統連線異常",
+            userMessage:
+              "請檢查網路連線，或稍後再試。若問題持續，請聯絡技術支援",
+            technicalInfo: verifyError.message,
+          });
+        } else if (
+          verifyError.message.includes("auth") ||
+          verifyError.message.includes("password")
+        ) {
+          setLoginError({
+            type: "system",
+            message: "密碼驗證系統異常",
+            userMessage: "系統初始化失敗，請聯絡技術支援",
+            technicalInfo: verifyError.message,
+          });
+        } else {
+          setLoginError({
+            type: "system",
+            message: "未知系統錯誤",
+            userMessage: "系統發生未預期錯誤，請聯絡技術支援",
+            technicalInfo: verifyError.message,
+          });
+        }
+
+        setLoginState("failed");
+        return;
+      }
+
+      if (isValid) {
+        // 設定登入成功狀態
+        setAuthSuccess();
+
+        // 檢查是否需要設定安全問題
+        const { needsSecuritySetup } = await import("./firebase/operations");
+        const needsSetup = await needsSecuritySetup();
+
+        if (needsSetup) {
+          setIsAuthenticated(true); // 先設定為已驗證
+          setCurrentView("securitysetup"); // 跳轉到安全問題設定頁面
+          return;
+        }
+
+        // 記錄登入日誌（可選）
+        try {
+          await logLoginAttempt(true, navigator.userAgent);
+        } catch (logError) {
+          console.warn("登入日誌記錄失敗:", logError);
+        }
+
+        // 切換到已登入狀態
+        setIsAuthenticated(true);
+        setLoginState("login");
+        setLoginError(null);
+      } else {
+        // 處理登入失敗邏輯
+        const failureResult = handleLoginFailureUtil();
+
+        // 記錄失敗日誌
+        try {
+          await logLoginAttempt(false, navigator.userAgent);
+        } catch (logError) {
+          console.warn("登入日誌記錄失敗:", logError);
+        }
+
+        // 根據剩餘次數提供不同訊息
+        if (failureResult.isLocked) {
+          setLoginError({
+            type: "locked",
+            attemptsLeft: 0,
+            lockUntil: failureResult.lockUntil,
+            message: "連續錯誤3次，帳戶已鎖定5分鐘",
+            userMessage:
+              "請等待鎖定時間結束，或確認密碼是否正確。如需協助請聯絡店長",
+          });
+          setLoginState("locked");
+        } else {
+          setLoginError({
+            type: "password",
+            attemptsLeft: failureResult.attemptsLeft,
+            message: "密碼錯誤，請重新輸入",
+            userMessage: `還有 ${failureResult.attemptsLeft} 次機會。請確認密碼是否正確，或嘗試使用忘記密碼功能`,
+          });
+          setLoginState("failed");
+        }
+      }
+    } catch (error) {
+      console.error("❌ 登入處理過程發生錯誤:", error);
+
+      // 顯示通用錯誤訊息
+      setLoginError({
+        type: "system",
+        attemptsLeft: 0,
+        lockUntil: null,
+        message: "系統錯誤",
+        userMessage:
+          "登入過程發生異常，請重新整理頁面後再試。若問題持續，請聯絡技術支援",
+        technicalInfo: error.message,
+      });
+      setLoginState("failed");
+    }
+  };
+
+  /**
+   * 處理登入失敗
+   * @param {Error} error - 錯誤物件
+   */
+  const handleLoginFailure = (error) => {
+    console.error("❌ 登入失敗回調:", error);
+
+    // 這個函數主要用於處理 LoginPage 組件內部的錯誤
+    // 例如網路錯誤、Firebase 連線失敗等
+    setLoginError({
+      attemptsLeft: 0,
+      lockUntil: null,
+      message: "登入處理失敗，請檢查網路連線",
+    });
+    setLoginState("failed");
+  };
+
+  /**
+   * 處理登出
+   */
+  const handleLogout = () => {
+    // 清除所有驗證相關的本地儲存
+    clearAuthData();
+
+    // 重置狀態
+    setIsAuthenticated(false);
+    setLoginState("login");
+    setLoginError(null);
+
+    // 可選：清除其他敏感資料
+    setCurrentOrder([]);
+    setSelectedTable(null);
+    setCurrentView("seating");
+  };
+
+  /**
+   * 初始化認證狀態（在系統啟動時檢查）
+   */
+  const initializeAuth = async () => {
+    try {
+      // 檢查是否有有效的 token
+      const tokenValid = isTokenValid();
+
+      if (tokenValid) {
+        setIsAuthenticated(true);
+        setLoginState("login");
+      } else {
+        // 清除過期的認證資料
+        clearAuthData();
+
+        // 初始化預設密碼（如果需要的話）
+        try {
+          const defaultPassword = await initializeDefaultPassword();
+          if (defaultPassword) {
+          }
+        } catch (error) {
+          console.error("初始化預設密碼失敗:", error);
+          // 不阻擋登入流程
+        }
+      }
+    } catch (error) {
+      console.error("❌ 認證系統初始化失敗:", error);
+      // 發生錯誤時保持未登入狀態
+      setIsAuthenticated(false);
+    }
+  };
+
+  //登入檢查
+  if (!isAuthenticated) {
+    // 處理忘記密碼的頁面
+    if (currentView === "forgotpassword") {
+      return (
+        <ForgotPasswordPage
+          onBack={() => setCurrentView("login")}
+          onResetSuccess={() => {
+            alert("密碼重置成功！請使用新密碼登入");
+            setCurrentView("login");
+          }}
+        />
+      );
+    }
+    if (loginState === "failed" || loginState === "locked") {
+      return (
+        <LoginFailurePage
+          attemptsLeft={loginError?.attemptsLeft || 0}
+          isLocked={loginState === "locked"}
+          lockUntil={loginError?.lockUntil}
+          onRetry={() => setLoginState("login")}
+          onBackToLogin={() => setLoginState("login")}
+          errorInfo={loginError}
+        />
+      );
+    } else {
+      return (
+        <LoginPage
+          onLoginSuccess={handleLoginSuccess}
+          onLoginFailure={handleLoginFailure}
+          onForgotPassword={() => setCurrentView("forgotpassword")}
+          isLoading={false}
+        />
+      );
+    }
+  }
+
+  // 載入中的顯示
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+          <p className="mt-4 text-lg text-gray-600">載入中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 錯誤顯示
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">載入失敗</h2>
+          <p className="text-gray-600 mb-4">{loadError}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            重新載入
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const calculateItemSubtotal = (item) => {
+    let basePrice = item.price || 0;
+    let totalAdjustment = 0;
+
+    // 檢查新格式的價格調整
+    if (item.selectedCustom && item.customOptions) {
+      Object.entries(item.selectedCustom).forEach(
+        ([optionType, selectedValue]) => {
+          if (!selectedValue) return;
+
+          // 找到對應的客製選項設定
+          const customOption = item.customOptions.find(
+            (opt) => opt.type === optionType
+          );
+
+          if (
+            customOption &&
+            customOption.priceAdjustments &&
+            customOption.priceAdjustments[selectedValue]
+          ) {
+            const adjustment = customOption.priceAdjustments[selectedValue];
+            totalAdjustment += adjustment;
+          }
+        }
+      );
+    }
+
+    // 向下相容：如果沒有新格式設定，使用舊的續杯邏輯
+    if (
+      totalAdjustment === 0 &&
+      item.selectedCustom &&
+      item.selectedCustom["續杯"] === "是"
+    ) {
+      // 檢查是否已經在新系統中處理過續杯
+      const renewalOption = item.customOptions?.find(
+        (opt) => opt.type === "續杯"
+      );
+      if (
+        !renewalOption ||
+        !renewalOption.priceAdjustments ||
+        !renewalOption.priceAdjustments["是"]
+      ) {
+        totalAdjustment = -20;
+      }
+    }
+
+    const finalPrice = Math.max(basePrice + totalAdjustment, 0);
+    const subtotal = finalPrice * item.quantity;
+
+    return subtotal;
+  };
+
+  // 輔助函數：為了相容性，提供 timers 格式給 UI 組件
+  const getTimersForDisplay = () => {
+    const timersForDisplay = {};
+    Object.entries(tableStates).forEach(([tableId, tableState]) => {
+      if (tableState.startTime) {
+        const currentStatus = getTableStatus(tableId);
+
+        // 修改：讓計時器在用餐中、入座和待清理狀態都顯示
+        if (
+          currentStatus === "occupied" ||
+          currentStatus === "seated" ||
+          currentStatus === "ready-to-clean"
+        ) {
+          timersForDisplay[tableId] = tableState.startTime;
+        }
+      }
+    });
+
+    return timersForDisplay;
+  };
+
+  // 輔助函數：為了相容性，提供 orders 格式給 UI 組件
+  const getOrdersForDisplay = () => {
+    const ordersForDisplay = {};
+    Object.entries(tableStates).forEach(([tableId, tableState]) => {
+      if (tableState.orders && Array.isArray(tableState.orders)) {
+        // 檢查是否只有入座標記
+        const onlySeatedMarker =
+          tableState.orders.length === 1 &&
+          tableState.orders[0] &&
+          tableState.orders[0].__seated;
+
+        if (onlySeatedMarker) {
+          ordersForDisplay[tableId] = [{ __seated_only: true }];
+          return;
+        }
+
+        // 過濾掉入座標記，只顯示真正的訂單
+        const realOrders = tableState.orders.filter((item) => {
+          return item && typeof item === "object" && !item.__seated;
+        });
+
+        if (realOrders.length > 0) {
+          ordersForDisplay[tableId] = [realOrders];
+        }
+      }
+    });
+
+    return ordersForDisplay;
+  };
 
   // 備用：從 localStorage 載入數據
   const loadFromLocalStorage = () => {
@@ -407,7 +703,6 @@ const CafePOSSystem = () => {
 
     try {
       await saveMenuData(newMenuData);
-      console.log("✅ 菜單儲存到 Firebase 成功");
     } catch (error) {
       console.error("❌ 儲存菜單到 Firebase 失敗:", error);
     }
@@ -1754,36 +2049,16 @@ const CafePOSSystem = () => {
     setCurrentOrder([]);
   };
 
-  // 載入中的顯示
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
-          <p className="mt-4 text-lg text-gray-600">載入中...</p>
-        </div>
-      </div>
-    );
-  }
+  //處理頁面跳轉
+  const handleGoToChangePassword = () => {
+    setCurrentView("changepassword");
+  };
 
-  // 錯誤顯示
-  if (loadError) {
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-500 text-xl mb-4">⚠️</div>
-          <h2 className="text-xl font-bold text-gray-800 mb-2">載入失敗</h2>
-          <p className="text-gray-600 mb-4">{loadError}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          >
-            重新載入
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // 密碼更改成功後可以返回帳戶管理頁面
+  const handlePasswordChanged = () => {
+    alert("密碼已成功更改");
+    setCurrentView("account");
+  };
 
   if (currentView === "menuedit") {
     return (
@@ -1811,6 +2086,38 @@ const CafePOSSystem = () => {
         onBack={() => setCurrentView("seating")}
         onMenuSelect={handleMenuSelect}
         onRefundOrder={handleRefund}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
+  if (currentView === "account") {
+    return (
+      <AccountManagementPage
+        onBack={() => setCurrentView("seating")}
+        onMenuSelect={handleMenuSelect}
+        onChangePassword={handleGoToChangePassword}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
+  // 現在從帳戶管理頁面進入更改密碼頁面路由
+  if (currentView === "changepassword") {
+    return (
+      <ChangePasswordPage
+        onBack={() => setCurrentView("account")}
+        onPasswordChanged={handlePasswordChanged}
+      />
+    );
+  }
+
+  // 初始設定安全問題頁面
+  if (currentView === "securitysetup") {
+    return (
+      <SetupSecurityQuestionPage
+        onComplete={() => setCurrentView("seating")}
+        onSkip={() => setCurrentView("seating")}
       />
     );
   }
@@ -1921,6 +2228,7 @@ const CafePOSSystem = () => {
           menuData={menuData}
           onReleaseSeat={handleReleaseSeat}
           onMoveTable={() => setShowMoveTableModal(true)}
+          onLogout={handleLogout}
         />
       </>
     );
@@ -1963,6 +2271,7 @@ const CafePOSSystem = () => {
         onTakeoutClick={handleTakeoutClick}
         onNewTakeout={handleNewTakeout}
         onMenuSelect={handleMenuSelect}
+        onLogout={handleLogout}
       />
     </>
   );
