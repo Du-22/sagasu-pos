@@ -26,6 +26,8 @@ const Header = ({
         return <span className="text-lg">⚙️</span>;
       case "export":
         return <span className="text-lg">📤</span>;
+      case "account":
+        return <span className="text-lg">👤</span>;
       default:
         return <Coffee className="w-5 h-5" />;
     }
