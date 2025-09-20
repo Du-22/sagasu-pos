@@ -27,6 +27,7 @@ const Timer = ({ startTime, className = "" }) => {
 
   useEffect(() => {
     if (!startTime) return;
+
     const updateTimer = () => {
       const elapsed = calculateElapsedTime(startTime);
       setDisplayTime(elapsed);
@@ -46,9 +47,7 @@ const Timer = ({ startTime, className = "" }) => {
   }
 
   return (
-    <div
-      className={`text-xs font-mono bg-gray-100 px-2 py-1 rounded ${className}`}
-    >
+    <div className={`text-xs font-mono px-2 py-1 rounded ${className}`}>
       {displayTime}
     </div>
   );
