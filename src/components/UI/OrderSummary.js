@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { CreditCard, Edit3, Banknote, Smartphone } from "lucide-react";
 import OrderItem from "./OrderItem";
+import { calculateItemPrice } from "../../utils/priceCalculations";
 
 const OrderSummary = ({
   currentOrder,
@@ -30,51 +31,8 @@ const OrderSummary = ({
 
   // 使用與 CafePOSSystem 相同的價格計算邏輯
   const getItemSubtotal = (item) => {
-    let basePrice = item.price || 0;
-    let totalAdjustment = 0;
-
-    // 檢查新格式的價格調整
-    if (item.selectedCustom && item.customOptions) {
-      Object.entries(item.selectedCustom).forEach(
-        ([optionType, selectedValue]) => {
-          if (!selectedValue) return;
-
-          const customOption = item.customOptions.find(
-            (opt) => opt.type === optionType
-          );
-
-          if (
-            customOption &&
-            customOption.priceAdjustments &&
-            customOption.priceAdjustments[selectedValue]
-          ) {
-            const adjustment = customOption.priceAdjustments[selectedValue];
-            totalAdjustment += adjustment;
-          }
-        }
-      );
-    }
-
-    // 向下相容：續杯邏輯
-    if (
-      totalAdjustment === 0 &&
-      item.selectedCustom &&
-      item.selectedCustom["續杯"] === "是"
-    ) {
-      const renewalOption = item.customOptions?.find(
-        (opt) => opt.type === "續杯"
-      );
-      if (
-        !renewalOption ||
-        !renewalOption.priceAdjustments ||
-        !renewalOption.priceAdjustments["是"]
-      ) {
-        totalAdjustment = -20;
-      }
-    }
-
-    const finalPrice = Math.max(basePrice + totalAdjustment, 0);
-    return finalPrice * item.quantity;
+    const priceInfo = calculateItemPrice(item);
+    return priceInfo.subtotal;
   };
 
   // 修正：將扁平化的訂單按時間分組，模擬批次顯示

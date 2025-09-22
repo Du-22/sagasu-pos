@@ -32,18 +32,25 @@ import {
   verifyPassword,
 } from "./firebase/operations";
 
-import {
-  checkLockStatus,
-  setAuthSuccess,
-  handleLoginFailure as handleLoginFailureUtil,
-  clearAuthData,
-  isTokenValid,
-} from "./auth/utils";
+import useAuth from "./components/hooks/useAuth";
 
 const CafePOSSystem = () => {
   const [currentFloor, setCurrentFloor] = useState("1F");
   const [selectedTable, setSelectedTable] = useState(null);
   const [currentView, setCurrentView] = useState("seating");
+
+  // 認證相關
+  const {
+    isAuthenticated,
+    loginState,
+    loginError,
+    handleLoginSuccess,
+    handleLoginFailure,
+    handleLogout,
+    handleGoToChangePassword,
+    handlePasswordChanged,
+    resetLoginState,
+  } = useAuth(setCurrentView);
 
   // 數據結構：tableStates 包含 orders + timers + status
   const [tableStates, setTableStates] = useState({});
@@ -61,9 +68,6 @@ const CafePOSSystem = () => {
   const [pendingSeatTable, setPendingSeatTable] = useState(null);
 
   // 載入狀態
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loginState, setLoginState] = useState("login");
-  const [loginError, setLoginError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
@@ -76,9 +80,6 @@ const CafePOSSystem = () => {
       setLoadError(null);
 
       try {
-        //先初始化認證系統
-        await initializeAuth();
-
         // 同時載入所有數據
         const [
           firebaseMenuData,
@@ -141,209 +142,6 @@ const CafePOSSystem = () => {
 
   // ==================== 登入相關處理函數 ====================
 
-  /**
-   * 處理登入成功
-   * @param {string} password - 使用者輸入的密碼
-   */
-  const handleLoginSuccess = async (password) => {
-    try {
-      // 檢查是否被鎖定
-      const { isLocked, timeLeft } = checkLockStatus();
-      if (isLocked) {
-        setLoginError({
-          type: "locked",
-          attemptsLeft: 0,
-          lockUntil: Date.now() + timeLeft,
-          message: "連續錯誤3次，帳戶已鎖定5分鐘",
-          userMessage: "請等待鎖定時間結束後再試，或聯絡店長協助",
-        });
-        setLoginState("locked");
-        return;
-      }
-
-      // 驗證密碼
-      let isValid = false;
-      try {
-        isValid = await verifyPassword(password);
-      } catch (verifyError) {
-        console.error("❌ 密碼驗證過程發生錯誤:", verifyError);
-
-        // 根據錯誤類型提供具體訊息
-        if (
-          verifyError.message.includes("Firebase") ||
-          verifyError.code?.includes("firebase")
-        ) {
-          setLoginError({
-            type: "system",
-            message: "系統連線異常",
-            userMessage:
-              "請檢查網路連線，或稍後再試。若問題持續，請聯絡技術支援",
-            technicalInfo: verifyError.message,
-          });
-        } else if (
-          verifyError.message.includes("auth") ||
-          verifyError.message.includes("password")
-        ) {
-          setLoginError({
-            type: "system",
-            message: "密碼驗證系統異常",
-            userMessage: "系統初始化失敗，請聯絡技術支援",
-            technicalInfo: verifyError.message,
-          });
-        } else {
-          setLoginError({
-            type: "system",
-            message: "未知系統錯誤",
-            userMessage: "系統發生未預期錯誤，請聯絡技術支援",
-            technicalInfo: verifyError.message,
-          });
-        }
-
-        setLoginState("failed");
-        return;
-      }
-
-      if (isValid) {
-        // 設定登入成功狀態
-        setAuthSuccess();
-
-        // 檢查是否需要設定安全問題
-        const { needsSecuritySetup } = await import("./firebase/operations");
-        const needsSetup = await needsSecuritySetup();
-
-        if (needsSetup) {
-          setIsAuthenticated(true); // 先設定為已驗證
-          setCurrentView("securitysetup"); // 跳轉到安全問題設定頁面
-          return;
-        }
-
-        // 記錄登入日誌（可選）
-        try {
-          await logLoginAttempt(true, navigator.userAgent);
-        } catch (logError) {
-          console.warn("登入日誌記錄失敗:", logError);
-        }
-
-        // 切換到已登入狀態
-        setIsAuthenticated(true);
-        setLoginState("login");
-        setLoginError(null);
-      } else {
-        // 處理登入失敗邏輯
-        const failureResult = handleLoginFailureUtil();
-
-        // 記錄失敗日誌
-        try {
-          await logLoginAttempt(false, navigator.userAgent);
-        } catch (logError) {
-          console.warn("登入日誌記錄失敗:", logError);
-        }
-
-        // 根據剩餘次數提供不同訊息
-        if (failureResult.isLocked) {
-          setLoginError({
-            type: "locked",
-            attemptsLeft: 0,
-            lockUntil: failureResult.lockUntil,
-            message: "連續錯誤3次，帳戶已鎖定5分鐘",
-            userMessage:
-              "請等待鎖定時間結束，或確認密碼是否正確。如需協助請聯絡店長",
-          });
-          setLoginState("locked");
-        } else {
-          setLoginError({
-            type: "password",
-            attemptsLeft: failureResult.attemptsLeft,
-            message: "密碼錯誤，請重新輸入",
-            userMessage: `還有 ${failureResult.attemptsLeft} 次機會。請確認密碼是否正確，或嘗試使用忘記密碼功能`,
-          });
-          setLoginState("failed");
-        }
-      }
-    } catch (error) {
-      console.error("❌ 登入處理過程發生錯誤:", error);
-
-      // 顯示通用錯誤訊息
-      setLoginError({
-        type: "system",
-        attemptsLeft: 0,
-        lockUntil: null,
-        message: "系統錯誤",
-        userMessage:
-          "登入過程發生異常，請重新整理頁面後再試。若問題持續，請聯絡技術支援",
-        technicalInfo: error.message,
-      });
-      setLoginState("failed");
-    }
-  };
-
-  /**
-   * 處理登入失敗
-   * @param {Error} error - 錯誤物件
-   */
-  const handleLoginFailure = (error) => {
-    console.error("❌ 登入失敗回調:", error);
-
-    // 這個函數主要用於處理 LoginPage 組件內部的錯誤
-    // 例如網路錯誤、Firebase 連線失敗等
-    setLoginError({
-      attemptsLeft: 0,
-      lockUntil: null,
-      message: "登入處理失敗，請檢查網路連線",
-    });
-    setLoginState("failed");
-  };
-
-  /**
-   * 處理登出
-   */
-  const handleLogout = () => {
-    // 清除所有驗證相關的本地儲存
-    clearAuthData();
-
-    // 重置狀態
-    setIsAuthenticated(false);
-    setLoginState("login");
-    setLoginError(null);
-
-    // 清除其他敏感資料
-    setCurrentOrder([]);
-    setSelectedTable(null);
-    setCurrentView("seating");
-  };
-
-  /**
-   * 初始化認證狀態（在系統啟動時檢查）
-   */
-  const initializeAuth = async () => {
-    try {
-      // 檢查是否有有效的 token
-      const tokenValid = isTokenValid();
-
-      if (tokenValid) {
-        setIsAuthenticated(true);
-        setLoginState("login");
-      } else {
-        // 清除過期的認證資料
-        clearAuthData();
-
-        // 初始化預設密碼（如果需要的話）
-        try {
-          const defaultPassword = await initializeDefaultPassword();
-          if (defaultPassword) {
-          }
-        } catch (error) {
-          console.error("初始化預設密碼失敗:", error);
-          // 不阻擋登入流程
-        }
-      }
-    } catch (error) {
-      console.error("❌ 認證系統初始化失敗:", error);
-      // 發生錯誤時保持未登入狀態
-      setIsAuthenticated(false);
-    }
-  };
-
   //登入檢查
   if (!isAuthenticated) {
     // 處理忘記密碼的頁面
@@ -364,8 +162,8 @@ const CafePOSSystem = () => {
           attemptsLeft={loginError?.attemptsLeft || 0}
           isLocked={loginState === "locked"}
           lockUntil={loginError?.lockUntil}
-          onRetry={() => setLoginState("login")}
-          onBackToLogin={() => setLoginState("login")}
+          onRetry={() => resetLoginState()}
+          onBackToLogin={() => resetLoginState()}
           errorInfo={loginError}
         />
       );
@@ -411,59 +209,6 @@ const CafePOSSystem = () => {
       </div>
     );
   }
-
-  // // 舊calculateItemSubtotal(保險起見暫且保留)
-  // const calculateItemSubtotal = (item) => {
-  //   let basePrice = item.price || 0;
-  //   let totalAdjustment = 0;
-
-  //   // 檢查新格式的價格調整
-  //   if (item.selectedCustom && item.customOptions) {
-  //     Object.entries(item.selectedCustom).forEach(
-  //       ([optionType, selectedValue]) => {
-  //         if (!selectedValue) return;
-
-  //         // 找到對應的客製選項設定
-  //         const customOption = item.customOptions.find(
-  //           (opt) => opt.type === optionType
-  //         );
-
-  //         if (
-  //           customOption &&
-  //           customOption.priceAdjustments &&
-  //           customOption.priceAdjustments[selectedValue]
-  //         ) {
-  //           const adjustment = customOption.priceAdjustments[selectedValue];
-  //           totalAdjustment += adjustment;
-  //         }
-  //       }
-  //     );
-  //   }
-
-  //   // 向下相容：如果沒有新格式設定，使用舊的續杯邏輯
-  //   if (
-  //     totalAdjustment === 0 &&
-  //     item.selectedCustom &&
-  //     item.selectedCustom["續杯"] === "是"
-  //   ) {
-  //     // 檢查是否已經在新系統中處理過續杯
-  //     const renewalOption = item.customOptions?.find(
-  //       (opt) => opt.type === "續杯"
-  //     );
-  //     if (
-  //       !renewalOption ||
-  //       !renewalOption.priceAdjustments ||
-  //       !renewalOption.priceAdjustments["是"]
-  //     ) {
-  //       totalAdjustment = -20;
-  //     }
-  //   }
-
-  //   const finalPrice = Math.max(basePrice + totalAdjustment, 0);
-  //   const subtotal = finalPrice * item.quantity;
-
-  //   return subtotal;
-  // };
 
   // 輔助函數：為了相容性，提供 timers 格式給 UI 組件
   const getTimersForDisplay = () => {
@@ -794,7 +539,6 @@ const CafePOSSystem = () => {
     return `G${dateStr}${timeStr}${randomStr}`;
   };
 
-  // // 舊createHistoryRecord(保險起見暫且保留)
   // const createHistoryRecord = (
   //   tableId,
   //   orderData,
@@ -1346,18 +1090,24 @@ const CafePOSSystem = () => {
   };
 
   const addToOrder = (item) => {
+    // 生成唯一識別碼，包含客製選項
+    const generateUniqueId = (item) => {
+      if (item.selectedCustom && Object.keys(item.selectedCustom).length > 0) {
+        return `${item.id}-${JSON.stringify(item.selectedCustom)}`;
+      }
+      return item.id.toString();
+    };
+
+    const uniqueId = generateUniqueId(item);
+
     const existingItem = currentOrder.find(
-      (orderItem) =>
-        orderItem.id === item.id &&
-        JSON.stringify(orderItem.selectedCustom || {}) ===
-          JSON.stringify(item.selectedCustom || {})
+      (orderItem) => orderItem.uniqueId === uniqueId
     );
+
     if (existingItem) {
       setCurrentOrder(
         currentOrder.map((orderItem) =>
-          orderItem.id === item.id &&
-          JSON.stringify(orderItem.selectedCustom || {}) ===
-            JSON.stringify(item.selectedCustom || {})
+          orderItem.uniqueId === uniqueId
             ? { ...orderItem, quantity: orderItem.quantity + 1 }
             : orderItem
         )
@@ -1365,26 +1115,35 @@ const CafePOSSystem = () => {
     } else {
       setCurrentOrder([
         ...currentOrder,
-        { ...item, quantity: 1, customOptions: item.customOptions },
+        {
+          ...item,
+          uniqueId: uniqueId,
+          quantity: 1,
+          customOptions: item.customOptions,
+        },
       ]);
     }
   };
 
-  const updateQuantity = (itemId, quantity) => {
+  const updateQuantity = (uniqueId, quantity) => {
     if (quantity <= 0) {
-      setCurrentOrder(currentOrder.filter((item) => item.id !== itemId));
+      setCurrentOrder(
+        currentOrder.filter((item) => item.uniqueId !== uniqueId)
+      );
     } else {
       setCurrentOrder(
         currentOrder.map((item) =>
-          item.id === itemId ? { ...item, quantity } : item
+          item.uniqueId === uniqueId ? { ...item, quantity } : item
         )
       );
     }
   };
 
   // removeFromOrder（使用新數據結構）
-  const removeFromOrder = async (itemId) => {
-    const removingItem = currentOrder.find((item) => item.id === itemId);
+  const removeFromOrder = async (uniqueId) => {
+    const removingItem = currentOrder.find(
+      (item) => item.uniqueId === uniqueId
+    );
 
     if (removingItem && removingItem.isEditing) {
       if (removingItem.isTakeout) {
@@ -1453,10 +1212,9 @@ const CafePOSSystem = () => {
     }
 
     // 從當前訂單中移除項目
-    setCurrentOrder(currentOrder.filter((item) => item.id !== itemId));
+    setCurrentOrder(currentOrder.filter((item) => item.uniqueId !== uniqueId));
   };
 
-  // // 舊checkout (保險起見暫且保留)
   // const checkout = async (paymentMethod = "cash", partialSelection = null) => {
   //   if (!selectedTable) return;
 
@@ -2464,17 +2222,6 @@ const CafePOSSystem = () => {
     setCurrentView("seating");
     setSelectedTable(null);
     setCurrentOrder([]);
-  };
-
-  //處理頁面跳轉
-  const handleGoToChangePassword = () => {
-    setCurrentView("changepassword");
-  };
-
-  // 密碼更改成功後可以返回帳戶管理頁面
-  const handlePasswordChanged = () => {
-    alert("密碼已成功更改");
-    setCurrentView("account");
   };
 
   if (currentView === "menuedit") {
