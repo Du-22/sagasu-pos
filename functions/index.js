@@ -9,34 +9,7 @@ const createCsvWriter = require("csv-writer").createArrayCsvWriter;
 initializeApp();
 const db = getFirestore();
 
-// 測試用的 HTTP Function
-exports.helloWorld = onRequest((request, response) => {
-  response.send("Hello from SAGASU POS Functions! 🚀");
-});
-
-// 測試用的可呼叫 Function
-exports.testConnection = onCall(async (request) => {
-  try {
-    // 測試 Firestore 連接
-    const testDoc = await db.collection("test").add({
-      timestamp: new Date(),
-      message: "Functions 連接測試成功！",
-    });
-
-    return {
-      success: true,
-      message: "Firebase Functions 運作正常！",
-      docId: testDoc.id,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error.message,
-    };
-  }
-});
-
-console.log("📧 SAGASU POS Dev Functions 已載入 [開發環境]");
+console.log("📧 SAGASU POS Dev Functions 已載入 [正式環境]");
 
 // ==================== 統計分析函數 ====================
 
@@ -468,35 +441,6 @@ const createEmailTransporter = () => {
 
 // ==================== Firebase Functions ====================
 
-// 測試 CSV 轉換的 Function
-exports.testCSV = onCall(async (request) => {
-  try {
-    // 從 Firestore 讀取一些測試數據
-    const salesRef = db.collection("stores/default_store/sales");
-    const snapshot = await salesRef.orderBy("timestamp", "desc").limit(5).get();
-
-    const salesData = [];
-    snapshot.forEach((doc) => {
-      salesData.push({ id: doc.id, ...doc.data() });
-    });
-
-    // 轉換為 CSV 格式
-    const csvData = convertSalesDataToCSV(salesData);
-
-    return {
-      success: true,
-      message: `成功轉換 ${salesData.length} 筆資料為 CSV 格式`,
-      csvRowCount: csvData.length,
-      sampleData: csvData.slice(0, 3), // 回傳前3行作為範例
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error.message,
-    };
-  }
-});
-
 // 發送 CSV 報表的 Function
 exports.sendCSVReport = onCall(async (request) => {
   try {
@@ -778,24 +722,33 @@ exports.weeklyReport = onSchedule("0 11 * * 0", async () => {
   try {
     console.log("開始執行週報自動發送...");
 
-    // 計算上一週的日期範圍 (週一到週日)
+    // 計算本週的日期範圍 (週一到週日)
     const now = new Date();
-    const lastSunday = new Date(now);
-    lastSunday.setDate(now.getDate() - now.getDay()); // 本週日
-    lastSunday.setDate(lastSunday.getDate() - 7); // 上週日
+    const currentDay = now.getDay();
 
-    const lastMonday = new Date(lastSunday);
-    lastMonday.setDate(lastSunday.getDate() - 6); // 上週一
+    // 計算本週一
+    const daysFromMonday = currentDay === 0 ? 6 : currentDay - 1; // 如果今天是週日，則回推6天
+    const thisMonday = new Date(now);
+    thisMonday.setDate(now.getDate() - daysFromMonday); // 本週一
 
-    const startDate = lastMonday.toISOString().split("T")[0];
-    const endDate = lastSunday.toISOString().split("T")[0];
+    // 計算本週日(今天)
+    const thisSunday = new Date(now);
+    if (currentDay !== 0) {
+      // 如果今天不是週日，計算到週日
+      thisSunday.setDate(thisMonday.getDate() + (7 - currentDay));
+    }
+
+    currentDay.setDate = thisMonday.toISOString().split("T")[0];
+    const endDate = thisSunday.toISOString().split("T")[0];
 
     console.log(`週報期間: ${startDate} ~ ${endDate}`);
+    console.log(
+      `執行期間: ${now.toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })}`
+    );
 
     // 設定收件人清單（可以從環境變數或固定設定讀取）
 
     const recipients = ["sagasucoffee@gmail.com"];
-
 
     // 對每個收件人發送週報
     const sendPromises = recipients.map((email) =>
@@ -814,6 +767,8 @@ exports.weeklyReport = onSchedule("0 11 * * 0", async () => {
       message: `週報自動發送完成 (${startDate} ~ ${endDate})`,
       sent: successCount,
       failed: failCount,
+      executionTime: now.toISOString(),
+      period: { startDate, endDate },
     };
   } catch (error) {
     console.error("週報自動發送失敗:", error);
@@ -839,18 +794,20 @@ exports.monthlyReport = onSchedule("0 11 28-31 * *", async () => {
       console.log("確認今天是月底，執行月報發送");
 
       // 計算上個月的日期範圍
-      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+      const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1); // 本月第一天
+      const thisMonthEnd = new Date(now); // 本月最後一天（今天）
 
-      const startDate = lastMonth.toISOString().split("T")[0];
-      const endDate = lastMonthEnd.toISOString().split("T")[0];
+      const startDate = thisMonthStart.toISOString().split("T")[0];
+      const endDate = thisMonthEnd.toISOString().split("T")[0];
 
       console.log(`月報期間: ${startDate} ~ ${endDate}`);
+      console.log(
+        `執行期間: ${now.toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })}`
+      );
 
       // 設定收件人清單
 
       const recipients = ["sagasucoffee@gmail.com"];
-
 
       // 對每個收件人發送月報
       const sendPromises = recipients.map((email) =>
@@ -871,6 +828,8 @@ exports.monthlyReport = onSchedule("0 11 28-31 * *", async () => {
         message: `月報自動發送完成 (${startDate} ~ ${endDate})`,
         sent: successCount,
         failed: failCount,
+        executionTime: now.toISOString(),
+        period: { startDate, endDate },
       };
     } else {
       console.log("今天不是月底最後一天，跳過月報發送");
@@ -1066,125 +1025,3 @@ function generateAutomaticReportEmail(
     </div>
   `;
 }
-
-// // ==================== 手動觸發自動報表（測試用）====================
-
-// /**
-//  * 手動觸發週報發送（測試用）
-//  */
-// exports.triggerWeeklyReport = onCall(async (request) => {
-//   try {
-//     console.log("手動觸發週報測試...");
-
-//     // 使用測試日期範圍（最近 7 天）
-//     const endDate = new Date();
-//     const startDate = new Date();
-//     startDate.setDate(endDate.getDate() - 7);
-
-//     const startDateStr = startDate.toISOString().split("T")[0];
-//     const endDateStr = endDate.toISOString().split("T")[0];
-
-//     const result = await sendAutomaticReport(
-//       "測試週報",
-//       "du88215@gmail.com",
-//       startDateStr,
-//       endDateStr
-//     );
-
-//     return {
-//       success: true,
-//       message: "手動週報測試發送完成",
-//       result: result,
-//     };
-//   } catch (error) {
-//     return { success: false, error: error.message };
-//   }
-// });
-
-// /**
-//  * 手動觸發月報發送（測試用）
-//  */
-// exports.triggerMonthlyReport = onCall(async (request) => {
-//   try {
-//     console.log("手動觸發月報測試...");
-
-//     // 使用測試日期範圍（最近 30 天）
-//     const endDate = new Date();
-//     const startDate = new Date();
-//     startDate.setDate(endDate.getDate() - 30);
-
-//     const startDateStr = startDate.toISOString().split("T")[0];
-//     const endDateStr = endDate.toISOString().split("T")[0];
-
-//     const result = await sendAutomaticReport(
-//       "測試月報",
-//       "du88215@gmail.com",
-//       startDateStr,
-//       endDateStr
-//     );
-
-//     return {
-//       success: true,
-//       message: "手動月報測試發送完成",
-//       result: result,
-//     };
-//   } catch (error) {
-//     return { success: false, error: error.message };
-//   }
-// });
-
-// ==================== 統計測試函數 ====================
-
-/**
- * 測試統計函數的 Firebase Function
- */
-exports.testStatistics = onCall(async (request) => {
-  try {
-    console.log("開始測試統計函數...");
-
-    // 取得最近7天的銷售資料
-    const salesRef = db.collection("stores/default_store/sales");
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-    const endDate = new Date().toISOString().split("T")[0];
-    const startDate = sevenDaysAgo.toISOString().split("T")[0];
-
-    const snapshot = await salesRef
-      .where("date", ">=", startDate)
-      .where("date", "<=", endDate)
-      .get();
-
-    const salesData = [];
-    snapshot.forEach((doc) => {
-      salesData.push({ id: doc.id, ...doc.data() });
-    });
-
-    console.log(`取得測試資料：${salesData.length} 筆`);
-
-    // 生成統計資料
-    const statistics = generateReportStatistics(salesData, startDate, endDate);
-
-    return {
-      success: true,
-      message: `成功生成 ${startDate} ~ ${endDate} 的統計資料`,
-      statistics: statistics,
-      testInfo: {
-        dataCount: salesData.length,
-        testedFunctions: [
-          "generateReportStatistics",
-          "generateBasicSummary",
-          "generateRefundStatistics",
-        ],
-        testDate: new Date().toISOString(),
-      },
-    };
-  } catch (error) {
-    console.error("統計函數測試失敗:", error);
-    return {
-      success: false,
-      error: error.message,
-      stack: error.stack,
-    };
-  }
-});
