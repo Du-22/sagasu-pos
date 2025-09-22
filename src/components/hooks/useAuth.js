@@ -11,12 +11,15 @@
 /* eslint-disable no-undef */
 
 import { useState, useEffect } from "react";
-import { clearAuthData, isTokenValid } from "../utils/authStorage";
-import { handleLoginSuccess, handleLoginFailure } from "../utils/loginHandler";
+import { clearAuthData, isTokenValid } from "../../utils/authStorage";
+import {
+  handleLoginSuccess,
+  handleLoginFailure,
+} from "../../utils/loginHandler";
 import {
   handleGoToChangePassword,
   handlePasswordChanged,
-} from "../utils/authNavigation";
+} from "../../utils/authNavigation";
 import { initializeDefaultPassword } from "../../firebase/operations";
 
 const useAuth = () => {

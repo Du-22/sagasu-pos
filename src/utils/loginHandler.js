@@ -10,11 +10,7 @@
 
 import { checkLockStatus, handleLoginFailureUtil } from "./lockManager";
 import { setAuthSuccess } from "./authHelpers";
-import {
-  verifyPassword,
-  logLoginAttempt,
-  initializeDefaultPassword,
-} from "../../firebase/operations";
+import { verifyPassword, logLoginAttempt } from "../firebase/operations";
 
 /**
  * handleLoginSuccess - 處理登入成功的邏輯
@@ -96,7 +92,7 @@ export const handleLoginSuccess = async (
       setAuthSuccess();
 
       // 檢查是否需要設定安全問題
-      const { needsSecuritySetup } = await import("../../firebase/operations");
+      const { needsSecuritySetup } = await import("../firebase/operations");
       const needsSetup = await needsSecuritySetup();
 
       if (needsSetup) {

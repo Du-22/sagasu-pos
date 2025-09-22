@@ -19,7 +19,6 @@ import {
   saveMenuData,
   getTableStates,
   saveTableState,
-  updateTableState,
   deleteTableState,
   getTakeoutOrders,
   saveTakeoutOrders,
@@ -27,9 +26,6 @@ import {
   getSalesHistory,
   addSalesRecord,
   updateSalesRecord,
-  logLoginAttempt,
-  initializeDefaultPassword,
-  verifyPassword,
 } from "./firebase/operations";
 
 import useAuth from "./components/hooks/useAuth";
@@ -963,7 +959,7 @@ const CafePOSSystem = () => {
       }));
 
       // 合併：扁平化結構，不要巢狀陣列
-      const finalOrders = [...existingOrders, ...newItems];
+      let finalOrders = [...existingOrders, ...newItems];
 
       // 驗證：確保沒有巢狀陣列
       const hasNestedArrays = finalOrders.some((item) => Array.isArray(item));
@@ -1049,7 +1045,7 @@ const CafePOSSystem = () => {
         }));
 
       // 合併：扁平化結構，不要巢狀陣列
-      const finalOrders = [...existingOrders, ...newItems];
+      let finalOrders = [...existingOrders, ...newItems];
 
       // 驗證：確保沒有巢狀陣列
       const hasNestedArrays = finalOrders.some((item) => Array.isArray(item));
@@ -1829,7 +1825,7 @@ const CafePOSSystem = () => {
           if (selectedQty <= 0) return;
 
           // 解析 key: "0-itemIndex" 格式
-          const [batchIndex, itemIndexStr] = key.split("-");
+          const [itemIndexStr] = key.split("-");
           const itemIndex = parseInt(itemIndexStr);
 
           // 從未付款商品中查找（這樣索引就對應了）
