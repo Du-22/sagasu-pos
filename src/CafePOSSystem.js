@@ -1083,13 +1083,9 @@ const CafePOSSystem = () => {
       let updateInstructions = [];
 
       if (isPartialCheckout) {
-        // ==================== 🔥 修正：部分結帳邏輯 ====================
+        // ==================== 部分結帳邏輯 ====================
         const { items: selectedItems, quantities: selectedQuantities } =
           partialSelection;
-
-        console.log("🔍 部分結帳 - 未付款商品:", unpaidItems.length, "項");
-        console.log("🔍 選擇項目:", selectedItems);
-        console.log("🔍 選擇數量:", selectedQuantities);
 
         Object.entries(selectedItems).forEach(([key, isSelected]) => {
           if (!isSelected) return;
@@ -1097,16 +1093,9 @@ const CafePOSSystem = () => {
           const selectedQty = selectedQuantities[key] || 1;
           if (selectedQty <= 0) return;
 
-          // 🔥 修正：直接使用 key 作為 unpaidItems 的索引
+          // 直接使用 key 作為 unpaidItems 的索引
           const itemIndex = parseInt(key.split("-")[1] || key);
           const originalItem = unpaidItems[itemIndex];
-
-          console.log(`🔍 處理項目 ${key}:`, {
-            itemIndex,
-            selectedQty,
-            originalItem: originalItem ? originalItem.name : "未找到",
-            availableQty: originalItem ? originalItem.quantity : 0,
-          });
 
           if (!originalItem) {
             console.error(`❌ 找不到索引 ${itemIndex} 的商品`);
@@ -1134,7 +1123,7 @@ const CafePOSSystem = () => {
             customOptions: originalItem.customOptions || null,
           });
 
-          // 🔥 修正：建立更新指令 - 使用在 allItems 中的實際索引
+          // 建立更新指令 - 使用在 allItems 中的實際索引
           const actualIndex = allItems.findIndex(
             (item) => item === originalItem
           );
@@ -1190,9 +1179,6 @@ const CafePOSSystem = () => {
         (sum, item) => sum + item.subtotal,
         0
       );
-
-      console.log("💰 結帳清單:", itemsToCheckout);
-      console.log("💰 更新指令:", updateInstructions);
 
       // ==================== 4. 歷史記錄建立（統一） ====================
       const createHistoryRecord = () => {
@@ -1250,7 +1236,7 @@ const CafePOSSystem = () => {
       const newHistory = [...salesHistory, historyRecord];
       await saveSalesHistoryToFirebase(newHistory);
 
-      // 🔥 修正：更新原始資料
+      // 更新原始資料
       if (type === "takeout") {
         // 外帶資料更新
         const updatedOrders = [...allItems];
@@ -1293,7 +1279,7 @@ const CafePOSSystem = () => {
         };
         await saveTakeoutOrdersToFirebase(newTakeoutOrders);
       } else {
-        // 🔥 修正：內用資料更新
+        // 內用資料更新
         const updatedOrders = [...sourceData.orders];
 
         updateInstructions.forEach(
@@ -1322,18 +1308,12 @@ const CafePOSSystem = () => {
           }
         );
 
-        // 🔥 修正：重新判斷桌位狀態
+        // 重新判斷桌位狀態
         const stillHasUnpaidItems = updatedOrders.some(
           (item) => item && !item.__seated && item.paid === false
         );
 
         const newStatus = stillHasUnpaidItems ? "occupied" : "ready-to-clean";
-
-        console.log("🔍 桌位狀態檢查:", {
-          stillHasUnpaidItems,
-          newStatus,
-          updatedOrdersCount: updatedOrders.length,
-        });
 
         await saveTableStateToFirebase(selectedTable, {
           ...sourceData,
@@ -1353,7 +1333,7 @@ const CafePOSSystem = () => {
           }部分結帳成功！結帳金額：$${total}`
         );
 
-        // 🔥 修正：部分結帳完成後，檢查是否需要返回主頁面
+        // 部分結帳完成後，檢查是否需要返回主頁面
         const remainingUnpaid = allItems.filter(
           (item) => item.paid === false
         ).length;
