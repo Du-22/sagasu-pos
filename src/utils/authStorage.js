@@ -22,8 +22,6 @@ export const clearAuthData = () => {
     localStorage.removeItem("authExpiration");
     localStorage.removeItem("loginAttempts");
     localStorage.removeItem("accountLockUntil");
-
-    console.log("✅ 認證資料已清除");
   } catch (error) {
     console.error("清除認證資料失敗:", error);
   }

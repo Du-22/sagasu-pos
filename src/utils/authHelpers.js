@@ -24,8 +24,6 @@ export const setAuthSuccess = () => {
     const expirationTime = Date.now() + 24 * 60 * 60 * 1000;
     localStorage.setItem("authToken", "authenticated");
     localStorage.setItem("authExpiration", expirationTime.toString());
-
-    console.log("✅ 認證狀態設定成功");
   } catch (error) {
     console.error("設定認證狀態失敗:", error);
   }
