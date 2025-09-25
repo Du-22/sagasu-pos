@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import OrderingPage from "./components/menuData/OrderingPage";
 import SeatingPage from "./components/seatingData/SeatingPage";
+import OrderingPage from "./components/menuData/OrderingPage";
 import HistoryPage from "./components/pages/HistoryPage";
 import MenuEditorPage from "./components/pages/MenuEditorPage";
 import defaultMenuData from "./components/menuData/defaultMenuData";

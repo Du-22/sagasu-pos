@@ -12,7 +12,7 @@ const OrderItemControls = ({ item, onUpdateQuantity, onRemove }) => {
     <div className="flex items-center space-x-2">
       {/* 減少數量按鈕 */}
       <button
-        onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+        onClick={() => onUpdateQuantity(item.uniqueId, item.quantity - 1)}
         className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-sm font-bold transition-colors"
         title="減少數量"
       >
@@ -26,7 +26,7 @@ const OrderItemControls = ({ item, onUpdateQuantity, onRemove }) => {
 
       {/* 增加數量按鈕 */}
       <button
-        onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+        onClick={() => onUpdateQuantity(item.uniqueId, item.quantity + 1)}
         className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-sm font-bold transition-colors"
         title="增加數量"
       >

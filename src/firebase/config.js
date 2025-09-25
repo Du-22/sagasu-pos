@@ -30,11 +30,6 @@ const firebaseConfig = isProduction ? prodConfig : devConfig;
 
 // 在 console 顯示當前使用的環境（僅開發時顯示）
 if (!isProduction) {
-  console.log(
-    "🔧 Firebase Environment:",
-    isProduction ? "Production" : "Development"
-  );
-  console.log("🔧 Using Project ID:", firebaseConfig.projectId);
 }
 
 // 初始化 Firebase

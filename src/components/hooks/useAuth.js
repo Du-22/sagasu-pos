@@ -92,8 +92,6 @@ const useAuth = () => {
     setIsAuthenticated(false);
     setLoginState("login");
     setLoginError(null);
-
-    console.log("使用者已登出");
   };
 
   // 包裝 loginHandler 的函數，傳入狀態設定函數

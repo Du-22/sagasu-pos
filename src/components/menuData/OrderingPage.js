@@ -1,7 +1,7 @@
 import React from "react";
 import Header from "../UI/Header";
 import MenuArea from "../UI/MenuArea";
-import OrderSummary from "../UI/OrderSummary";
+import NewOrderSummary from "../UI/OrderSummary/NewOrderSummary";
 
 const OrderingPage = ({
   selectedTable,
@@ -58,7 +58,7 @@ const OrderingPage = ({
           </button>
         )}
 
-        <OrderSummary
+        <NewOrderSummary
           currentOrder={currentOrder}
           confirmedOrdersBatches={confirmedOrdersBatches}
           selectedTable={selectedTable}
