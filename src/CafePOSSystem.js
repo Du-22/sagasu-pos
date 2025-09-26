@@ -12,17 +12,14 @@ import ChangePasswordPage from "./auth/ChangePasswordPage";
 import AccountManagementPage from "./components/pages/AccountManagementPage";
 import SetupSecurityQuestionPage from "./auth/SetupSecurityQuestionPage";
 import ForgotPasswordPage from "./auth/ForgotPasswordPage";
+import useDataManager from "./components/hooks/useDataManager";
 
 // Firebase 操作函數 imports - 使用新版本
 import {
   getMenuData,
   saveMenuData,
   getTableStates,
-  saveTableState,
-  deleteTableState,
   getTakeoutOrders,
-  saveTakeoutOrders,
-  deleteTakeoutOrder,
   getSalesHistory,
   addSalesRecord,
   updateSalesRecord,
@@ -67,6 +64,16 @@ const CafePOSSystem = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
+  // 操作回饋狀態
+  const [operationFeedback, setOperationFeedback] = useState({
+    show: false,
+    message: "",
+    severity: "info",
+  });
+
+  // hook初始化
+  const dataManager = useDataManager();
+
   useEffect(() => {}, [currentView, selectedTable]);
 
   // 從 Firebase 載入所有數據
@@ -99,8 +106,19 @@ const CafePOSSystem = () => {
         }
 
         // 設置桌位狀態（新的整合數據）
+        const loadedTableStates = firebaseTableStates || {};
 
-        setTableStates(firebaseTableStates || {});
+        // 新增：使用新的驗證工具檢查數據完整性
+        const validationResult =
+          dataManager.validateTableData(loadedTableStates);
+        if (validationResult.warnings.length > 0) {
+          console.warn("桌位數據警告:", validationResult.warnings);
+        }
+        if (validationResult.errors.length > 0) {
+          console.error("桌位數據錯誤:", validationResult.errors);
+        }
+
+        setTableStates(loadedTableStates);
 
         // 設置外帶訂單
 
@@ -135,6 +153,14 @@ const CafePOSSystem = () => {
       }
     });
   }, [tableStates]);
+
+  // 操作回饋處理
+  const showOperationFeedback = (message, severity = "info") => {
+    setOperationFeedback({ show: true, message, severity });
+    setTimeout(() => {
+      setOperationFeedback({ show: false, message: "", severity: "info" });
+    }, 3000);
+  };
 
   // ==================== 登入相關處理函數 ====================
 
@@ -208,53 +234,12 @@ const CafePOSSystem = () => {
 
   // 輔助函數：為了相容性，提供 timers 格式給 UI 組件
   const getTimersForDisplay = () => {
-    const timersForDisplay = {};
-    Object.entries(tableStates).forEach(([tableId, tableState]) => {
-      if (tableState.startTime) {
-        const currentStatus = getTableStatus(tableId);
-
-        // 讓計時器在用餐中、入座和待清理狀態都顯示
-        if (
-          currentStatus === "occupied" ||
-          currentStatus === "seated" ||
-          currentStatus === "ready-to-clean"
-        ) {
-          timersForDisplay[tableId] = tableState.startTime;
-        }
-      }
-    });
-
-    return timersForDisplay;
+    return dataManager.getDisplayTimers(tableStates);
   };
 
   // 輔助函數：為了相容性，提供 orders 格式給 UI 組件
   const getOrdersForDisplay = () => {
-    const ordersForDisplay = {};
-    Object.entries(tableStates).forEach(([tableId, tableState]) => {
-      if (tableState.orders && Array.isArray(tableState.orders)) {
-        // 檢查是否只有入座標記
-        const onlySeatedMarker =
-          tableState.orders.length === 1 &&
-          tableState.orders[0] &&
-          tableState.orders[0].__seated;
-
-        if (onlySeatedMarker) {
-          ordersForDisplay[tableId] = [{ __seated_only: true }];
-          return;
-        }
-
-        // 過濾掉入座標記，只顯示真正的訂單
-        const realOrders = tableState.orders.filter((item) => {
-          return item && typeof item === "object" && !item.__seated;
-        });
-
-        if (realOrders.length > 0) {
-          ordersForDisplay[tableId] = [realOrders];
-        }
-      }
-    });
-
-    return ordersForDisplay;
+    return dataManager.getDisplayOrders(tableStates);
   };
 
   // 從 localStorage 載入數據
@@ -320,7 +305,7 @@ const CafePOSSystem = () => {
     };
   };
 
-  // 輔助函數：從訂單推斷桌位狀態
+  // 輔助函數：從訂單推斷桌位狀態(TTOD：目前單純為了loadFromLocalStorage函數服務 待之後修改成組件系統)
   const getTableStatusFromOrders = (orders) => {
     if (!orders || orders.length === 0) return "available";
 
@@ -342,99 +327,121 @@ const CafePOSSystem = () => {
 
   // 儲存桌位狀態到 Firebase
   const saveTableStateToFirebase = async (tableId, updates) => {
-    const currentState = tableStates[tableId] || {};
-    const newState = { ...currentState, ...updates };
-
-    // 在儲存前清理資料
-    const sanitizedState = sanitizeTableData(newState);
-
-    setTableStates((prev) => ({
-      ...prev,
-      [tableId]: sanitizedState,
-    }));
-
     try {
-      await saveTableState(tableId, sanitizedState);
+      const result = await dataManager.saveTableState(
+        tableId,
+        updates,
+        tableStates
+      );
 
-      // 同時保存到 localStorage 作為備份
-      if (sanitizedState.orders) {
-        const oldOrders = JSON.parse(
-          localStorage.getItem("cafeOrders") || "{}"
+      // 處理操作結果
+      if (result.success) {
+        // 完全成功
+        setTableStates((prev) => ({ ...prev, [tableId]: result.data }));
+      } else if (result.hasBackup) {
+        // 部分成功 - 更新 UI 但顯示警告
+        setTableStates((prev) => ({ ...prev, [tableId]: result.data }));
+        showOperationFeedback(
+          result.uiGuidance.message,
+          result.uiGuidance.severity
         );
-        oldOrders[tableId] = sanitizedState.orders;
-        localStorage.setItem("cafeOrders", JSON.stringify(oldOrders));
-      }
-
-      if (sanitizedState.startTime) {
-        const oldTimers = JSON.parse(
-          localStorage.getItem("cafeTimers") || "{}"
+      } else {
+        // 完全失敗
+        showOperationFeedback(
+          result.uiGuidance.message,
+          result.uiGuidance.severity
         );
-        oldTimers[tableId] = sanitizedState.startTime;
-        localStorage.setItem("cafeTimers", JSON.stringify(oldTimers));
+        throw new Error(result.error);
       }
     } catch (error) {
-      console.error("儲存桌位狀態到 Firebase 失敗:", error);
-
-      // 失敗時至少保存到 localStorage
-      if (sanitizedState.orders) {
-        const oldOrders = JSON.parse(
-          localStorage.getItem("cafeOrders") || "{}"
-        );
-        oldOrders[tableId] = sanitizedState.orders;
-        localStorage.setItem("cafeOrders", JSON.stringify(oldOrders));
-      }
+      console.error("❌ 儲存桌位狀態失敗:", error);
+      throw error;
     }
   };
 
   // 刪除桌位狀態
   const deleteTableStateFromFirebase = async (tableId) => {
-    const newTableStates = { ...tableStates };
-    delete newTableStates[tableId];
-    setTableStates(newTableStates);
-
     try {
-      await deleteTableState(tableId);
+      const result = await dataManager.deleteTableState(tableId);
 
-      // 同時從 localStorage 移除
-      const oldOrders = JSON.parse(localStorage.getItem("cafeOrders") || "{}");
-      const oldTimers = JSON.parse(localStorage.getItem("cafeTimers") || "{}");
-      delete oldOrders[tableId];
-      delete oldTimers[tableId];
-      localStorage.setItem("cafeOrders", JSON.stringify(oldOrders));
-      localStorage.setItem("cafeTimers", JSON.stringify(oldTimers));
+      if (result.success || result.hasBackup) {
+        // 成功或部分成功都更新本地狀態
+        const newTableStates = { ...tableStates };
+        delete newTableStates[tableId];
+        setTableStates(newTableStates);
+
+        if (!result.success && result.hasBackup) {
+          showOperationFeedback(
+            result.uiGuidance.message,
+            result.uiGuidance.severity
+          );
+        }
+      } else {
+        // 完全失敗
+        showOperationFeedback(
+          result.uiGuidance.message,
+          result.uiGuidance.severity
+        );
+        throw new Error(result.error);
+      }
     } catch (error) {
-      console.error("刪除桌位狀態失敗:", error);
+      console.error("❌ 刪除桌位狀態失敗:", error);
+      throw error;
     }
   };
 
   // 儲存外帶訂單到 Firebase
   const saveTakeoutOrdersToFirebase = async (newTakeoutOrders) => {
-    setTakeoutOrders(newTakeoutOrders);
-
     try {
-      await saveTakeoutOrders(newTakeoutOrders);
-      localStorage.setItem(
-        "cafeTakeoutOrders",
-        JSON.stringify(newTakeoutOrders)
-      );
+      const result = await dataManager.saveTakeoutOrders(newTakeoutOrders);
+
+      if (result.success || result.hasBackup) {
+        setTakeoutOrders(newTakeoutOrders);
+
+        if (!result.success && result.hasBackup) {
+          showOperationFeedback(
+            result.uiGuidance.message,
+            result.uiGuidance.severity
+          );
+        }
+      } else {
+        showOperationFeedback(
+          result.uiGuidance.message,
+          result.uiGuidance.severity
+        );
+        throw new Error(result.error);
+      }
     } catch (error) {
-      console.error("儲存外帶訂單到 Firebase 失敗:", error);
-      localStorage.setItem(
-        "cafeTakeoutOrders",
-        JSON.stringify(newTakeoutOrders)
-      );
+      console.error("❌ 儲存外帶訂單失敗:", error);
+      throw error;
     }
   };
 
   // 儲存銷售歷史到 Firebase
   const saveSalesHistoryToFirebase = async (newHistory) => {
-    setSalesHistory(newHistory);
-
     try {
-      localStorage.setItem("cafeSalesHistory", JSON.stringify(newHistory));
+      const newRecord = newHistory[newHistory.length - 1]; // 假設新記錄在最後
+      const result = await dataManager.addSalesRecord(newRecord, salesHistory);
+
+      if (result.success || result.hasBackup) {
+        setSalesHistory(result.data);
+
+        if (!result.success && result.hasBackup) {
+          showOperationFeedback(
+            result.uiGuidance.message,
+            result.uiGuidance.severity
+          );
+        }
+      } else {
+        showOperationFeedback(
+          result.uiGuidance.message,
+          result.uiGuidance.severity
+        );
+        throw new Error(result.error);
+      }
     } catch (error) {
-      console.error("儲存銷售歷史到 Firebase 失敗:", error);
-      localStorage.setItem("cafeSalesHistory", JSON.stringify(newHistory));
+      console.error("❌ 儲存銷售歷史失敗:", error);
+      throw error;
     }
   };
 
@@ -522,8 +529,8 @@ const CafePOSSystem = () => {
   const generateHistoryId = () => {
     const now = new Date();
     const dateStr = now.toISOString().split("T")[0].replace(/-/g, "");
-    const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, "");
-    const randomStr = Math.random().toString(36).substr(2, 3).toUpperCase();
+    const timeStr = now.getTime().toString();
+    const randomStr = Math.random().toString(36).substr(2, 4).toUpperCase();
     return `H${dateStr}${timeStr}${randomStr}`;
   };
 
@@ -602,10 +609,24 @@ const CafePOSSystem = () => {
       setCurrentView("ordering");
     } else if (orderData && orderData.paid) {
       try {
-        await deleteTakeoutOrder(takeoutId);
-        const newTakeoutOrders = { ...takeoutOrders };
-        delete newTakeoutOrders[takeoutId];
-        await saveTakeoutOrdersToFirebase(newTakeoutOrders);
+        const result = await dataManager.deleteTakeoutOrder(
+          takeoutId,
+          takeoutOrders
+        );
+        if (result.success || result.hasBackup) {
+          setTakeoutOrders(result.data);
+          if (!result.success && result.hasBackup) {
+            showOperationFeedback(
+              result.uiGuidance.message,
+              result.uiGuidance.severity
+            );
+          }
+        } else {
+          showOperationFeedback(
+            result.uiGuidance.message,
+            result.uiGuidance.severity
+          );
+        }
       } catch (error) {
         console.error("刪除外帶訂單失敗:", error);
       }
@@ -1678,6 +1699,21 @@ const CafePOSSystem = () => {
 
   return (
     <>
+      {/* 操作回饋UI */}
+      {operationFeedback.show && (
+        <div
+          className={`fixed top-4 right-4 z-50 px-4 py-2 rounded shadow-lg ${
+            operationFeedback.severity === "error"
+              ? "bg-red-500 text-white"
+              : operationFeedback.severity === "warning"
+              ? "bg-yellow-500 text-black"
+              : "bg-green-500 text-white"
+          }`}
+        >
+          {operationFeedback.message}
+        </div>
+      )}
+
       {showSeatConfirmModal && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 shadow-lg min-w-[300px]">
