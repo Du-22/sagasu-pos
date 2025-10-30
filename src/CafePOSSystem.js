@@ -20,7 +20,7 @@ import {
   saveMenuData,
   getTableStates,
   getTakeoutOrders,
-  getSalesHistory,
+  getSalesHistoryByDate,
   addSalesRecord,
   updateSalesRecord,
 } from "./firebase/operations";
@@ -83,24 +83,51 @@ const CafePOSSystem = () => {
       setLoadError(null);
 
       try {
-        // 同時載入所有數據
+        // ==================== 1. 檢查 localStorage 快取 ====================
+        const savedHistory = localStorage.getItem("cafeSalesHistory");
+        let hasCachedData = false;
+
+        if (savedHistory) {
+          try {
+            const parsed = JSON.parse(savedHistory);
+            if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+              setSalesHistory(parsed);
+              hasCachedData = true;
+            }
+          } catch (e) {
+            console.warn("⚠️ localStorage 銷售記錄解析失敗:", e);
+          }
+        }
+
+        // ==================== 2. 載入必要資料 ====================
         const [
           firebaseMenuData,
           firebaseTableStates,
           firebaseTakeoutOrders,
-          firebaseSalesHistory,
+          recentSalesHistory,
         ] = await Promise.all([
           getMenuData(),
           getTableStates(),
           getTakeoutOrders(),
-          getSalesHistory(),
+          // ✅ 如果沒有快取，從 Firebase 載入最近 30 天
+          hasCachedData
+            ? Promise.resolve(null)
+            : (async () => {
+                const today = new Date();
+                const thirtyDaysAgo = new Date(today);
+                thirtyDaysAgo.setDate(today.getDate() - 30);
+
+                const endDate = today.toISOString().split("T")[0];
+                const startDate = thirtyDaysAgo.toISOString().split("T")[0];
+
+                return getSalesHistoryByDate(startDate, endDate);
+              })(),
         ]);
 
         // 設置菜單數據
         if (firebaseMenuData && firebaseMenuData.length > 0) {
           setMenuData(firebaseMenuData);
         } else {
-          console.log("📋 首次使用，儲存預設菜單到 Firebase");
           await saveMenuData(defaultMenuData);
           setMenuData(defaultMenuData);
         }
@@ -121,13 +148,19 @@ const CafePOSSystem = () => {
         setTableStates(loadedTableStates);
 
         // 設置外帶訂單
-
         setTakeoutOrders(firebaseTakeoutOrders || {});
 
-        // 設置銷售歷史
-
-        setSalesHistory(firebaseSalesHistory || []);
-        console.log("✅ 所有數據載入完成");
+        // ==================== 3. 設置銷售歷史（如果沒有快取） ====================
+        if (!hasCachedData && recentSalesHistory) {
+          setSalesHistory(recentSalesHistory);
+          // ✅ 儲存到 localStorage 供下次快速啟動
+          localStorage.setItem(
+            "cafeSalesHistory",
+            JSON.stringify(recentSalesHistory)
+          );
+        } else if (!hasCachedData) {
+          setSalesHistory([]);
+        }
       } catch (error) {
         console.error("❌ 載入數據失敗:", error);
         setLoadError("載入數據失敗，請檢查網路連線");
@@ -1545,7 +1578,6 @@ const CafePOSSystem = () => {
   if (currentView === "history") {
     return (
       <HistoryPage
-        salesHistory={salesHistory}
         onBack={() => setCurrentView("seating")}
         onMenuSelect={handleMenuSelect}
         onRefundOrder={handleRefund}
