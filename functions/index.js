@@ -9,7 +9,7 @@ const createCsvWriter = require("csv-writer").createArrayCsvWriter;
 initializeApp();
 const db = getFirestore();
 
-console.log("📧 SAGASU POS Dev Functions 已載入 [正式環境]");
+console.log("📧 SAGASU POS Functions 已載入");
 
 // ==================== 統計分析函數 ====================
 
@@ -722,23 +722,19 @@ exports.weeklyReport = onSchedule("0 11 * * 0", async () => {
   try {
     console.log("開始執行週報自動發送...");
 
-    // 計算本週的日期範圍 (週一到週日)
+    // 獲取當前時間
     const now = new Date();
-    const currentDay = now.getDay();
 
-    // 計算本週一
-    const daysFromMonday = currentDay === 0 ? 6 : currentDay - 1; // 如果今天是週日，則回推6天
+    // 計算本週一（今天往前推 6 天）
     const thisMonday = new Date(now);
-    thisMonday.setDate(now.getDate() - daysFromMonday); // 本週一
+    thisMonday.setDate(now.getDate() - 6);
+    thisMonday.setHours(0, 0, 0, 0);
 
-    // 計算本週日(今天)
+    // 計算本週日（今天）
     const thisSunday = new Date(now);
-    if (currentDay !== 0) {
-      // 如果今天不是週日，計算到週日
-      thisSunday.setDate(thisMonday.getDate() + (7 - currentDay));
-    }
+    thisSunday.setHours(23, 59, 59, 999);
 
-    currentDay.setDate = thisMonday.toISOString().split("T")[0];
+    const startDate = thisMonday.toISOString().split("T")[0];
     const endDate = thisSunday.toISOString().split("T")[0];
 
     console.log(`週報期間: ${startDate} ~ ${endDate}`);
@@ -748,7 +744,7 @@ exports.weeklyReport = onSchedule("0 11 * * 0", async () => {
 
     // 設定收件人清單（可以從環境變數或固定設定讀取）
 
-    const recipients = ["sagasucoffee@gmail.com"];
+    const recipients = ["sagasucoffee@gmail.com", "du88215@gmail.com"];
 
     // 對每個收件人發送週報
     const sendPromises = recipients.map((email) =>
@@ -807,7 +803,7 @@ exports.monthlyReport = onSchedule("0 11 28-31 * *", async () => {
 
       // 設定收件人清單
 
-      const recipients = ["sagasucoffee@gmail.com"];
+      const recipients = ["sagasucoffee@gmail.com", "du88215@gmail.com"];
 
       // 對每個收件人發送月報
       const sendPromises = recipients.map((email) =>

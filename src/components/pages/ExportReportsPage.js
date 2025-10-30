@@ -446,20 +446,6 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
                 系統會自動在指定時間發送報表，無需手動操作。
               </p>
             </div>
-            {/* <div className="flex space-x-3">
-              <button
-                onClick={testWeeklyReport}
-                className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-              >
-                測試週報
-              </button>
-              <button
-                onClick={testMonthlyReport}
-                className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors"
-              >
-                測試月報
-              </button>
-            </div> */}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

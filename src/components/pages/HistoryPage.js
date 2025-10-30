@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from "react";
 import Header from "../UI/Header";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { getSalesHistoryByDate, updateSalesRecord } from "../../firebase/operations";
 
 const HistoryPage = ({
-  salesHistory,
   onBack,
   onMenuSelect,
   onRefundOrder,
   onLogout,
 }) => {
+  // 自己管理 salesHistory
+  const [salesHistory, setSalesHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
+
   const [selectedDate, setSelectedDate] = useState(
     (() => {
       const now = new Date();
@@ -68,23 +72,38 @@ const HistoryPage = ({
     return { start, end };
   };
 
-  // 根據檢視模式過濾記錄
-  const getFilteredRecords = () => {
-    if (viewMode === "daily") {
-      return salesHistory.filter((record) => record.date === selectedDate);
-    } else if (viewMode === "weekly") {
-      const { start, end } = getWeekRange(selectedDate);
-      return salesHistory.filter((record) => {
-        return record.date >= start && record.date <= end;
-      });
-    } else if (viewMode === "monthly") {
-      const { start, end } = getMonthRange(selectedDate);
-      return salesHistory.filter((record) => {
-        return record.date >= start && record.date <= end;
-      });
+  // 根據檢視模式查詢資料
+  useEffect(() => {
+    fetchSalesData();
+  }, [selectedDate, viewMode]);
+
+  const fetchSalesData = async () => {
+    setLoading(true);
+    try {
+      let startDate, endDate;
+      
+      if (viewMode === "daily") {
+        startDate = endDate = selectedDate;
+      } else if (viewMode === "weekly") {
+        const range = getWeekRange(selectedDate);
+        startDate = range.start;
+        endDate = range.end;
+      } else if (viewMode === "monthly") {
+        const range = getMonthRange(selectedDate);
+        startDate = range.start;
+        endDate = range.end;
+      }
+      
+      const data = await getSalesHistoryByDate(startDate, endDate);
+      setSalesHistory(data);
+    } catch (error) {
+      console.error("載入銷售資料失敗:", error);
+    } finally {
+      setLoading(false);
     }
-    return [];
   };
+
+  // 根據檢視模式過濾記錄
 
   // 獲取日期範圍顯示文字
   const getDateRangeText = () => {
@@ -131,7 +150,7 @@ const HistoryPage = ({
     );
   };
 
-  const allPeriodRecords = getFilteredRecords();
+  const allPeriodRecords = salesHistory;
   const activePeriodRecords = allPeriodRecords.filter(
     (record) => !record.isRefunded
   );
@@ -253,13 +272,37 @@ const HistoryPage = ({
     setShowRefundModal(true);
   };
 
-  const handleConfirmRefund = () => {
-    if (selectedRefundRecord && onRefundOrder) {
-      onRefundOrder(selectedRefundRecord.id);
+  const handleConfirmRefund = async () => {
+    if (!selectedRefundRecord) return;
+
+    try {
+      // 更新 Firebase
+      await updateSalesRecord(selectedRefundRecord.id, {
+        isRefunded: true,
+        refundDate: new Date().toISOString().split("T")[0],
+        refundTime: new Date().toLocaleTimeString("zh-TW", {
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: "Asia/Taipei",
+        }),
+      });
+
+      // 重新載入資料
+      await fetchSalesData();
+      
       setShowRefundModal(false);
       setSelectedRefundRecord(null);
+      
+      // 通知父組件
+      if (onRefundOrder) {
+        onRefundOrder(selectedRefundRecord.id);
+      }
+    } catch (error) {
+      console.error("退款失敗:", error);
+      alert("退款失敗，請稍後再試");
     }
   };
+
 
   const handleCancelRefund = () => {
     setShowRefundModal(false);
@@ -273,6 +316,13 @@ const HistoryPage = ({
 
   return (
     <div className="min-h-screen bg-gray-100">
+      {/* 載入提示 */}
+      {loading && (
+        <div className="fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded shadow-lg z-50">
+          載入中...
+        </div>
+      )}
+
       <Header
         title="Sasuga POS系統"
         subtitle="營業紀錄"

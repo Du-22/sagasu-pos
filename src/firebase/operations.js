@@ -679,3 +679,33 @@ export const resetPasswordWithSecurity = async (
     };
   }
 };
+
+// ==================== 日期範圍查詢 ====================
+/**
+ * 根據日期範圍查詢銷售歷史
+ * @param {string} startDate - 開始日期 (YYYY-MM-DD)
+ * @param {string} endDate - 結束日期 (YYYY-MM-DD)
+ * @returns {Array} 銷售記錄陣列
+ */
+export const getSalesHistoryByDate = async (startDate, endDate) => {
+  try {
+    const salesRef = collection(db, "stores", STORE_ID, "sales");
+    const salesQuery = query(
+      salesRef,
+      where("date", ">=", startDate),
+      where("date", "<=", endDate),
+      orderBy("date", "desc")
+    );
+    const salesSnap = await getDocs(salesQuery);
+
+    const salesHistory = [];
+    salesSnap.forEach((doc) => {
+      salesHistory.push({ id: doc.id, ...doc.data() });
+    });
+
+    return salesHistory;
+  } catch (error) {
+    console.error("獲取銷售歷史失敗:", error);
+    return [];
+  }
+};
