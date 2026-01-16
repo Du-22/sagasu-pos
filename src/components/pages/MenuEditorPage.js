@@ -415,6 +415,165 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
     setSelectedProduct(null);
   };
 
+  //刪除類別
+  /**
+   * 刪除類別功能 - 兩層防呆確認
+   *
+   * @param {string} categoryToDelete - 要刪除的類別名稱
+   *
+   * @description
+   * 連同類別下的所有產品一起刪除，並提供兩層確認防呆
+   *
+   * @安全機制
+   * 1. 第一層確認：提示將刪除的產品數量
+   * 2. 第二層確認：要求用戶輸入類別名稱確認
+   * 3. 刪除後自動切換到第一個可用的類別
+   */
+  const handleDeleteCategory = (categoryToDelete) => {
+    // 計算該類別下的產品數量
+    const itemsInCategory = menuData.filter(
+      (item) => item.category === categoryToDelete
+    );
+
+    // 第一層防呆：確認是否要刪除
+    const firstConfirm = window.confirm(
+      `⚠️ 警告：即將刪除類別\n\n` +
+        `類別名稱：「${categoryToDelete}」\n` +
+        `產品數量：${itemsInCategory.length} 個\n\n` +
+        `此操作將同時刪除該類別下的所有產品！\n` +
+        `此操作無法復原！\n\n` +
+        `確定要繼續嗎？`
+    );
+
+    if (!firstConfirm) {
+      return;
+    }
+
+    // 第二層防呆：要求輸入類別名稱確認
+    const userInput = window.prompt(
+      `🔒 二次確認\n\n` +
+        `為了防止誤刪，請輸入要刪除的類別名稱：\n\n` +
+        `「${categoryToDelete}」\n\n` +
+        `(請完整輸入類別名稱)`
+    );
+
+    // 檢查輸入是否正確
+    if (userInput !== categoryToDelete) {
+      if (userInput !== null) {
+        // 用戶有輸入但輸入錯誤
+        alert(
+          `❌ 輸入錯誤\n\n` +
+            `您輸入的是：「${userInput}」\n` +
+            `正確的類別名稱是：「${categoryToDelete}」\n\n` +
+            `刪除已取消。`
+        );
+      }
+      // 用戶點擊取消或輸入錯誤，都不執行刪除
+      return;
+    }
+
+    // 通過兩層確認，執行刪除
+    const updatedMenuData = menuData.filter(
+      (item) => item.category !== categoryToDelete
+    );
+
+    setMenuData(updatedMenuData);
+
+    // 切換到第一個可用的類別
+    const remainingCategories = Array.from(
+      new Set(updatedMenuData.map((item) => item.category))
+    );
+
+    if (remainingCategories.length > 0) {
+      setSelectedCategory(remainingCategories[0]);
+    } else {
+      setSelectedCategory("");
+    }
+
+    // 成功提示
+    alert(
+      `✅ 刪除成功\n\n已刪除類別「${categoryToDelete}」及其下的 ${itemsInCategory.length} 個產品。`
+    );
+  };
+
+  //重新命名類別
+  /**
+   * 重命名類別功能
+   *
+   * @param {string} oldCategoryName - 原類別名稱
+   *
+   * @description
+   * 修改類別名稱，會同步更新該類別下所有產品的類別
+   *
+   * @驗證規則
+   * 1. 新名稱不能為空
+   * 2. 新名稱不能與現有類別重複
+   * 3. 新名稱不能與原名稱相同
+   */
+  const handleRenameCategory = (oldCategoryName) => {
+    // 取得新的類別名稱
+    const newCategoryName = window.prompt(
+      `✏️ 重命名類別\n\n` +
+        `目前類別名稱：「${oldCategoryName}」\n\n` +
+        `請輸入新的類別名稱：`,
+      oldCategoryName
+    );
+
+    // 用戶取消或輸入為空
+    if (!newCategoryName || newCategoryName.trim() === "") {
+      return;
+    }
+
+    const trimmedNewName = newCategoryName.trim();
+
+    // 檢查是否與原名稱相同
+    if (trimmedNewName === oldCategoryName) {
+      alert("❌ 新名稱與原名稱相同，無需修改。");
+      return;
+    }
+
+    // 檢查新名稱是否已存在
+    const existingCategories = Array.from(
+      new Set(menuData.map((item) => item.category))
+    );
+
+    if (existingCategories.includes(trimmedNewName)) {
+      alert(
+        `❌ 類別名稱重複\n\n` +
+          `類別「${trimmedNewName}」已經存在。\n` +
+          `請使用其他名稱。`
+      );
+      return;
+    }
+
+    // 確認重命名
+    const confirm = window.confirm(
+      `確定要將類別名稱修改嗎？\n\n` +
+        `原名稱：「${oldCategoryName}」\n` +
+        `新名稱：「${trimmedNewName}」\n\n` +
+        `此操作會同步更新該類別下所有產品的類別。`
+    );
+
+    if (!confirm) {
+      return;
+    }
+
+    // 執行重命名：更新所有屬於該類別的產品
+    const updatedMenuData = menuData.map((item) =>
+      item.category === oldCategoryName
+        ? { ...item, category: trimmedNewName }
+        : item
+    );
+
+    setMenuData(updatedMenuData);
+    setSelectedCategory(trimmedNewName);
+
+    // 成功提示
+    alert(
+      `✅ 重命名成功\n\n類別「${oldCategoryName}」已改名為「${trimmedNewName}」。`
+    );
+  };
+
   // 新增產品
   const handleAddProduct = () => {
     if (!newProductName || !newProductPrice || !newProductCategory) return;
@@ -517,49 +676,123 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
         </button>
       </div>
 
-      {/* 類別選擇 */}
+      {/* 類別選擇與管理 */}
       <div className="mb-4 bg-white p-4 rounded-lg shadow">
-        <label className="font-medium mr-2">選擇類別：</label>
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="border rounded px-2 py-1 mr-4"
-        >
-          {categories.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
-          ))}
-        </select>
-        <input
-          type="text"
-          placeholder="新增類別"
-          value={newCategory}
-          onChange={(e) => setNewCategory(e.target.value)}
-          className="ml-2 border rounded px-2 py-1"
-        />
-        <button
-          onClick={() => {
-            if (newCategory && !categories.includes(newCategory)) {
-              setMenuData([
-                ...menuData,
-                {
-                  id: Date.now().toString(),
-                  name: "",
-                  price: 0,
-                  category: newCategory,
-                  customOptions: [],
-                  order: 1,
-                },
-              ]);
-              setSelectedCategory(newCategory);
-              setNewCategory("");
-            }
-          }}
-          className="ml-2 px-2 py-1 bg-blue-500 text-white rounded"
-        >
-          新增類別
-        </button>
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* 類別選擇 */}
+          <div className="flex items-center">
+            <label className="font-medium mr-2">選擇類別：</label>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="border rounded px-3 py-2"
+            >
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 類別管理按鈕組 */}
+          <div className="flex items-center gap-2">
+            {/* 重命名按鈕 */}
+            <button
+              onClick={() => handleRenameCategory(selectedCategory)}
+              className="px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded transition-colors text-sm font-medium flex items-center gap-1"
+              title="重命名此類別"
+            >
+              ✏️ 重命名
+            </button>
+
+            {/* 刪除按鈕 */}
+            <button
+              onClick={() => handleDeleteCategory(selectedCategory)}
+              className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded transition-colors text-sm font-medium flex items-center gap-1"
+              title="刪除此類別（兩層確認）"
+            >
+              🗑️ 刪除
+            </button>
+          </div>
+
+          {/* 分隔線 */}
+          <div className="h-8 w-px bg-gray-300"></div>
+
+          {/* 新增類別 */}
+          <div className="flex items-center">
+            <input
+              type="text"
+              placeholder="新增類別名稱"
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              className="border rounded px-3 py-2"
+              onKeyPress={(e) => {
+                if (e.key === "Enter") {
+                  // 按 Enter 也可以新增
+                  document.querySelector("[data-add-category]").click();
+                }
+              }}
+            />
+            <button
+              data-add-category
+              onClick={() => {
+                if (newCategory && !categories.includes(newCategory.trim())) {
+                  const trimmedCategory = newCategory.trim();
+                  setMenuData([
+                    ...menuData,
+                    {
+                      id: Date.now().toString(),
+                      name: "",
+                      price: 0,
+                      category: trimmedCategory,
+                      customOptions: [],
+                      order: 1,
+                    },
+                  ]);
+                  setSelectedCategory(trimmedCategory);
+                  setNewCategory("");
+                } else if (categories.includes(newCategory.trim())) {
+                  alert("❌ 此類別名稱已存在！");
+                }
+              }}
+              className="ml-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors text-sm font-medium"
+            >
+              ➕ 新增類別
+            </button>
+          </div>
+        </div>
+
+        {/* 提示訊息 */}
+        <div className="mt-4 text-xs text-gray-700 bg-blue-50 p-3 rounded border border-blue-200">
+          <div className="font-bold mb-2 text-sm">💡 類別管理說明</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="bg-white p-2 rounded">
+              <div className="font-bold text-blue-600 mb-1">✏️ 重命名類別</div>
+              <ul className="list-disc ml-4 space-y-0.5">
+                <li>修改類別名稱</li>
+                <li>自動更新所有產品</li>
+                <li>不能使用重複名稱</li>
+              </ul>
+            </div>
+            <div className="bg-white p-2 rounded">
+              <div className="font-bold text-red-600 mb-1">🗑️ 刪除類別</div>
+              <ul className="list-disc ml-4 space-y-0.5">
+                <li>會同時刪除所有產品</li>
+                <li>需要兩層確認防呆</li>
+                <li>無法復原，請謹慎操作</li>
+              </ul>
+            </div>
+            <div className="bg-white p-2 rounded">
+              <div className="font-bold text-green-600 mb-1">➕ 新增類別</div>
+              <ul className="list-disc ml-4 space-y-0.5">
+                <li>輸入名稱後點擊按鈕</li>
+                <li>或按 Enter 快速新增</li>
+                <li>會自動切換到新類別</li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* 可拖拉的產品列表 */}
