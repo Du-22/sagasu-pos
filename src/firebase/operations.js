@@ -41,24 +41,107 @@ export const getMenuData = async () => {
 };
 
 export const saveMenuData = async (menuData) => {
+  console.log("📝 開始安全保存菜單數據...");
+
+  // ==================== 步驟 1: 備份到 localStorage ====================
   try {
-    // 清除舊菜單
-    const menuRef = collection(db, "stores", STORE_ID, "menu");
-    const oldItems = await getDocs(menuRef);
-    const deletePromises = oldItems.docs.map((doc) => deleteDoc(doc.ref));
-    await Promise.all(deletePromises);
-
-    // 新增菜單項目
-    const addPromises = menuData.map((item) => {
-      const { id, ...itemData } = item;
-      return setDoc(doc(menuRef, id), itemData);
-    });
-
-    await Promise.all(addPromises);
-  } catch (error) {
-    console.error("儲存菜單失敗:", error);
-    throw error;
+    const backup = {
+      data: menuData,
+      timestamp: new Date().toISOString(),
+      version: "v2_granular",
+    };
+    localStorage.setItem("cafeMenuData", JSON.stringify(menuData));
+    localStorage.setItem("cafeMenuData_backup", JSON.stringify(backup));
+    console.log("✅ 本地備份成功");
+  } catch (backupError) {
+    console.error("⚠️ 本地備份失敗:", backupError);
+    // 繼續執行，不中斷
   }
+
+  // ==================== 步驟 2: 獲取現有菜單 ====================
+  const menuRef = collection(db, "stores", STORE_ID, "menu");
+  let existingItems = new Map();
+
+  try {
+    const existingDocs = await getDocs(menuRef);
+    existingDocs.forEach((doc) => {
+      existingItems.set(doc.id, doc.data());
+    });
+    console.log(`📊 現有品項數量: ${existingItems.size}`);
+  } catch (error) {
+    console.error("⚠️ 無法讀取現有菜單，將直接寫入:", error);
+    // 繼續執行，當作沒有現有數據
+  }
+
+  // ==================== 步驟 3: 更新或新增品項 ====================
+  const updatePromises = [];
+  const newItemIds = new Set();
+
+  for (const item of menuData) {
+    const { id, ...itemData } = item;
+
+    if (!id) {
+      console.error("❌ 品項缺少 ID:", item);
+      continue;
+    }
+
+    newItemIds.add(id);
+
+    // ✅ 使用 setDoc 的 merge 模式更新或新增
+    // 關鍵：每個產品都有自己的時間戳
+    const promise = setDoc(
+      doc(menuRef, id),
+      {
+        ...itemData,
+        lastUpdated: new Date().toISOString(), // ✅ 每個產品獨立時間戳
+      },
+      { merge: true } // ✅ 關鍵：使用 merge 模式，不會先刪除
+    )
+      .then(() => {
+        console.log(`✅ 更新品項: ${item.name || id}`);
+        return { success: true, id, name: item.name };
+      })
+      .catch((error) => {
+        console.error(`❌ 更新品項失敗: ${item.name || id}`, error);
+        return { success: false, id, name: item.name, error };
+      });
+
+    updatePromises.push(promise);
+  }
+
+  // 等待所有更新完成
+  const results = await Promise.allSettled(updatePromises);
+  const successCount = results.filter((r) => r.value?.success).length;
+  const failCount = results.filter((r) => !r.value?.success).length;
+
+  console.log(`📊 更新結果: ${successCount} 成功, ${failCount} 失敗`);
+
+  // ==================== 步驟 4: 刪除不再需要的品項 ====================
+  const deletePromises = [];
+
+  for (const [existingId] of existingItems) {
+    if (!newItemIds.has(existingId)) {
+      console.log(`🗑️ 刪除舊品項: ${existingId}`);
+      const promise = deleteDoc(doc(menuRef, existingId))
+        .then(() => ({ success: true, id: existingId }))
+        .catch((error) => ({ success: false, id: existingId, error }));
+      deletePromises.push(promise);
+    }
+  }
+
+  if (deletePromises.length > 0) {
+    const deleteResults = await Promise.allSettled(deletePromises);
+    const deleteSuccess = deleteResults.filter((r) => r.value?.success).length;
+    console.log(`🗑️ 刪除結果: ${deleteSuccess}/${deletePromises.length} 成功`);
+  }
+
+  // ==================== 步驟 5: 檢查結果 ====================
+  if (failCount > 0) {
+    console.error(`⚠️ 有 ${failCount} 個品項保存失敗`);
+    throw new Error(`保存失敗: ${failCount} 個品項未能成功儲存`);
+  }
+
+  console.log("✅ 菜單保存完成");
 };
 
 // ==================== 桌位狀態相關操作 ====================
