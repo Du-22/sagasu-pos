@@ -10,6 +10,7 @@ const seatingData = {
     { id: "1F-S3", x: 37, y: 78, size: "medium" }, // 2桌右邊
     { id: "1F-S4", x: 62, y: 78, size: "medium" }, // 3桌右邊
     { id: "1F-S5", x: 87, y: 78, size: "medium" }, // 最右下角
+    { id: "1F-外桌", x: 62, y: 40, size: "medium" }, // 4桌上面
   ],
   // 2F: 分兩房間
   "2F": [
@@ -56,7 +57,7 @@ const TakeoutPanel = ({
             {Object.entries(takeoutOrders).map(([takeoutId, orderData]) => {
               // 修復：計算未付款項目的總金額和數量
               const unpaidItems = (orderData.orders || []).filter(
-                (item) => item && item.paid === false
+                (item) => item && item.paid === false,
               );
 
               const total = unpaidItems.reduce((sum, item) => {
@@ -87,7 +88,7 @@ const TakeoutPanel = ({
 
               const itemCount = unpaidItems.reduce(
                 (sum, item) => sum + item.quantity,
-                0
+                0,
               );
 
               const isPaid = orderData.paid || unpaidItems.length === 0;
@@ -150,7 +151,7 @@ const TakeoutPanel = ({
 
                           const finalPrice = Math.max(
                             basePrice + adjustment,
-                            0
+                            0,
                           );
                           return sum + finalPrice * item.quantity;
                         }, 0)
