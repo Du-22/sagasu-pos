@@ -80,7 +80,7 @@ const SortableItem = ({ item, index, onEdit, onDelete }) => {
           item.customOptions.some(
             (opt) =>
               opt.priceAdjustments &&
-              Object.keys(opt.priceAdjustments).length > 0
+              Object.keys(opt.priceAdjustments).length > 0,
           ) && (
             <div className="text-xs text-green-600 mt-1">💰 含價格調整選項</div>
           )}
@@ -247,7 +247,7 @@ const CustomOptionEditor = ({ option, index, onChange, onDelete }) => {
                     刪除
                   </button>
                 </div>
-              )
+              ),
             )}
         </div>
 
@@ -274,7 +274,7 @@ const CustomOptionEditor = ({ option, index, onChange, onDelete }) => {
 
 const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
   const [selectedCategory, setSelectedCategory] = useState(
-    menuData[0]?.category || ""
+    menuData[0]?.category || "",
   );
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [editName, setEditName] = useState("");
@@ -291,16 +291,16 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   // 取得所有類別
   const predefinedCategories = ["義式", "手沖", "非咖啡", "小食"];
   const allCategories = Array.from(
-    new Set(menuData.map((item) => item.category))
+    new Set(menuData.map((item) => item.category)),
   );
   const newCategories = allCategories.filter(
-    (cat) => !predefinedCategories.includes(cat)
+    (cat) => !predefinedCategories.includes(cat),
   );
   const categories = [...predefinedCategories, ...newCategories];
 
@@ -323,10 +323,10 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
     if (!over || active.id === over.id) return;
 
     const oldIndex = currentCategoryItems.findIndex(
-      (item) => item.id === active.id
+      (item) => item.id === active.id,
     );
     const newIndex = currentCategoryItems.findIndex(
-      (item) => item.id === over.id
+      (item) => item.id === over.id,
     );
 
     // 重新排序當前類別的商品
@@ -337,7 +337,7 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
 
     reorderedItems.forEach((item, index) => {
       const menuIndex = updatedMenuData.findIndex(
-        (menuItem) => menuItem.id === item.id
+        (menuItem) => menuItem.id === item.id,
       );
       if (menuIndex !== -1) {
         // 🔥 特殊處理：塑膠袋永遠保持 order: 999
@@ -358,16 +358,16 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
     // 🔥 如果有塑膠袋被拖動，需要重新調整其他商品的 order
     if (selectedCategory === "小食") {
       const plasticBagItem = reorderedItems.find(
-        (item) => item.name === "塑膠袋"
+        (item) => item.name === "塑膠袋",
       );
       if (plasticBagItem) {
         // 將塑膠袋以外的商品重新編號
         const nonPlasticBagItems = reorderedItems.filter(
-          (item) => item.name !== "塑膠袋"
+          (item) => item.name !== "塑膠袋",
         );
         nonPlasticBagItems.forEach((item, index) => {
           const menuIndex = updatedMenuData.findIndex(
-            (menuItem) => menuItem.id === item.id
+            (menuItem) => menuItem.id === item.id,
           );
           if (menuIndex !== -1) {
             updatedMenuData[menuIndex] = {
@@ -403,14 +403,35 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
               customOptions: processedCustomOptions,
               category: selectedCategory,
             }
-          : item
-      )
+          : item,
+      ),
     );
     setSelectedProduct(null);
   };
 
   // 刪除產品
   const handleDeleteProduct = (id) => {
+    // 找到要刪除的產品
+    const productToDelete = menuData.find((item) => item.id === id);
+
+    if (!productToDelete) {
+      alert("❌ 找不到該產品");
+      return;
+    }
+
+    // 二次確認
+    const confirmed = window.confirm(
+      `⚠️ 確定要刪除此產品嗎？\n\n` +
+        `產品名稱：「${productToDelete.name}」\n` +
+        `價格：$${productToDelete.price}\n` +
+        `類別：${productToDelete.category}\n\n` +
+        `此操作無法復原！`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     setMenuData(menuData.filter((item) => item.id !== id));
     setSelectedProduct(null);
   };
@@ -432,7 +453,7 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
   const handleDeleteCategory = (categoryToDelete) => {
     // 計算該類別下的產品數量
     const itemsInCategory = menuData.filter(
-      (item) => item.category === categoryToDelete
+      (item) => item.category === categoryToDelete,
     );
 
     // 第一層防呆：確認是否要刪除
@@ -442,7 +463,7 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
         `產品數量：${itemsInCategory.length} 個\n\n` +
         `此操作將同時刪除該類別下的所有產品！\n` +
         `此操作無法復原！\n\n` +
-        `確定要繼續嗎？`
+        `確定要繼續嗎？`,
     );
 
     if (!firstConfirm) {
@@ -454,7 +475,7 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
       `🔒 二次確認\n\n` +
         `為了防止誤刪，請輸入要刪除的類別名稱：\n\n` +
         `「${categoryToDelete}」\n\n` +
-        `(請完整輸入類別名稱)`
+        `(請完整輸入類別名稱)`,
     );
 
     // 檢查輸入是否正確
@@ -465,7 +486,7 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
           `❌ 輸入錯誤\n\n` +
             `您輸入的是：「${userInput}」\n` +
             `正確的類別名稱是：「${categoryToDelete}」\n\n` +
-            `刪除已取消。`
+            `刪除已取消。`,
         );
       }
       // 用戶點擊取消或輸入錯誤，都不執行刪除
@@ -474,14 +495,14 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
 
     // 通過兩層確認，執行刪除
     const updatedMenuData = menuData.filter(
-      (item) => item.category !== categoryToDelete
+      (item) => item.category !== categoryToDelete,
     );
 
     setMenuData(updatedMenuData);
 
     // 切換到第一個可用的類別
     const remainingCategories = Array.from(
-      new Set(updatedMenuData.map((item) => item.category))
+      new Set(updatedMenuData.map((item) => item.category)),
     );
 
     if (remainingCategories.length > 0) {
@@ -492,7 +513,7 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
 
     // 成功提示
     alert(
-      `✅ 刪除成功\n\n已刪除類別「${categoryToDelete}」及其下的 ${itemsInCategory.length} 個產品。`
+      `✅ 刪除成功\n\n已刪除類別「${categoryToDelete}」及其下的 ${itemsInCategory.length} 個產品。`,
     );
   };
 
@@ -516,7 +537,7 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
       `✏️ 重命名類別\n\n` +
         `目前類別名稱：「${oldCategoryName}」\n\n` +
         `請輸入新的類別名稱：`,
-      oldCategoryName
+      oldCategoryName,
     );
 
     // 用戶取消或輸入為空
@@ -534,14 +555,14 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
 
     // 檢查新名稱是否已存在
     const existingCategories = Array.from(
-      new Set(menuData.map((item) => item.category))
+      new Set(menuData.map((item) => item.category)),
     );
 
     if (existingCategories.includes(trimmedNewName)) {
       alert(
         `❌ 類別名稱重複\n\n` +
           `類別「${trimmedNewName}」已經存在。\n` +
-          `請使用其他名稱。`
+          `請使用其他名稱。`,
       );
       return;
     }
@@ -551,7 +572,7 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
       `確定要將類別名稱修改嗎？\n\n` +
         `原名稱：「${oldCategoryName}」\n` +
         `新名稱：「${trimmedNewName}」\n\n` +
-        `此操作會同步更新該類別下所有產品的類別。`
+        `此操作會同步更新該類別下所有產品的類別。`,
     );
 
     if (!confirm) {
@@ -562,7 +583,7 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
     const updatedMenuData = menuData.map((item) =>
       item.category === oldCategoryName
         ? { ...item, category: trimmedNewName }
-        : item
+        : item,
     );
 
     setMenuData(updatedMenuData);
@@ -570,7 +591,7 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
 
     // 成功提示
     alert(
-      `✅ 重命名成功\n\n類別「${oldCategoryName}」已改名為「${trimmedNewName}」。`
+      `✅ 重命名成功\n\n類別「${oldCategoryName}」已改名為「${trimmedNewName}」。`,
     );
   };
 
@@ -580,7 +601,7 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
 
     // 🔥 新邏輯：只計算同類別內的最大 order
     const categoryItems = menuData.filter(
-      (item) => item.category === newProductCategory && item.name
+      (item) => item.category === newProductCategory && item.name,
     );
 
     let maxOrder = 0;
@@ -589,7 +610,7 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
       // 🔥 特殊處理：如果是小食類別，排除塑膠袋(order: 999)
       if (newProductCategory === "小食") {
         const nonPlasticBagItems = categoryItems.filter(
-          (item) => item.name !== "塑膠袋"
+          (item) => item.name !== "塑膠袋",
         );
         maxOrder =
           nonPlasticBagItems.length > 0
@@ -645,7 +666,7 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
   // 刪除客製選項
   const deleteNewCustomOption = (index) => {
     setNewProductCustomOptions(
-      newProductCustomOptions.filter((_, i) => i !== index)
+      newProductCustomOptions.filter((_, i) => i !== index),
     );
   };
 
@@ -837,7 +858,7 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
                             ? option.options
                             : [],
                           priceAdjustments: option.priceAdjustments || {},
-                        }))
+                        })),
                       );
                     }}
                     onDelete={handleDeleteProduct}
