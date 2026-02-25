@@ -153,7 +153,7 @@ const CafePOSSystem = () => {
               });
 
               console.log(
-                `📱 找到本地備份: ${localMenuMap.size} 個品項 (${parsed.timestamp})`
+                `📱 找到本地備份: ${localMenuMap.size} 個品項 (${parsed.timestamp})`,
               );
             }
           }
@@ -211,7 +211,7 @@ const CafePOSSystem = () => {
             if (!firebaseTime) {
               // Firebase 沒有時間戳，優先用本地
               console.log(
-                `⚠️ ${localItem.name} Firebase 無時間戳，使用本地版本`
+                `⚠️ ${localItem.name} Firebase 無時間戳，使用本地版本`,
               );
               const { _localTimestamp, ...cleanItem } = localItem;
               mergedMenu.set(id, cleanItem);
@@ -221,7 +221,7 @@ const CafePOSSystem = () => {
               // 本地較新
               const timeDiff = Math.round((localTime - firebaseTime) / 1000); // 秒
               console.log(
-                `🔄 ${localItem.name} 本地較新 (相差 ${timeDiff} 秒)`
+                `🔄 ${localItem.name} 本地較新 (相差 ${timeDiff} 秒)`,
               );
               const { _localTimestamp, ...cleanItem } = localItem;
               mergedMenu.set(id, cleanItem);
@@ -241,7 +241,7 @@ const CafePOSSystem = () => {
         for (const [id, firebaseItem] of firebaseMenuMap) {
           if (!localMenuMap.has(id)) {
             console.log(
-              `☁️  產品只存在 Firebase: ${firebaseItem.name} (${id})`
+              `☁️  產品只存在 Firebase: ${firebaseItem.name} (${id})`,
             );
             const { _firebaseTimestamp, ...cleanItem } = firebaseItem;
             mergedMenu.set(id, cleanItem);
@@ -273,7 +273,7 @@ const CafePOSSystem = () => {
                   ...itemData,
                   lastUpdated: new Date().toISOString(),
                 },
-                { merge: true }
+                { merge: true },
               )
                 .then(() => {
                   console.log(`  ✅ 同步成功: ${item.name}`);
@@ -293,7 +293,7 @@ const CafePOSSystem = () => {
 
             if (failCount > 0) {
               console.warn(
-                `⚠️ 有 ${failCount} 個產品同步失敗，但不影響本地使用`
+                `⚠️ 有 ${failCount} 個產品同步失敗，但不影響本地使用`,
               );
             }
           } catch (syncError) {
@@ -306,20 +306,8 @@ const CafePOSSystem = () => {
 
         // 步驟 6: 處理沒有任何數據的情況
         if (mergedMenu.size === 0) {
-          console.warn("⚠️ 無任何菜單數據，使用預設數據");
-
-          // 使用預設數據
-          defaultMenuData.forEach((item) => {
-            mergedMenu.set(item.id, item);
-          });
-
-          // 保存預設數據到 Firebase 和 localStorage
-          try {
-            await saveMenuData(defaultMenuData);
-            console.log("✅ 預設數據已保存");
-          } catch (error) {
-            console.error("❌ 保存預設數據失敗:", error);
-          }
+          console.log("ℹ️ 目前無任何菜單數據，等待使用者手動新增");
+          // 不再自動載入預設菜單，允許從空白開始
         }
 
         // 步驟 7: 轉換回陣列並設置
@@ -370,7 +358,7 @@ const CafePOSSystem = () => {
           // ✅ 儲存到 localStorage 供下次快速啟動
           localStorage.setItem(
             "cafeSalesHistory",
-            JSON.stringify(recentSalesHistory)
+            JSON.stringify(recentSalesHistory),
           );
         } else if (!hasCachedData) {
           setSalesHistory([]);
@@ -543,7 +531,7 @@ const CafePOSSystem = () => {
       })
       .filter(
         (batch) =>
-          batch !== null && (Array.isArray(batch) ? batch.length > 0 : true)
+          batch !== null && (Array.isArray(batch) ? batch.length > 0 : true),
       );
 
     return {
@@ -562,12 +550,12 @@ const CafePOSSystem = () => {
 
     // 檢查付款狀態
     const hasUnpaidItems = orders.some(
-      (item) => item && !item.__seated && item.paid === false
+      (item) => item && !item.__seated && item.paid === false,
     );
     if (hasUnpaidItems) return "occupied";
 
     const hasPaidItems = orders.some(
-      (item) => item && !item.__seated && item.paid === true
+      (item) => item && !item.__seated && item.paid === true,
     );
     return hasPaidItems ? "ready-to-clean" : "available";
   };
@@ -578,7 +566,7 @@ const CafePOSSystem = () => {
       const result = await dataManager.saveTableState(
         tableId,
         updates,
-        tableStates
+        tableStates,
       );
 
       // 處理操作結果
@@ -590,13 +578,13 @@ const CafePOSSystem = () => {
         setTableStates((prev) => ({ ...prev, [tableId]: result.data }));
         showOperationFeedback(
           result.uiGuidance.message,
-          result.uiGuidance.severity
+          result.uiGuidance.severity,
         );
       } else {
         // 完全失敗
         showOperationFeedback(
           result.uiGuidance.message,
-          result.uiGuidance.severity
+          result.uiGuidance.severity,
         );
         throw new Error(result.error);
       }
@@ -620,14 +608,14 @@ const CafePOSSystem = () => {
         if (!result.success && result.hasBackup) {
           showOperationFeedback(
             result.uiGuidance.message,
-            result.uiGuidance.severity
+            result.uiGuidance.severity,
           );
         }
       } else {
         // 完全失敗
         showOperationFeedback(
           result.uiGuidance.message,
-          result.uiGuidance.severity
+          result.uiGuidance.severity,
         );
         throw new Error(result.error);
       }
@@ -648,13 +636,13 @@ const CafePOSSystem = () => {
         if (!result.success && result.hasBackup) {
           showOperationFeedback(
             result.uiGuidance.message,
-            result.uiGuidance.severity
+            result.uiGuidance.severity,
           );
         }
       } else {
         showOperationFeedback(
           result.uiGuidance.message,
-          result.uiGuidance.severity
+          result.uiGuidance.severity,
         );
         throw new Error(result.error);
       }
@@ -676,13 +664,13 @@ const CafePOSSystem = () => {
         if (!result.success && result.hasBackup) {
           showOperationFeedback(
             result.uiGuidance.message,
-            result.uiGuidance.severity
+            result.uiGuidance.severity,
           );
         }
       } else {
         showOperationFeedback(
           result.uiGuidance.message,
-          result.uiGuidance.severity
+          result.uiGuidance.severity,
         );
         throw new Error(result.error);
       }
@@ -711,7 +699,7 @@ const CafePOSSystem = () => {
       // ✅ 顯示警告（不是錯誤，因為本地已有備份）
       showOperationFeedback(
         "⚠️ 雲端同步失敗，已保存到本地裝置。請檢查網路後會自動同步。",
-        "warning"
+        "warning",
       );
     }
   };
@@ -804,7 +792,7 @@ const CafePOSSystem = () => {
 
   const handleRefund = async (recordId) => {
     const recordIndex = salesHistory.findIndex(
-      (record) => record.id === recordId
+      (record) => record.id === recordId,
     );
 
     if (recordIndex === -1) {
@@ -824,7 +812,7 @@ const CafePOSSystem = () => {
           .split("/");
         return `${parts[0]}-${parts[1].padStart(2, "0")}-${parts[2].padStart(
           2,
-          "0"
+          "0",
         )}`;
       })(),
       refundTime: new Date().toTimeString().slice(0, 8),
@@ -841,7 +829,7 @@ const CafePOSSystem = () => {
 
       await saveSalesHistoryToFirebase(newSalesHistory);
       alert(
-        `訂單 ${record.table} (${record.time}) 已成功退款 $${record.total}`
+        `訂單 ${record.table} (${record.time}) 已成功退款 $${record.total}`,
       );
     } catch (error) {
       console.error("處理退款失敗:", error);
@@ -871,20 +859,20 @@ const CafePOSSystem = () => {
       try {
         const result = await dataManager.deleteTakeoutOrder(
           takeoutId,
-          takeoutOrders
+          takeoutOrders,
         );
         if (result.success || result.hasBackup) {
           setTakeoutOrders(result.data);
           if (!result.success && result.hasBackup) {
             showOperationFeedback(
               result.uiGuidance.message,
-              result.uiGuidance.severity
+              result.uiGuidance.severity,
             );
           }
         } else {
           showOperationFeedback(
             result.uiGuidance.message,
-            result.uiGuidance.severity
+            result.uiGuidance.severity,
           );
         }
       } catch (error) {
@@ -1042,7 +1030,7 @@ const CafePOSSystem = () => {
 
       // 處理編輯項目
       const hasEditingItems = currentOrder.some(
-        (item) => item.isEditing && !item.isTakeout
+        (item) => item.isEditing && !item.isTakeout,
       );
 
       if (hasEditingItems) {
@@ -1140,7 +1128,7 @@ const CafePOSSystem = () => {
     const uniqueId = generateUniqueId(item);
 
     const existingItem = currentOrder.find(
-      (orderItem) => orderItem.uniqueId === uniqueId
+      (orderItem) => orderItem.uniqueId === uniqueId,
     );
 
     if (existingItem) {
@@ -1148,8 +1136,8 @@ const CafePOSSystem = () => {
         currentOrder.map((orderItem) =>
           orderItem.uniqueId === uniqueId
             ? { ...orderItem, quantity: orderItem.quantity + 1 }
-            : orderItem
-        )
+            : orderItem,
+        ),
       );
     } else {
       setCurrentOrder([
@@ -1167,13 +1155,13 @@ const CafePOSSystem = () => {
   const updateQuantity = (uniqueId, quantity) => {
     if (quantity <= 0) {
       setCurrentOrder(
-        currentOrder.filter((item) => item.uniqueId !== uniqueId)
+        currentOrder.filter((item) => item.uniqueId !== uniqueId),
       );
     } else {
       setCurrentOrder(
         currentOrder.map((item) =>
-          item.uniqueId === uniqueId ? { ...item, quantity } : item
-        )
+          item.uniqueId === uniqueId ? { ...item, quantity } : item,
+        ),
       );
     }
   };
@@ -1181,7 +1169,7 @@ const CafePOSSystem = () => {
   // removeFromOrder（使用新數據結構）
   const removeFromOrder = async (uniqueId) => {
     const removingItem = currentOrder.find(
-      (item) => item.uniqueId === uniqueId
+      (item) => item.uniqueId === uniqueId,
     );
 
     if (removingItem && removingItem.isEditing) {
@@ -1230,7 +1218,9 @@ const CafePOSSystem = () => {
             // 過濾掉可能的空值或無效項目
             const validOrders = flatOrders.filter(
               (item) =>
-                item && typeof item === "object" && (item.__seated || item.name)
+                item &&
+                typeof item === "object" &&
+                (item.__seated || item.name),
             );
 
             await saveTableStateToFirebase(selectedTable, {
@@ -1262,7 +1252,7 @@ const CafePOSSystem = () => {
       // ==================== 1. 環境判斷 ====================
       const isPartialCheckout = Boolean(
         partialSelection &&
-          Object.values(partialSelection.items || {}).some(Boolean)
+        Object.values(partialSelection.items || {}).some(Boolean),
       );
       const type = selectedTable.startsWith("T") ? "takeout" : "dine-in";
 
@@ -1295,7 +1285,7 @@ const CafePOSSystem = () => {
 
         // 統一格式：取得完整商品列表
         allItems = (sourceData?.orders || []).filter(
-          (item) => item && typeof item === "object"
+          (item) => item && typeof item === "object",
         );
       } else {
         // 內用
@@ -1306,7 +1296,7 @@ const CafePOSSystem = () => {
 
         // 統一格式：取得完整商品列表（排除入座標記）
         allItems = sourceData.orders.filter(
-          (item) => item && typeof item === "object" && !item.__seated
+          (item) => item && typeof item === "object" && !item.__seated,
         );
       }
 
@@ -1333,19 +1323,19 @@ const CafePOSSystem = () => {
               if (!selectedValue) return;
 
               const customOption = item.customOptions.find(
-                (opt) => opt.type === optionType
+                (opt) => opt.type === optionType,
               );
               if (customOption?.priceAdjustments?.[selectedValue]) {
                 totalAdjustment += customOption.priceAdjustments[selectedValue];
               }
-            }
+            },
           );
         }
 
         // 向下相容：舊的續杯邏輯
         if (totalAdjustment === 0 && item.selectedCustom?.["續杯"] === "是") {
           const renewalOption = item.customOptions?.find(
-            (opt) => opt.type === "續杯"
+            (opt) => opt.type === "續杯",
           );
           if (!renewalOption?.priceAdjustments?.["是"]) {
             totalAdjustment = -20;
@@ -1385,7 +1375,7 @@ const CafePOSSystem = () => {
 
           if (selectedQty > originalItem.quantity) {
             console.error(
-              `❌ 選擇數量 ${selectedQty} 超過可用數量 ${originalItem.quantity}`
+              `❌ 選擇數量 ${selectedQty} 超過可用數量 ${originalItem.quantity}`,
             );
             return;
           }
@@ -1406,7 +1396,7 @@ const CafePOSSystem = () => {
 
           // 建立更新指令 - 使用在 allItems 中的實際索引
           const actualIndex = allItems.findIndex(
-            (item) => item === originalItem
+            (item) => item === originalItem,
           );
 
           if (actualIndex !== -1) {
@@ -1438,7 +1428,7 @@ const CafePOSSystem = () => {
         // 全部標記為已付款
         unpaidItems.forEach((item) => {
           const actualIndex = allItems.findIndex(
-            (listItem) => listItem === item
+            (listItem) => listItem === item,
           );
           if (actualIndex !== -1) {
             updateInstructions.push({
@@ -1458,7 +1448,7 @@ const CafePOSSystem = () => {
 
       const total = itemsToCheckout.reduce(
         (sum, item) => sum + item.subtotal,
-        0
+        0,
       );
 
       // ==================== 4. 歷史記錄建立（統一） ====================
@@ -1469,7 +1459,7 @@ const CafePOSSystem = () => {
           .split("/");
         const taiwanDateStr = `${parts[0]}-${parts[1].padStart(
           2,
-          "0"
+          "0",
         )}-${parts[2].padStart(2, "0")}`;
 
         // 取得或產生 groupId
@@ -1492,7 +1482,7 @@ const CafePOSSystem = () => {
           total: total,
           itemCount: itemsToCheckout.reduce(
             (sum, item) => sum + item.quantity,
-            0
+            0,
           ),
           paymentMethod,
           isPartialPayment: isPartialCheckout,
@@ -1500,7 +1490,7 @@ const CafePOSSystem = () => {
             ? {
                 totalItems: Object.keys(partialSelection.items || {}).length,
                 selectedItems: Object.values(
-                  partialSelection.items || {}
+                  partialSelection.items || {},
                 ).filter(Boolean).length,
                 note: "此為部分結帳，每個商品項目獨立記錄",
               }
@@ -1544,11 +1534,11 @@ const CafePOSSystem = () => {
                 };
               }
             }
-          }
+          },
         );
 
         const hasUnpaidItems = updatedOrders.some(
-          (item) => item.paid === false
+          (item) => item.paid === false,
         );
         const newTakeoutOrders = {
           ...takeoutOrders,
@@ -1586,12 +1576,12 @@ const CafePOSSystem = () => {
                 };
               }
             }
-          }
+          },
         );
 
         // 重新判斷桌位狀態
         const stillHasUnpaidItems = updatedOrders.some(
-          (item) => item && !item.__seated && item.paid === false
+          (item) => item && !item.__seated && item.paid === false,
         );
 
         const newStatus = stillHasUnpaidItems ? "occupied" : "ready-to-clean";
@@ -1611,18 +1601,18 @@ const CafePOSSystem = () => {
         alert(
           `${
             type === "takeout" ? "外帶" : "內用"
-          }部分結帳成功！結帳金額：$${total}`
+          }部分結帳成功！結帳金額：$${total}`,
         );
 
         // 部分結帳完成後，檢查是否需要返回主頁面
         const remainingUnpaid = allItems.filter(
-          (item) => item.paid === false
+          (item) => item.paid === false,
         ).length;
         const updateInstructionsMarkAsPaid = updateInstructions.filter(
-          (inst) => inst.markAsPaid
+          (inst) => inst.markAsPaid,
         ).length;
         const updateInstructionsUpdateQty = updateInstructions.filter(
-          (inst) => inst.shouldUpdateQuantity
+          (inst) => inst.shouldUpdateQuantity,
         ).length;
 
         // 如果所有商品都已結帳完畢，返回主頁面
@@ -1637,7 +1627,7 @@ const CafePOSSystem = () => {
         setSelectedTable(null);
         setCurrentView("main");
         alert(
-          `${type === "takeout" ? "外帶" : "內用"}結帳成功！結帳金額：$${total}`
+          `${type === "takeout" ? "外帶" : "內用"}結帳成功！結帳金額：$${total}`,
         );
       }
     } catch (error) {
@@ -1672,7 +1662,7 @@ const CafePOSSystem = () => {
         (orderItem) =>
           orderItem.isEditing &&
           orderItem.originalItemIndex === itemIndex &&
-          orderItem.isTakeout === true
+          orderItem.isTakeout === true,
       );
 
       if (isAlreadyEditing) {
@@ -1683,8 +1673,8 @@ const CafePOSSystem = () => {
                 orderItem.isEditing &&
                 orderItem.originalItemIndex === itemIndex &&
                 orderItem.isTakeout === true
-              )
-          )
+              ),
+          ),
         );
       } else {
         setCurrentOrder([
@@ -1706,7 +1696,7 @@ const CafePOSSystem = () => {
 
       // 過濾掉入座標記，獲取真正的餐點
       const realOrders = flatOrders.filter(
-        (item) => item && typeof item === "object" && !item.__seated
+        (item) => item && typeof item === "object" && !item.__seated,
       );
 
       // 檢查索引是否有效
@@ -1748,7 +1738,7 @@ const CafePOSSystem = () => {
         (orderItem) =>
           orderItem.isEditing &&
           orderItem.originalItemIndex === actualFlatIndex &&
-          !orderItem.isTakeout
+          !orderItem.isTakeout,
       );
 
       if (isAlreadyEditing) {
@@ -1759,8 +1749,8 @@ const CafePOSSystem = () => {
                 orderItem.isEditing &&
                 orderItem.originalItemIndex === actualFlatIndex &&
                 !orderItem.isTakeout
-              )
-          )
+              ),
+          ),
         );
       } else {
         setCurrentOrder([
@@ -1851,7 +1841,7 @@ const CafePOSSystem = () => {
       if (takeoutData && !takeoutData.paid) {
         const flatOrders = takeoutData.orders || [];
         const realOrders = flatOrders.filter(
-          (item) => item && typeof item === "object" && item.paid === false
+          (item) => item && typeof item === "object" && item.paid === false,
         );
         if (realOrders.length > 0) {
           confirmedOrdersBatches = [realOrders];
@@ -1868,7 +1858,7 @@ const CafePOSSystem = () => {
           item &&
           typeof item === "object" &&
           !item.__seated &&
-          item.paid === false
+          item.paid === false,
       );
 
       // 將扁平化訂單重新組織為批次格式（為了相容現有的 UI）
@@ -1982,8 +1972,8 @@ const CafePOSSystem = () => {
       operationFeedback.severity === "error"
         ? "bg-red-500 text-white"
         : operationFeedback.severity === "warning"
-        ? "bg-yellow-500 text-black"
-        : "bg-green-500 text-white"
+          ? "bg-yellow-500 text-black"
+          : "bg-green-500 text-white"
     }`}
         >
           {operationFeedback.message}

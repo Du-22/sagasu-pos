@@ -36,3 +36,7 @@ Thumbs.db
 # 臨時檔案
 *.tmp
 *.temp
+
+# 重構過程的備份檔案
+*.legacy.js
+*.old.js
