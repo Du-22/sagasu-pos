@@ -20,6 +20,9 @@ import useTableActions from "./components/hooks/useTableActions";
 import useOrderActions from "./components/hooks/useOrderActions";
 import useCheckout from "./components/hooks/useCheckout";
 import useInitialLoad from "./components/hooks/useInitialLoad";
+import SeatConfirmModal from "./components/UI/SeatConfirmModal";
+import MoveTableModal from "./components/UI/MoveTableModal";
+import OperationFeedback from "./components/UI/OperationFeedback";
 
 const CafePOSSystem = () => {
   const [currentFloor, setCurrentFloor] = useState("1F");
@@ -334,61 +337,19 @@ const CafePOSSystem = () => {
 
     return (
       <>
-        {showMoveTableModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 shadow-lg min-w-[300px]">
-              <h2 className="text-lg font-bold mb-4">換桌</h2>
-
-              <div className="mb-4">
-                選擇要搬移到哪個桌位：
-                <select
-                  className="border rounded px-2 py-1 ml-2"
-                  value={moveTableTarget}
-                  onChange={(e) => setMoveTableTarget(e.target.value)}
-                >
-                  <option value="">請選擇桌號</option>
-                  {allTableIds
-                    .filter((tid) => {
-                      const status = getTableStatus(tid);
-                      return (
-                        tid !== selectedTable &&
-                        (status === "available" || status === "ready-to-clean")
-                      );
-                    })
-                    .map((tid) => (
-                      <option key={tid} value={tid}>
-                        {tid} (
-                        {getTableStatus(tid) === "available"
-                          ? "空桌"
-                          : "待清理"}
-                        )
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  className="bg-blue-500 text-white px-4 py-2 rounded"
-                  onClick={() =>
-                    handleMoveTable(selectedTable, moveTableTarget)
-                  }
-                  disabled={!moveTableTarget}
-                >
-                  確認換桌
-                </button>
-                <button
-                  className="bg-gray-300 px-4 py-2 rounded"
-                  onClick={() => {
-                    setShowMoveTableModal(false);
-                    setMoveTableTarget("");
-                  }}
-                >
-                  取消
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <MoveTableModal
+          isOpen={showMoveTableModal}
+          selectedTable={selectedTable}
+          allTableIds={allTableIds}
+          moveTableTarget={moveTableTarget}
+          getTableStatus={getTableStatus}
+          onTargetChange={setMoveTableTarget}
+          onConfirm={() => handleMoveTable(selectedTable, moveTableTarget)}
+          onCancel={() => {
+            setShowMoveTableModal(false);
+            setMoveTableTarget("");
+          }}
+        />
         <OrderingPage
           selectedTable={selectedTable}
           currentOrder={currentOrder}
@@ -423,53 +384,16 @@ const CafePOSSystem = () => {
         </div>
       )}
 
-      {/* 操作回饋UI */}
-      {operationFeedback.show && (
-        <div
-          className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-4 py-2 rounded shadow-lg 
-    transition-all duration-300 ease-in-out
-    ${
-      operationFeedback.show
-        ? "opacity-100 translate-y-0"
-        : "opacity-0 -translate-y-4"
-    }
-    ${
-      operationFeedback.severity === "error"
-        ? "bg-red-500 text-white"
-        : operationFeedback.severity === "warning"
-          ? "bg-yellow-500 text-black"
-          : "bg-green-500 text-white"
-    }`}
-        >
-          {operationFeedback.message}
-        </div>
-      )}
+      <OperationFeedback feedback={operationFeedback} />
 
-      {showSeatConfirmModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 shadow-lg min-w-[300px]">
-            <h2 className="text-lg font-bold mb-4">帶位確認</h2>
-            <div className="mb-4">是否帶客人入座此桌？</div>
-            <div className="flex space-x-2">
-              <button
-                onClick={handleSeatConfirm}
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-              >
-                是
-              </button>
-              <button
-                onClick={() => {
-                  setShowSeatConfirmModal(false);
-                  setPendingSeatTable(null);
-                }}
-                className="bg-gray-300 px-4 py-2 rounded"
-              >
-                否
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <SeatConfirmModal
+        isOpen={showSeatConfirmModal}
+        onConfirm={handleSeatConfirm}
+        onCancel={() => {
+          setShowSeatConfirmModal(false);
+          setPendingSeatTable(null);
+        }}
+      />
       <SeatingPage
         currentFloor={currentFloor}
         orders={getOrdersForDisplay()}
