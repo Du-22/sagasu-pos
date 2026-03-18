@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getSalesHistoryByDate, updateSalesRecord } from "../../firebase/operations";
 import { getWeekRange, getMonthRange } from "../../utils/historyUtils";
 
@@ -26,11 +26,7 @@ const useHistoryData = ({ onRefundOrder }) => {
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [selectedRefundRecord, setSelectedRefundRecord] = useState(null);
 
-  useEffect(() => {
-    fetchSalesData();
-  }, [selectedDate, viewMode]);
-
-  const fetchSalesData = async () => {
+  const fetchSalesData = useCallback(async () => {
     setLoading(true);
     try {
       let startDate, endDate;
@@ -54,7 +50,11 @@ const useHistoryData = ({ onRefundOrder }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedDate, viewMode]);
+
+  useEffect(() => {
+    fetchSalesData();
+  }, [fetchSalesData]);
 
   const handleRefundClick = (record) => {
     setSelectedRefundRecord(record);
