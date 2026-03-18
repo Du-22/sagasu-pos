@@ -26,9 +26,10 @@ yarn-error.log*
 .next/
 out/
 
-# 編輯器設定檔案
+# 編輯器與工具設定檔案
 .vscode/
 .idea/
+.claude/
 
 # Windows 系統檔案
 Thumbs.db
