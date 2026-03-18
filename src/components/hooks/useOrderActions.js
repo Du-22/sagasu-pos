@@ -102,6 +102,21 @@ const useOrderActions = ({
             const updatedOrders = [...takeoutData.orders];
             updatedOrders.splice(originalIndex, 1);
 
+            if (updatedOrders.length === 0) {
+              // 最後一筆品項被刪除，取消整個外帶單並返回座位圖
+              const result = await dataManager.deleteTakeoutOrder(
+                selectedTable,
+                takeoutOrders,
+              );
+              if (result.success || result.hasBackup) {
+                setTakeoutOrders(result.data);
+              }
+              setCurrentOrder([]);
+              setSelectedTable(null);
+              setCurrentView("seating");
+              return;
+            }
+
             const newTakeoutOrders = {
               ...takeoutOrders,
               [selectedTable]: {

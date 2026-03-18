@@ -16,7 +16,7 @@ import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
  * 組件長度：約 180 行
  */
 const useMenuEditor = ({ menuData, setMenuData }) => {
-  const [selectedCategory, setSelectedCategory] = useState(menuData[0]?.category || "");
+  const [selectedCategory, setSelectedCategory] = useState("義式");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [editName, setEditName] = useState("");
   const [editPrice, setEditPrice] = useState("");
