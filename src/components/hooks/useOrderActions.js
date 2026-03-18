@@ -27,7 +27,6 @@ const useOrderActions = ({
   saveTableStateToFirebase,
   deleteTableStateFromFirebase,
   saveTakeoutOrdersToFirebase,
-  showOperationFeedback,
 }) => {
   // 新增品項到當前點餐暫存
   const addToOrder = (item) => {
@@ -461,17 +460,6 @@ const useOrderActions = ({
         );
         if (result.success || result.hasBackup) {
           setTakeoutOrders(result.data);
-          if (!result.success && result.hasBackup) {
-            showOperationFeedback(
-              result.uiGuidance.message,
-              result.uiGuidance.severity,
-            );
-          }
-        } else {
-          showOperationFeedback(
-            result.uiGuidance.message,
-            result.uiGuidance.severity,
-          );
         }
       } catch (error) {
         console.error("刪除外帶訂單失敗:", error);

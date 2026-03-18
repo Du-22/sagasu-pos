@@ -16,10 +16,6 @@ import {
   handleLoginSuccess,
   handleLoginFailure,
 } from "../../utils/loginHandler";
-import {
-  handleGoToChangePassword,
-  handlePasswordChanged,
-} from "../../utils/authNavigation";
 import { initializeDefaultPassword } from "../../firebase/operations";
 
 const useAuth = () => {
@@ -136,7 +132,6 @@ const useAuth = () => {
     handleLoginSuccess: wrappedHandleLoginSuccess,
     handleLoginFailure: wrappedHandleLoginFailure,
     handleLogout,
-    resetLoginState,
 
     // 導航操作 (需要外部提供 setCurrentView)
     handleGoToChangePassword: wrappedHandleGoToChangePassword,

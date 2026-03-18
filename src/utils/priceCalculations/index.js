@@ -28,9 +28,11 @@ export {
 // 批量處理函數
 export { batchCalculateItemPrices } from "./batchProcessor";
 
-export default {
+const priceCalculations = {
   ...core,
   ...validators,
   ...formatters,
   ...batchProcessor,
 };
+
+export default priceCalculations;

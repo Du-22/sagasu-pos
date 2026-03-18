@@ -2,7 +2,6 @@ import React from "react";
 import Header from "../UI/Header";
 import FloorTabs from "../UI/FloorTabs";
 import SeatingArea from "./SeatingArea";
-import Timer from "../UI/Timer";
 
 const SeatingPage = ({
   currentFloor,

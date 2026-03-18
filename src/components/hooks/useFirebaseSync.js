@@ -1,18 +1,16 @@
-import { useState } from "react";
 import { saveMenuData } from "../../firebase/operations";
 
 /**
  * useFirebaseSync Hook
  *
  * 原始程式碼：定義在 CafePOSSystem.js 的 Firebase 包裝函數群
- * 功能效果：統一處理所有資料的 Firebase 儲存操作，並管理操作回饋通知
+ * 功能效果：統一處理所有資料的 Firebase 儲存操作
  * 用途：封裝 dataManager 的呼叫與結果處理，讓主元件不需要處理成功/失敗邏輯
- * 組件長度：約 140 行
+ * 組件長度：約 120 行
  *
  * 重要說明：
  * - 所有函數都處理三種結果：完全成功、部分成功（有本地備份）、完全失敗
- * - 部分成功時仍更新 UI，但顯示警告提示
- * - operationFeedback 是 toast 通知狀態，5 秒後自動消失
+ * - 部分成功時仍更新 UI
  */
 const useFirebaseSync = ({
   dataManager,
@@ -23,21 +21,6 @@ const useFirebaseSync = ({
   setSalesHistory,
   setMenuData,
 }) => {
-  // Toast 通知狀態
-  const [operationFeedback, setOperationFeedback] = useState({
-    show: false,
-    message: "",
-    severity: "info",
-  });
-
-  // 顯示操作回饋通知，5 秒後自動消失
-  const showOperationFeedback = (message, severity = "info") => {
-    setOperationFeedback({ show: true, message, severity });
-    setTimeout(() => {
-      setOperationFeedback({ show: false, message: "", severity: "info" });
-    }, 5000);
-  };
-
   // 儲存桌位狀態到 Firebase
   const saveTableStateToFirebase = async (tableId, updates) => {
     try {
@@ -51,18 +34,10 @@ const useFirebaseSync = ({
         // 完全成功
         setTableStates((prev) => ({ ...prev, [tableId]: result.data }));
       } else if (result.hasBackup) {
-        // 部分成功 - 更新 UI 但顯示警告
+        // 部分成功 - 更新 UI
         setTableStates((prev) => ({ ...prev, [tableId]: result.data }));
-        showOperationFeedback(
-          result.uiGuidance.message,
-          result.uiGuidance.severity,
-        );
       } else {
         // 完全失敗
-        showOperationFeedback(
-          result.uiGuidance.message,
-          result.uiGuidance.severity,
-        );
         throw new Error(result.error);
       }
     } catch (error) {
@@ -82,18 +57,8 @@ const useFirebaseSync = ({
         delete newTableStates[tableId];
         setTableStates(newTableStates);
 
-        if (!result.success && result.hasBackup) {
-          showOperationFeedback(
-            result.uiGuidance.message,
-            result.uiGuidance.severity,
-          );
-        }
       } else {
         // 完全失敗
-        showOperationFeedback(
-          result.uiGuidance.message,
-          result.uiGuidance.severity,
-        );
         throw new Error(result.error);
       }
     } catch (error) {
@@ -109,18 +74,7 @@ const useFirebaseSync = ({
 
       if (result.success || result.hasBackup) {
         setTakeoutOrders(newTakeoutOrders);
-
-        if (!result.success && result.hasBackup) {
-          showOperationFeedback(
-            result.uiGuidance.message,
-            result.uiGuidance.severity,
-          );
-        }
       } else {
-        showOperationFeedback(
-          result.uiGuidance.message,
-          result.uiGuidance.severity,
-        );
         throw new Error(result.error);
       }
     } catch (error) {
@@ -137,18 +91,7 @@ const useFirebaseSync = ({
 
       if (result.success || result.hasBackup) {
         setSalesHistory(result.data);
-
-        if (!result.success && result.hasBackup) {
-          showOperationFeedback(
-            result.uiGuidance.message,
-            result.uiGuidance.severity,
-          );
-        }
       } else {
-        showOperationFeedback(
-          result.uiGuidance.message,
-          result.uiGuidance.severity,
-        );
         throw new Error(result.error);
       }
     } catch (error) {
@@ -164,19 +107,12 @@ const useFirebaseSync = ({
 
     try {
       await saveMenuData(newMenuData);
-      showOperationFeedback("✅ 菜單儲存成功", "success");
     } catch (error) {
       console.error("❌ 儲存菜單到 Firebase 失敗:", error);
-      showOperationFeedback(
-        "⚠️ 雲端同步失敗，已保存到本地裝置。請檢查網路後會自動同步。",
-        "warning",
-      );
     }
   };
 
   return {
-    operationFeedback,
-    showOperationFeedback,
     saveTableStateToFirebase,
     deleteTableStateFromFirebase,
     saveTakeoutOrdersToFirebase,

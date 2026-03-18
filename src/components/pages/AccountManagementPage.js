@@ -5,10 +5,6 @@ import {
   User,
   ArrowRight,
   RefreshCw,
-  Shield,
-  Eye,
-  EyeOff,
-  X,
 } from "lucide-react";
 import Header from "../UI/Header";
 
@@ -21,15 +17,6 @@ const AccountManagementPage = ({
   const [loginLogs, setLoginLogs] = useState([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
   const [error, setError] = useState("");
-  const [showSecurityModal, setShowSecurityModal] = useState(false);
-  const [securityForm, setSecurityForm] = useState({
-    currentPassword: "",
-    newAnswer: "",
-  });
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [securityError, setSecurityError] = useState("");
-  const [isUpdatingSecurity, setIsUpdatingSecurity] = useState(false);
-  const [securitySuccess, setSecuritySuccess] = useState("");
 
   useEffect(() => {
     loadLoginLogs();
@@ -89,70 +76,6 @@ const AccountManagementPage = ({
 
   const getStatusText = (success) => {
     return success ? "成功" : "失敗";
-  };
-
-  const handleSecuritySubmit = async (e) => {
-    e.preventDefault();
-
-    if (!securityForm.currentPassword.trim()) {
-      setSecurityError("請輸入目前密碼");
-      return;
-    }
-
-    if (!securityForm.newAnswer.trim()) {
-      setSecurityError("請輸入新的安全問題答案");
-      return;
-    }
-
-    if (securityForm.newAnswer.trim().length < 2) {
-      setSecurityError("答案至少需要2個字符");
-      return;
-    }
-
-    setIsUpdatingSecurity(true);
-    setSecurityError("");
-    setSecuritySuccess("");
-
-    try {
-      const { updateSecurityQuestion } = await import(
-        "../../firebase/operations"
-      );
-      const success = await updateSecurityQuestion(
-        securityForm.currentPassword,
-        securityForm.newAnswer.trim()
-      );
-
-      if (success) {
-        setSecuritySuccess("安全問題更新成功！");
-        setSecurityForm({
-          currentPassword: "",
-          newAnswer: "",
-        });
-
-        // 3秒後關閉modal
-        setTimeout(() => {
-          setShowSecurityModal(false);
-          setSecuritySuccess("");
-        }, 3000);
-      } else {
-        setSecurityError("目前密碼錯誤，請重新輸入");
-      }
-    } catch (error) {
-      console.error("更新安全問題失敗:", error);
-      setSecurityError("系統錯誤，請稍後再試");
-    } finally {
-      setIsUpdatingSecurity(false);
-    }
-  };
-
-  const handleCloseSecurityModal = () => {
-    setShowSecurityModal(false);
-    setSecurityForm({
-      currentPassword: "",
-      newAnswer: "",
-    });
-    setSecurityError("");
-    setSecuritySuccess("");
   };
 
   return (

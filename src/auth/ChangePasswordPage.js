@@ -17,19 +17,6 @@ const ChangePasswordPage = ({ onBack, onPasswordChanged }) => {
   const newPasswordRef = useRef(null);
   const confirmPasswordRef = useRef(null);
 
-  const getInputRef = (field) => {
-    switch (field) {
-      case "oldPassword":
-        return oldPasswordRef;
-      case "newPassword":
-        return newPasswordRef;
-      case "confirmPassword":
-        return confirmPasswordRef;
-      default:
-        return null;
-    }
-  };
-
   // 簡化的密碼顯示切換，使用 React 狀態但按鈕在外面
   const togglePasswordVisibility = (field) => {
     setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));

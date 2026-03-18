@@ -22,7 +22,7 @@ import useCheckout from "./components/hooks/useCheckout";
 import useInitialLoad from "./components/hooks/useInitialLoad";
 import SeatConfirmModal from "./components/UI/SeatConfirmModal";
 import MoveTableModal from "./components/UI/MoveTableModal";
-import OperationFeedback from "./components/UI/OperationFeedback";
+
 
 const CafePOSSystem = () => {
   const [currentFloor, setCurrentFloor] = useState("1F");
@@ -61,8 +61,6 @@ const CafePOSSystem = () => {
   const dataManager = useDataManager();
 
   const {
-    operationFeedback,
-    showOperationFeedback,
     saveTableStateToFirebase,
     deleteTableStateFromFirebase,
     saveTakeoutOrdersToFirebase,
@@ -124,7 +122,6 @@ const CafePOSSystem = () => {
     saveTableStateToFirebase,
     deleteTableStateFromFirebase,
     saveTakeoutOrdersToFirebase,
-    showOperationFeedback,
   });
 
   const { checkout, handleRefund } = useCheckout({
@@ -383,8 +380,6 @@ const CafePOSSystem = () => {
           />
         </div>
       )}
-
-      <OperationFeedback feedback={operationFeedback} />
 
       <SeatConfirmModal
         isOpen={showSeatConfirmModal}

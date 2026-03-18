@@ -1,5 +1,3 @@
-import { type } from "@testing-library/user-event/dist/type";
-
 //固定菜單 order改為各類別排序
 //只留塑膠袋 其他菜單則使用網頁菜單編輯功能新增
 const defaultMenuData = [

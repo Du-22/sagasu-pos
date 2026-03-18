@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 
 const Timer = ({ startTime, className = "" }) => {
   const [displayTime, setDisplayTime] = useState("00:00");
-  const intervalRef = useRef(null);
-
   const calculateElapsedTime = (startTimestamp) => {
     if (!startTimestamp) return "00:00";
 

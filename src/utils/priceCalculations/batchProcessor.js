@@ -36,7 +36,7 @@ export const batchCalculateItemPrices = (items, partialSelection = null) => {
       if (selectedQty <= 0) return;
 
       // 解析 key: "batchIndex-itemIndex" 格式
-      const [batchIndex, itemIndexStr] = key.split("-");
+      const [, itemIndexStr] = key.split("-");
       const itemIndex = parseInt(itemIndexStr);
 
       const originalItem = items[itemIndex];

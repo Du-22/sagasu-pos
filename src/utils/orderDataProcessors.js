@@ -18,7 +18,6 @@ export const groupOrdersByTime = (flatOrders) => {
   }
 
   // 依據timestamp分組
-  const groups = [];
   const timeGroups = {};
 
   flatOrders.forEach((item, index) => {
