@@ -181,55 +181,6 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
     setEmailToDelete("");
   };
 
-  // 自動報表測試
-  const testWeeklyReport = async () => {
-    try {
-      const functions = getFunctions();
-      const triggerWeeklyReport = httpsCallable(
-        functions,
-        "triggerWeeklyReport"
-      );
-      const result = await triggerWeeklyReport();
-
-      if (result.data.success) {
-        alert(`週報測試發送成功！
-
-請檢查信箱查看自動週報郵件。
-
-注意：這是測試功能，正式的自動週報會在每週日 19:00 自動發送。`);
-      } else {
-        alert("週報測試失敗: " + result.data.error);
-      }
-    } catch (error) {
-      console.error("週報測試失敗:", error);
-      alert("週報測試失敗: " + error.message);
-    }
-  };
-
-  const testMonthlyReport = async () => {
-    try {
-      const functions = getFunctions();
-      const triggerMonthlyReport = httpsCallable(
-        functions,
-        "triggerMonthlyReport"
-      );
-      const result = await triggerMonthlyReport();
-
-      if (result.data.success) {
-        alert(`月報測試發送成功！
-
-請檢查信箱查看自動月報郵件。
-
-注意：這是測試功能，正式的自動月報會在每月最後一天 19:00 自動發送。`);
-      } else {
-        alert("月報測試失敗: " + result.data.error);
-      }
-    } catch (error) {
-      console.error("月報測試失敗:", error);
-      alert("月報測試失敗: " + error.message);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-100">
       <Header

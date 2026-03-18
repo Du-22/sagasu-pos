@@ -110,6 +110,8 @@ const NewOrderSummary = ({
 
   const handleFullCheckout = () => {
     setShowCheckoutTypeModal(false);
+    setSelectedItems({});
+    setSelectedQuantities({});
     setShowPaymentModal(true);
   };
 

@@ -1,5 +1,4 @@
 import React from "react";
-import { formatPriceAdjustment } from "../../utils/priceCalculations";
 
 /**
  * 訂單項目顯示組件

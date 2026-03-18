@@ -26,9 +26,10 @@ yarn-error.log*
 .next/
 out/
 
-# 編輯器設定檔案
+# 編輯器與工具設定檔案
 .vscode/
 .idea/
+.claude/
 
 # Windows 系統檔案
 Thumbs.db
@@ -36,3 +37,10 @@ Thumbs.db
 # 臨時檔案
 *.tmp
 *.temp
+
+# 重構過程的備份檔案
+*.legacy.js
+*.old.js
+
+# 重構文件（完成後統一整理）
+sagasu-pos-refactoring/

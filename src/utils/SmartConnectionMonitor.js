@@ -49,31 +49,6 @@ export const SmartConnectionMonitor = ({
     }
   }, []);
 
-  // ==================== 監聽瀏覽器網路事件（免費！）====================
-  useEffect(() => {
-    const handleOnline = () => {
-      console.log("🌐 瀏覽器偵測到網路恢復");
-      setNetworkOnline(true);
-
-      // 網路恢復時，自動測試一次 Firebase 連線
-      testFirebaseConnection();
-    };
-
-    const handleOffline = () => {
-      console.log("🌐 瀏覽器偵測到網路斷線");
-      setNetworkOnline(false);
-      setFirebaseConnected(false);
-    };
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
-
   // ==================== Firebase 連線測試（只在需要時執行）====================
   const testFirebaseConnection = useCallback(async () => {
     // 如果瀏覽器都沒網路，就不用測試了
@@ -149,6 +124,31 @@ export const SmartConnectionMonitor = ({
       setIsTesting(false);
     }
   }, []);
+
+  // ==================== 監聽瀏覽器網路事件（免費！）====================
+  useEffect(() => {
+    const handleOnline = () => {
+      console.log("🌐 瀏覽器偵測到網路恢復");
+      setNetworkOnline(true);
+
+      // 網路恢復時，自動測試一次 Firebase 連線
+      testFirebaseConnection();
+    };
+
+    const handleOffline = () => {
+      console.log("🌐 瀏覽器偵測到網路斷線");
+      setNetworkOnline(false);
+      setFirebaseConnected(false);
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [testFirebaseConnection]);
 
   // ==================== 初始載入時檢測一次 ====================
   useEffect(() => {

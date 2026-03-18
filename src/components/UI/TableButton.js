@@ -2,19 +2,6 @@ import React from "react";
 import Timer from "./Timer";
 
 const TableButton = ({ table, status, onClick, startTime }) => {
-  const getTableSizeClass = (size) => {
-    switch (size) {
-      case "small":
-        return "w-8 h-8";
-      case "medium":
-        return "w-24 h-24";
-      case "large":
-        return "w-[150px] h-[150px]";
-      default:
-        return "w-10 h-10";
-    }
-  };
-
   // 新增入座狀態顏色
   const getTableColor = (status) => {
     switch (status) {

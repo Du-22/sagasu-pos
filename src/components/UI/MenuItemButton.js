@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from "react";
-import { calculateItemPrice } from "../../utils/priceCalculations";
 import CustomOptionsModal from "./CustomOptionsModal";
 
 /**

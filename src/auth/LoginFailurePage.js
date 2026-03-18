@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { AlertTriangle, Clock, Shield, Wifi, ArrowLeft } from "lucide-react";
+import { AlertTriangle, Clock, Shield, Wifi } from "lucide-react";
 
 const LoginFailurePage = ({
   attemptsLeft,
