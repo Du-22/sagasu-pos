@@ -20,7 +20,7 @@ import {
   doc,
   getDocs,
   getDoc,
-  addDoc,
+  setDoc,
   updateDoc,
   deleteDoc,
   query,
@@ -109,13 +109,15 @@ export const getSalesHistory = getAllSalesHistory;
  */
 export const addSalesRecord = async (salesData) => {
   try {
+    // 重要：使用 salesData.id 作為文件 ID，確保 updateSalesRecord（退款）能找到同一份文件
     const salesRef = collection(db, "stores", STORE_ID, "sales");
-    const docRef = await addDoc(salesRef, {
+    const docRef = doc(salesRef, salesData.id);
+    await setDoc(docRef, {
       ...salesData,
       createdAt: new Date().toISOString(),
     });
-    console.log(`✅ 銷售記錄新增成功，ID: ${docRef.id}`);
-    return docRef.id;
+    console.log(`✅ 銷售記錄新增成功，ID: ${salesData.id}`);
+    return salesData.id;
   } catch (error) {
     console.error("新增銷售記錄失敗:", error);
     throw error;
