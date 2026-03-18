@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l /c/Users/USER/Desktop/sagasu-pos/src/components/UI/OrderSummary/*.js /c/Users/USER/Desktop/sagasu-pos/src/components/pages/HistoryPage.js /c/Users/USER/Desktop/sagasu-pos/src/components/pages/MenuEditorPage.js)"
+    ]
+  }
+}
