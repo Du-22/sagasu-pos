@@ -40,3 +40,6 @@ Thumbs.db
 # 重構過程的備份檔案
 *.legacy.js
 *.old.js
+
+# 重構文件（完成後統一整理）
+sagasu-pos-refactoring/

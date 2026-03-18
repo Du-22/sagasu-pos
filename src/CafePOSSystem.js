@@ -4,7 +4,6 @@ import OrderingPage from "./components/menuData/OrderingPage";
 import HistoryPage from "./components/pages/HistoryPage";
 import MenuEditorPage from "./components/pages/MenuEditorPage";
 import defaultMenuData from "./components/menuData/defaultMenuData";
-import { seatingData } from "./components/seatingData/SeatingArea";
 import ExportReportsPage from "./components/pages/ExportReportsPage";
 import LoginPage from "./auth/LoginPage";
 import LoginFailurePage from "./auth/LoginFailurePage";
@@ -18,11 +17,9 @@ import SmartConnectionMonitor from "./utils/SmartConnectionMonitor";
 // Firebase 操作函數 imports - 使用新版本
 import {
   getMenuData,
-  saveMenuData,
   getTableStates,
   getTakeoutOrders,
   getSalesHistoryByDate,
-  addSalesRecord,
   updateSalesRecord,
 } from "./firebase/operations";
 
@@ -33,6 +30,10 @@ import { collection, doc, setDoc, getDocs } from "firebase/firestore";
 import { db } from "./firebase/config";
 
 import useAuth from "./components/hooks/useAuth";
+import useFirebaseSync from "./components/hooks/useFirebaseSync";
+import useTableActions from "./components/hooks/useTableActions";
+import useOrderActions from "./components/hooks/useOrderActions";
+import { generateHistoryId, generateGroupId } from "./utils/idGenerators";
 
 // 🆕 STORE_ID 常數定義
 const STORE_ID = "default_store";
@@ -74,15 +75,75 @@ const CafePOSSystem = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
-  // 操作回饋狀態
-  const [operationFeedback, setOperationFeedback] = useState({
-    show: false,
-    message: "",
-    severity: "info",
-  });
-
   // hook初始化
   const dataManager = useDataManager();
+
+  const {
+    operationFeedback,
+    showOperationFeedback,
+    saveTableStateToFirebase,
+    deleteTableStateFromFirebase,
+    saveTakeoutOrdersToFirebase,
+    saveSalesHistoryToFirebase,
+    saveMenuDataToFirebase,
+  } = useFirebaseSync({
+    dataManager,
+    tableStates,
+    salesHistory,
+    setTableStates,
+    setTakeoutOrders,
+    setSalesHistory,
+    setMenuData,
+  });
+
+  const {
+    allTableIds,
+    getTableStatus,
+    handleTableClick,
+    handleSeatConfirm,
+    handleMoveTable,
+    handleReleaseSeat,
+  } = useTableActions({
+    tableStates,
+    takeoutOrders,
+    pendingSeatTable,
+    saveTableStateToFirebase,
+    deleteTableStateFromFirebase,
+    setTableStates,
+    setSelectedTable,
+    setCurrentOrder,
+    setCurrentView,
+    setShowSeatConfirmModal,
+    setPendingSeatTable,
+    setShowMoveTableModal,
+    setMoveTableTarget,
+  });
+
+  const {
+    addToOrder,
+    updateQuantity,
+    removeFromOrder,
+    submitOrder,
+    editConfirmedItem,
+    handleNewTakeout,
+    handleTakeoutClick,
+  } = useOrderActions({
+    currentOrder,
+    selectedTable,
+    tableStates,
+    takeoutOrders,
+    nextTakeoutId,
+    dataManager,
+    setCurrentOrder,
+    setSelectedTable,
+    setCurrentView,
+    setNextTakeoutId,
+    setTakeoutOrders,
+    saveTableStateToFirebase,
+    deleteTableStateFromFirebase,
+    saveTakeoutOrdersToFirebase,
+    showOperationFeedback,
+  });
 
   useEffect(() => {}, [currentView, selectedTable]);
 
@@ -389,13 +450,6 @@ const CafePOSSystem = () => {
     });
   }, [tableStates]);
 
-  // 操作回饋處理
-  const showOperationFeedback = (message, severity = "info") => {
-    setOperationFeedback({ show: true, message, severity });
-    setTimeout(() => {
-      setOperationFeedback({ show: false, message: "", severity: "info" });
-    }, 5000);
-  };
 
   // ==================== 登入相關處理函數 ====================
 
@@ -560,236 +614,6 @@ const CafePOSSystem = () => {
     return hasPaidItems ? "ready-to-clean" : "available";
   };
 
-  // 儲存桌位狀態到 Firebase
-  const saveTableStateToFirebase = async (tableId, updates) => {
-    try {
-      const result = await dataManager.saveTableState(
-        tableId,
-        updates,
-        tableStates,
-      );
-
-      // 處理操作結果
-      if (result.success) {
-        // 完全成功
-        setTableStates((prev) => ({ ...prev, [tableId]: result.data }));
-      } else if (result.hasBackup) {
-        // 部分成功 - 更新 UI 但顯示警告
-        setTableStates((prev) => ({ ...prev, [tableId]: result.data }));
-        showOperationFeedback(
-          result.uiGuidance.message,
-          result.uiGuidance.severity,
-        );
-      } else {
-        // 完全失敗
-        showOperationFeedback(
-          result.uiGuidance.message,
-          result.uiGuidance.severity,
-        );
-        throw new Error(result.error);
-      }
-    } catch (error) {
-      console.error("❌ 儲存桌位狀態失敗:", error);
-      throw error;
-    }
-  };
-
-  // 刪除桌位狀態
-  const deleteTableStateFromFirebase = async (tableId) => {
-    try {
-      const result = await dataManager.deleteTableState(tableId);
-
-      if (result.success || result.hasBackup) {
-        // 成功或部分成功都更新本地狀態
-        const newTableStates = { ...tableStates };
-        delete newTableStates[tableId];
-        setTableStates(newTableStates);
-
-        if (!result.success && result.hasBackup) {
-          showOperationFeedback(
-            result.uiGuidance.message,
-            result.uiGuidance.severity,
-          );
-        }
-      } else {
-        // 完全失敗
-        showOperationFeedback(
-          result.uiGuidance.message,
-          result.uiGuidance.severity,
-        );
-        throw new Error(result.error);
-      }
-    } catch (error) {
-      console.error("❌ 刪除桌位狀態失敗:", error);
-      throw error;
-    }
-  };
-
-  // 儲存外帶訂單到 Firebase
-  const saveTakeoutOrdersToFirebase = async (newTakeoutOrders) => {
-    try {
-      const result = await dataManager.saveTakeoutOrders(newTakeoutOrders);
-
-      if (result.success || result.hasBackup) {
-        setTakeoutOrders(newTakeoutOrders);
-
-        if (!result.success && result.hasBackup) {
-          showOperationFeedback(
-            result.uiGuidance.message,
-            result.uiGuidance.severity,
-          );
-        }
-      } else {
-        showOperationFeedback(
-          result.uiGuidance.message,
-          result.uiGuidance.severity,
-        );
-        throw new Error(result.error);
-      }
-    } catch (error) {
-      console.error("❌ 儲存外帶訂單失敗:", error);
-      throw error;
-    }
-  };
-
-  // 儲存銷售歷史到 Firebase
-  const saveSalesHistoryToFirebase = async (newHistory) => {
-    try {
-      const newRecord = newHistory[newHistory.length - 1]; // 假設新記錄在最後
-      const result = await dataManager.addSalesRecord(newRecord, salesHistory);
-
-      if (result.success || result.hasBackup) {
-        setSalesHistory(result.data);
-
-        if (!result.success && result.hasBackup) {
-          showOperationFeedback(
-            result.uiGuidance.message,
-            result.uiGuidance.severity,
-          );
-        }
-      } else {
-        showOperationFeedback(
-          result.uiGuidance.message,
-          result.uiGuidance.severity,
-        );
-        throw new Error(result.error);
-      }
-    } catch (error) {
-      console.error("❌ 儲存銷售歷史失敗:", error);
-      throw error;
-    }
-  };
-
-  // 儲存菜單到 Firebase
-  const saveMenuDataToFirebase = async (newMenuData) => {
-    // ✅ 先更新本地 state（立即反應）
-    setMenuData(newMenuData);
-
-    try {
-      // ✅ 嘗試保存到 Firebase
-      await saveMenuData(newMenuData);
-
-      console.log("✅ 菜單儲存成功");
-
-      // ✅ 顯示成功訊息
-      showOperationFeedback("✅ 菜單儲存成功", "success");
-    } catch (error) {
-      console.error("❌ 儲存菜單到 Firebase 失敗:", error);
-
-      // ✅ 顯示警告（不是錯誤，因為本地已有備份）
-      showOperationFeedback(
-        "⚠️ 雲端同步失敗，已保存到本地裝置。請檢查網路後會自動同步。",
-        "warning",
-      );
-    }
-  };
-
-  // 取得所有桌號
-  const allTableIds = Object.values(seatingData)
-    .flat()
-    .map((table) => table.id);
-
-  // 換桌邏輯（使用新數據結構）
-  const handleMoveTable = async (fromTable, toTable) => {
-    if (!fromTable || !toTable || fromTable === toTable) return;
-
-    const targetTableStatus = getTableStatus(toTable);
-
-    if (
-      targetTableStatus !== "available" &&
-      targetTableStatus !== "ready-to-clean"
-    ) {
-      alert("目標桌不可用，請選擇空桌或待清理的桌子。");
-      return;
-    }
-
-    const fromTableState = tableStates[fromTable];
-    if (!fromTableState?.orders || fromTableState.orders.length === 0) {
-      alert("原桌沒有訂單可搬移。");
-      return;
-    }
-
-    try {
-      // 1. 複製桌位狀態到新桌位
-      await saveTableStateToFirebase(toTable, {
-        orders: fromTableState.orders,
-        startTime: fromTableState.startTime || Date.now(),
-        status: fromTableState.status,
-      });
-
-      // 2. 刪除原桌位狀態
-      await deleteTableStateFromFirebase(fromTable);
-
-      // 3. 強制更新本地狀態，確保 UI 立即反映變化
-      setTableStates((prevStates) => {
-        const newStates = { ...prevStates };
-
-        // 複製到新桌位
-        newStates[toTable] = {
-          orders: fromTableState.orders,
-          startTime: fromTableState.startTime || Date.now(),
-          status: fromTableState.status,
-          updatedAt: new Date().toISOString(),
-        };
-
-        // 刪除原桌位
-        delete newStates[fromTable];
-
-        return newStates;
-      });
-
-      // 4. 更新當前選中的桌子
-      setSelectedTable(toTable);
-      setCurrentOrder([]);
-
-      // 5. 關閉 modal
-      setShowMoveTableModal(false);
-      setMoveTableTarget("");
-
-      // 6. 返回座位視圖
-      setCurrentView("seating");
-    } catch (error) {
-      console.error("❌ 換桌操作失敗:", error);
-      alert("換桌失敗，請稍後再試");
-    }
-  };
-
-  const generateHistoryId = () => {
-    const now = new Date();
-    const dateStr = now.toISOString().split("T")[0].replace(/-/g, "");
-    const timeStr = now.getTime().toString();
-    const randomStr = Math.random().toString(36).substr(2, 4).toUpperCase();
-    return `H${dateStr}${timeStr}${randomStr}`;
-  };
-
-  const generateGroupId = () => {
-    const now = new Date();
-    const dateStr = now.toISOString().split("T")[0].replace(/-/g, "");
-    const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, "");
-    const randomStr = Math.random().toString(36).substr(2, 2).toUpperCase();
-    return `G${dateStr}${timeStr}${randomStr}`;
-  };
-
   const handleRefund = async (recordId) => {
     const recordIndex = salesHistory.findIndex(
       (record) => record.id === recordId,
@@ -839,409 +663,6 @@ const CafePOSSystem = () => {
 
   const handleMenuSelect = (menuId) => {
     setCurrentView(menuId);
-  };
-
-  const handleNewTakeout = () => {
-    const takeoutId = `T${String(nextTakeoutId).padStart(3, "0")}`;
-    setSelectedTable(takeoutId);
-    setCurrentOrder([]);
-    setCurrentView("ordering");
-    setNextTakeoutId(nextTakeoutId + 1);
-  };
-
-  const handleTakeoutClick = async (takeoutId) => {
-    const orderData = takeoutOrders[takeoutId];
-    if (orderData && !orderData.paid) {
-      setSelectedTable(takeoutId);
-      setCurrentOrder([]);
-      setCurrentView("ordering");
-    } else if (orderData && orderData.paid) {
-      try {
-        const result = await dataManager.deleteTakeoutOrder(
-          takeoutId,
-          takeoutOrders,
-        );
-        if (result.success || result.hasBackup) {
-          setTakeoutOrders(result.data);
-          if (!result.success && result.hasBackup) {
-            showOperationFeedback(
-              result.uiGuidance.message,
-              result.uiGuidance.severity,
-            );
-          }
-        } else {
-          showOperationFeedback(
-            result.uiGuidance.message,
-            result.uiGuidance.severity,
-          );
-        }
-      } catch (error) {
-        console.error("刪除外帶訂單失敗:", error);
-      }
-    }
-  };
-
-  // 入座確認（使用新數據結構）
-  const handleSeatConfirm = async () => {
-    const seatData = {
-      orders: [{ __seated: true, timestamp: new Date().toISOString() }], // 扁平化陣列
-      startTime: Date.now(),
-      status: "seated",
-    };
-
-    await saveTableStateToFirebase(pendingSeatTable, seatData);
-    setShowSeatConfirmModal(false);
-    setPendingSeatTable(null);
-  };
-
-  // getTableStatus 使用新數據結構
-  const getTableStatus = (tableId) => {
-    if (tableId.startsWith("T")) {
-      const takeoutData = takeoutOrders[tableId];
-      if (takeoutData) {
-        return takeoutData.paid ? "takeout-paid" : "takeout-unpaid";
-      }
-      return "takeout-new";
-    }
-
-    const tableState = tableStates[tableId];
-
-    if (!tableState || !tableState.orders || tableState.orders.length === 0) {
-      return "available";
-    }
-
-    // 詳細檢查入座狀態
-    for (let i = 0; i < tableState.orders.length; i++) {
-      const item = tableState.orders[i];
-
-      if (item && typeof item === "object" && item.__seated === true) {
-        return "seated";
-      }
-    }
-
-    // 檢查付款狀態
-    let hasUnpaidItems = false;
-    let hasPaidItems = false;
-
-    for (const item of tableState.orders) {
-      if (item && typeof item === "object" && !item.__seated) {
-        if (item.paid === false) {
-          hasUnpaidItems = true;
-        } else if (item.paid === true) {
-          hasPaidItems = true;
-        }
-      }
-    }
-
-    if (hasUnpaidItems) {
-      return "occupied";
-    }
-    if (hasPaidItems) {
-      return "ready-to-clean";
-    }
-
-    return "available";
-  };
-
-  const handleTableClick = (tableId) => {
-    const status = getTableStatus(tableId);
-    if (status === "available") {
-      setPendingSeatTable(tableId);
-      setShowSeatConfirmModal(true);
-    } else if (status === "seated" || status === "occupied") {
-      setSelectedTable(tableId);
-      setCurrentOrder([]);
-      setTimeout(() => {
-        setCurrentView("ordering");
-      }, 10);
-    } else if (status === "ready-to-clean") {
-      handleCleanTable(tableId);
-    }
-  };
-
-  // 清理桌子（使用新數據結構）
-  const handleCleanTable = async (tableId) => {
-    try {
-      // 清理桌子時完全刪除桌位狀態，包括計時器
-      await deleteTableStateFromFirebase(tableId);
-    } catch (error) {
-      console.error("清理桌子失敗:", error);
-    }
-  };
-
-  // submitOrder（使用新數據結構）
-  const submitOrder = async () => {
-    if (currentOrder.length === 0) return;
-
-    if (selectedTable.startsWith("T")) {
-      // 外帶訂單 - 改為扁平化結構
-
-      const existingTakeoutData = takeoutOrders[selectedTable];
-      let existingOrders = existingTakeoutData?.orders
-        ? [...existingTakeoutData.orders]
-        : [];
-
-      // 新增項目（直接加到扁平化陣列末尾）
-      const newItems = currentOrder.map((item) => ({
-        ...item,
-        timestamp: new Date().toISOString(),
-        paid: false,
-        customOptions: item.customOptions,
-      }));
-
-      // 合併：扁平化結構，不要巢狀陣列
-      let finalOrders = [...existingOrders, ...newItems];
-
-      // 驗證：確保沒有巢狀陣列
-      const hasNestedArrays = finalOrders.some((item) => Array.isArray(item));
-
-      if (hasNestedArrays) {
-        console.error("❌ 外帶訂單檢測到巢狀陣列，進行扁平化");
-        finalOrders = finalOrders.flat();
-      }
-
-      const newTakeoutOrders = {
-        ...takeoutOrders,
-        [selectedTable]: {
-          orders: finalOrders, // 改用 orders 而不是 batches
-          timestamp: existingTakeoutData
-            ? existingTakeoutData.timestamp
-            : new Date().toISOString(),
-          paid: false,
-        },
-      };
-
-      await saveTakeoutOrdersToFirebase(newTakeoutOrders);
-      setCurrentView("seating");
-      setSelectedTable(null);
-      setCurrentOrder([]);
-    } else {
-      // 內用訂單 - 使用扁平化結構
-
-      const currentTableState = tableStates[selectedTable] || {};
-      let existingOrders = currentTableState.orders
-        ? [...currentTableState.orders]
-        : [];
-
-      // 移除入座標記
-      existingOrders = existingOrders.filter((item) => {
-        return !(item && item.__seated);
-      });
-
-      // 處理編輯項目
-      const hasEditingItems = currentOrder.some(
-        (item) => item.isEditing && !item.isTakeout,
-      );
-
-      if (hasEditingItems) {
-        // 如果有編輯項目，更新現有訂單
-        currentOrder.forEach((item) => {
-          if (item.isEditing && !item.isTakeout) {
-            const {
-              isEditing,
-              originalBatchIndex,
-              originalItemIndex,
-              ...updatedItem
-            } = item;
-
-            // 計算在扁平化陣列中的實際位置
-            let flatIndex = 0;
-            for (let b = 0; b < originalBatchIndex; b++) {
-              if (Array.isArray(currentTableState.orders[b])) {
-                flatIndex += currentTableState.orders[b].length;
-              } else {
-                flatIndex += 1;
-              }
-            }
-            flatIndex += originalItemIndex;
-
-            if (existingOrders[flatIndex]) {
-              existingOrders[flatIndex] = {
-                ...updatedItem,
-                timestamp: new Date().toISOString(),
-                paid: false,
-              };
-            }
-          }
-        });
-      }
-
-      // 新增項目（直接加到扁平化陣列末尾）
-      const newItems = currentOrder
-        .filter((item) => !item.isEditing)
-        .map((item) => ({
-          ...item,
-          timestamp: new Date().toISOString(),
-          paid: false,
-        }));
-
-      // 合併：扁平化結構，不要巢狀陣列
-      let finalOrders = [...existingOrders, ...newItems];
-
-      // 驗證：確保沒有巢狀陣列
-      const hasNestedArrays = finalOrders.some((item) => Array.isArray(item));
-
-      if (hasNestedArrays) {
-        console.error("❌ 檢測到巢狀陣列，進行扁平化");
-        finalOrders = finalOrders.flat();
-      }
-
-      // 儲存桌位狀態
-      const stateToSave = {
-        orders: finalOrders,
-        startTime: currentTableState.startTime || Date.now(),
-        status: "occupied",
-      };
-
-      await saveTableStateToFirebase(selectedTable, stateToSave);
-
-      if (hasEditingItems && newItems.length === 0) {
-        setCurrentOrder([]);
-      } else {
-        setCurrentView("seating");
-        setSelectedTable(null);
-        setCurrentOrder([]);
-      }
-    }
-  };
-
-  // handleReleaseSeat（使用新數據結構）
-  const handleReleaseSeat = async (tableId) => {
-    try {
-      await deleteTableStateFromFirebase(tableId);
-      setCurrentView("seating");
-      setSelectedTable(null);
-    } catch (error) {
-      console.error("釋放座位失敗:", error);
-    }
-  };
-
-  const addToOrder = (item) => {
-    // 生成唯一識別碼，包含客製選項
-    const generateUniqueId = (item) => {
-      if (item.selectedCustom && Object.keys(item.selectedCustom).length > 0) {
-        return `${item.id}-${JSON.stringify(item.selectedCustom)}`;
-      }
-      return item.id.toString();
-    };
-
-    const uniqueId = generateUniqueId(item);
-
-    const existingItem = currentOrder.find(
-      (orderItem) => orderItem.uniqueId === uniqueId,
-    );
-
-    if (existingItem) {
-      setCurrentOrder(
-        currentOrder.map((orderItem) =>
-          orderItem.uniqueId === uniqueId
-            ? { ...orderItem, quantity: orderItem.quantity + 1 }
-            : orderItem,
-        ),
-      );
-    } else {
-      setCurrentOrder([
-        ...currentOrder,
-        {
-          ...item,
-          uniqueId: uniqueId,
-          quantity: 1,
-          customOptions: item.customOptions,
-        },
-      ]);
-    }
-  };
-
-  const updateQuantity = (uniqueId, quantity) => {
-    if (quantity <= 0) {
-      setCurrentOrder(
-        currentOrder.filter((item) => item.uniqueId !== uniqueId),
-      );
-    } else {
-      setCurrentOrder(
-        currentOrder.map((item) =>
-          item.uniqueId === uniqueId ? { ...item, quantity } : item,
-        ),
-      );
-    }
-  };
-
-  // removeFromOrder（使用新數據結構）
-  const removeFromOrder = async (uniqueId) => {
-    const removingItem = currentOrder.find(
-      (item) => item.uniqueId === uniqueId,
-    );
-
-    if (removingItem && removingItem.isEditing) {
-      if (removingItem.isTakeout) {
-        // 外帶項目邏輯
-        const takeoutData = takeoutOrders[selectedTable];
-        if (
-          takeoutData &&
-          takeoutData.orders &&
-          Array.isArray(takeoutData.orders)
-        ) {
-          // 使用扁平化結構
-          const originalIndex = removingItem.originalItemIndex;
-
-          // 確保索引有效
-          if (originalIndex >= 0 && originalIndex < takeoutData.orders.length) {
-            const updatedOrders = [...takeoutData.orders];
-            updatedOrders.splice(originalIndex, 1);
-
-            const newTakeoutOrders = {
-              ...takeoutOrders,
-              [selectedTable]: {
-                ...takeoutData,
-                orders: updatedOrders,
-              },
-            };
-            await saveTakeoutOrdersToFirebase(newTakeoutOrders);
-          }
-        }
-      } else {
-        // 內用項目（使用新數據結構）
-        const currentTableState = tableStates[selectedTable] || {};
-        const flatOrders = currentTableState.orders
-          ? [...currentTableState.orders]
-          : [];
-
-        // 從 originalItemIndex 獲取在扁平化陣列中的實際位置
-        const actualIndex = removingItem.originalItemIndex;
-
-        // 確保索引有效且該位置有項目
-        if (actualIndex >= 0 && actualIndex < flatOrders.length) {
-          // 直接從扁平化陣列中移除項目
-          flatOrders.splice(actualIndex, 1);
-
-          if (flatOrders.length > 0) {
-            // 過濾掉可能的空值或無效項目
-            const validOrders = flatOrders.filter(
-              (item) =>
-                item &&
-                typeof item === "object" &&
-                (item.__seated || item.name),
-            );
-
-            await saveTableStateToFirebase(selectedTable, {
-              ...currentTableState,
-              orders: validOrders,
-            });
-          } else {
-            // 如果沒有訂單了，刪除整個桌位狀態
-            await deleteTableStateFromFirebase(selectedTable);
-          }
-        } else {
-          console.warn("⚠️ 無效的索引或項目不存在:", {
-            actualIndex,
-            flatOrdersLength: flatOrders.length,
-          });
-        }
-      }
-    }
-
-    // 從當前訂單中移除項目
-    setCurrentOrder(currentOrder.filter((item) => item.uniqueId !== uniqueId));
   };
 
   //統一結帳函數
@@ -1502,8 +923,7 @@ const CafePOSSystem = () => {
 
       // ==================== 5. 資料更新（統一） ====================
 
-      // 儲存歷史記錄
-      await addSalesRecord(historyRecord);
+      // 儲存歷史記錄（saveSalesHistoryToFirebase 已包含 Firebase 寫入）
       const newHistory = [...salesHistory, historyRecord];
       await saveSalesHistoryToFirebase(newHistory);
 
@@ -1635,135 +1055,6 @@ const CafePOSSystem = () => {
       alert("結帳失敗，請稍後再試。錯誤: " + error.message);
     } finally {
       console.groupEnd();
-    }
-  };
-
-  const editConfirmedItem = (item, batchIndex, itemIndex) => {
-    if (selectedTable.startsWith("T")) {
-      // 外帶項目編輯邏輯
-      const takeoutData = takeoutOrders[selectedTable];
-      if (
-        !takeoutData ||
-        !takeoutData.orders ||
-        !Array.isArray(takeoutData.orders)
-      ) {
-        console.warn("⚠️ 外帶訂單數據無效");
-        return;
-      }
-
-      if (itemIndex < 0 || itemIndex >= takeoutData.orders.length) {
-        console.warn("⚠️ 外帶項目索引無效:", itemIndex);
-        return;
-      }
-
-      const editingItem = { ...takeoutData.orders[itemIndex] };
-
-      const isAlreadyEditing = currentOrder.some(
-        (orderItem) =>
-          orderItem.isEditing &&
-          orderItem.originalItemIndex === itemIndex &&
-          orderItem.isTakeout === true,
-      );
-
-      if (isAlreadyEditing) {
-        setCurrentOrder(
-          currentOrder.filter(
-            (orderItem) =>
-              !(
-                orderItem.isEditing &&
-                orderItem.originalItemIndex === itemIndex &&
-                orderItem.isTakeout === true
-              ),
-          ),
-        );
-      } else {
-        setCurrentOrder([
-          ...currentOrder,
-          {
-            ...editingItem,
-            isEditing: true,
-            isTakeout: true,
-            originalBatchIndex: 0, // 外帶都是批次0
-            originalItemIndex: itemIndex,
-            customOptions: editingItem.customOptions,
-          },
-        ]);
-      }
-    } else {
-      // 內用項目編輯（適應扁平化結構）
-      const currentTableState = tableStates[selectedTable] || {};
-      const flatOrders = currentTableState.orders || [];
-
-      // 過濾掉入座標記，獲取真正的餐點
-      const realOrders = flatOrders.filter(
-        (item) => item && typeof item === "object" && !item.__seated,
-      );
-
-      // 檢查索引是否有效
-      if (itemIndex < 0 || itemIndex >= realOrders.length) {
-        console.warn("⚠️ 內用項目索引無效:", {
-          itemIndex,
-          realOrdersLength: realOrders.length,
-        });
-        return;
-      }
-
-      const editingItem = { ...realOrders[itemIndex] };
-
-      // 找到在原始扁平化陣列中的實際位置
-      let actualFlatIndex = -1;
-      let realItemCount = 0;
-
-      for (let i = 0; i < flatOrders.length; i++) {
-        const currentItem = flatOrders[i];
-        if (
-          currentItem &&
-          typeof currentItem === "object" &&
-          !currentItem.__seated
-        ) {
-          if (realItemCount === itemIndex) {
-            actualFlatIndex = i;
-            break;
-          }
-          realItemCount++;
-        }
-      }
-
-      if (actualFlatIndex === -1) {
-        console.warn("⚠️ 無法找到項目在扁平化陣列中的位置");
-        return;
-      }
-
-      const isAlreadyEditing = currentOrder.some(
-        (orderItem) =>
-          orderItem.isEditing &&
-          orderItem.originalItemIndex === actualFlatIndex &&
-          !orderItem.isTakeout,
-      );
-
-      if (isAlreadyEditing) {
-        setCurrentOrder(
-          currentOrder.filter(
-            (orderItem) =>
-              !(
-                orderItem.isEditing &&
-                orderItem.originalItemIndex === actualFlatIndex &&
-                !orderItem.isTakeout
-              ),
-          ),
-        );
-      } else {
-        setCurrentOrder([
-          ...currentOrder,
-          {
-            ...editingItem,
-            isEditing: true,
-            originalBatchIndex: 0, // 在顯示時總是批次0
-            originalItemIndex: actualFlatIndex, // 使用在扁平化陣列中的實際位置
-            customOptions: editingItem.customOptions,
-          },
-        ]);
-      }
     }
   };
 
