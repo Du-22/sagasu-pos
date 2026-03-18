@@ -1,7 +1,7 @@
 import React from "react";
 import Header from "../UI/Header";
 import FloorTabs from "../UI/FloorTabs";
-import SeatingArea from "./SeatingArea";
+import SeatingArea from "../UI/SeatingArea";
 
 const SeatingPage = ({
   currentFloor,

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { getSalesHistoryByDate, updateSalesRecord } from "../../firebase/operations";
-import { getWeekRange, getMonthRange } from "../../utils/historyUtils";
+import { getSalesHistoryByDate, updateSalesRecord } from "../firebase/operations";
+import { getWeekRange, getMonthRange } from "../utils/historyUtils";
 
 /**
  * useHistoryData Hook

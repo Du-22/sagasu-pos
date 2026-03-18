@@ -1,4 +1,4 @@
-import { seatingData } from "../seatingData/SeatingArea";
+import { seatingData } from "../components/UI/SeatingArea";
 
 /**
  * useTableActions Hook

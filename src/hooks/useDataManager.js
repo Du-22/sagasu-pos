@@ -17,13 +17,13 @@ import { useState, useCallback } from "react";
 import {
   createDataManagers,
   OperationResultHandler,
-} from "../../utils/firebaseHelpers";
+} from "../utils/firebaseHelpers";
 import {
   getTableStatus,
   getTimersForDisplay,
   getOrdersForDisplay,
   validateTableStates,
-} from "../../utils/tableStateHelpers";
+} from "../utils/tableStateHelpers";
 
 /**
  * 統一數據管理 Hook

@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { collection, doc, setDoc } from "firebase/firestore";
-import { db } from "../../firebase/config";
+import { db } from "../firebase/config";
 import {
   getMenuData,
   getTableStates,
   getTakeoutOrders,
   getSalesHistoryByDate,
-} from "../../firebase/operations";
+} from "../firebase/operations";
 
 /**
  * useInitialLoad Hook

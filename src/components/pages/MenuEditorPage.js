@@ -1,5 +1,5 @@
 import React from "react";
-import useMenuEditor from "../hooks/useMenuEditor";
+import useMenuEditor from "../../hooks/useMenuEditor";
 import CategoryManager from "./MenuEditorPage/CategoryManager";
 import ProductList from "./MenuEditorPage/ProductList";
 import EditProductModal from "./MenuEditorPage/EditProductModal";

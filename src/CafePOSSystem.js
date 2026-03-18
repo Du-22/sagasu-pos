@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import SeatingPage from "./components/seatingData/SeatingPage";
-import OrderingPage from "./components/menuData/OrderingPage";
+import SeatingPage from "./components/pages/SeatingPage";
+import OrderingPage from "./components/pages/OrderingPage";
 import HistoryPage from "./components/pages/HistoryPage";
 import MenuEditorPage from "./components/pages/MenuEditorPage";
-import defaultMenuData from "./components/menuData/defaultMenuData";
+import defaultMenuData from "./data/defaultMenuData";
 import ExportReportsPage from "./components/pages/ExportReportsPage";
 import LoginPage from "./auth/LoginPage";
 import LoginFailurePage from "./auth/LoginFailurePage";
@@ -11,15 +11,15 @@ import ChangePasswordPage from "./auth/ChangePasswordPage";
 import AccountManagementPage from "./components/pages/AccountManagementPage";
 import SetupSecurityQuestionPage from "./auth/SetupSecurityQuestionPage";
 import ForgotPasswordPage from "./auth/ForgotPasswordPage";
-import useDataManager from "./components/hooks/useDataManager";
+import useDataManager from "./hooks/useDataManager";
 import SmartConnectionMonitor from "./utils/SmartConnectionMonitor";
 
-import useAuth from "./components/hooks/useAuth";
-import useFirebaseSync from "./components/hooks/useFirebaseSync";
-import useTableActions from "./components/hooks/useTableActions";
-import useOrderActions from "./components/hooks/useOrderActions";
-import useCheckout from "./components/hooks/useCheckout";
-import useInitialLoad from "./components/hooks/useInitialLoad";
+import useAuth from "./hooks/useAuth";
+import useFirebaseSync from "./hooks/useFirebaseSync";
+import useTableActions from "./hooks/useTableActions";
+import useOrderActions from "./hooks/useOrderActions";
+import useCheckout from "./hooks/useCheckout";
+import useInitialLoad from "./hooks/useInitialLoad";
 import SeatConfirmModal from "./components/UI/SeatConfirmModal";
 import MoveTableModal from "./components/UI/MoveTableModal";
 

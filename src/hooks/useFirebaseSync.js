@@ -1,4 +1,4 @@
-import { saveMenuData } from "../../firebase/operations";
+import { saveMenuData } from "../firebase/operations";
 
 /**
  * useFirebaseSync Hook

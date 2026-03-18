@@ -1,6 +1,6 @@
 import React from "react";
 import Header from "../UI/Header";
-import useHistoryData from "../hooks/useHistoryData";
+import useHistoryData from "../../hooks/useHistoryData";
 import {
   getDateRangeText,
   getDailyBreakdown,

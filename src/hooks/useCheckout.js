@@ -1,6 +1,6 @@
-import { calculateItemPrice } from "../../utils/priceCalculations";
-import { generateHistoryId, generateGroupId } from "../../utils/idGenerators";
-import { updateSalesRecord } from "../../firebase/operations";
+import { calculateItemPrice } from "../utils/priceCalculations";
+import { generateHistoryId, generateGroupId } from "../utils/idGenerators";
+import { updateSalesRecord } from "../firebase/operations";
 
 /**
  * useCheckout Hook
