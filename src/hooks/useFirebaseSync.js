@@ -105,6 +105,21 @@ const useFirebaseSync = ({
     // 先更新本地 state（立即反應）
     setMenuData(newMenuData);
 
+    // 同步更新 localStorage 備份
+    // 重要：若不更新，被刪除的品項下次啟動時會被合併邏輯誤判為「離線新增」而還原
+    try {
+      localStorage.setItem(
+        "cafeMenuData_backup",
+        JSON.stringify({
+          data: newMenuData,
+          timestamp: new Date().toISOString(),
+          version: "v2_granular",
+        }),
+      );
+    } catch (e) {
+      console.warn("⚠️ 更新本地備份失敗:", e);
+    }
+
     try {
       await saveMenuData(newMenuData);
     } catch (error) {
