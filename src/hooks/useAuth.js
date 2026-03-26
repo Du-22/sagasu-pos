@@ -18,7 +18,7 @@ import {
 } from "../utils/loginHandler";
 import { initializeDefaultPassword } from "../firebase/operations";
 
-const useAuth = () => {
+const useAuth = (setCurrentView) => {
   // 認證相關狀態
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginState, setLoginState] = useState("login"); // "login" | "failed" | "locked"
@@ -104,16 +104,12 @@ const useAuth = () => {
     handleLoginFailure(error, setLoginError, setLoginState);
   };
 
-  // 暫時移除導航函數，直接返回空函數避免錯誤
-  // TODO: 修正 setCurrentView 傳遞問題後恢復完整功能
   const wrappedHandleGoToChangePassword = () => {
-    console.warn("修改密碼頁面跳轉功能暫時停用");
-    alert("修改密碼功能暫時不可用，請聯絡系統管理員");
+    setCurrentView("changepassword");
   };
 
   const wrappedHandlePasswordChanged = () => {
-    console.warn("密碼修改後跳轉功能暫時停用");
-    alert("密碼已成功更改");
+    setCurrentView("seating");
   };
 
   // 在組件載入時初始化認證狀態
