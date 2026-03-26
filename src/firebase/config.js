@@ -25,7 +25,9 @@ const prodConfig = {
 };
 
 // 根據環境選擇配置
-const isProduction = process.env.NODE_ENV === "production";
+// REACT_APP_USE_DEMO=true 時強制使用 dev Firebase（用於 Vercel demo 部署）
+const isDemo = process.env.REACT_APP_USE_DEMO === "true";
+const isProduction = process.env.NODE_ENV === "production" && !isDemo;
 const firebaseConfig = isProduction ? prodConfig : devConfig;
 
 // 在 console 顯示當前使用的環境（僅開發時顯示）
