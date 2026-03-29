@@ -124,6 +124,12 @@ const useFirebaseSync = ({
       await saveMenuData(newMenuData);
     } catch (error) {
       console.error("❌ 儲存菜單到 Firebase 失敗:", error);
+      window.alert(
+        "⚠️ 菜單儲存失敗\n\n" +
+        "錯誤原因：" + error.message + "\n\n" +
+        "品項變更可能未儲存成功。\n" +
+        "請截圖此訊息並通知管理員。"
+      );
     }
   };
 
