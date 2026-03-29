@@ -82,6 +82,7 @@ export const saveMenuData = async (menuData) => {
   // ==================== 步驟 2: 取得現有選單 ====================
   const menuRef = collection(db, "stores", STORE_ID, "menu");
   let existingItems = new Map();
+  let step2Failed = false;
 
   try {
     const existingDocs = await getDocs(menuRef);
@@ -90,6 +91,7 @@ export const saveMenuData = async (menuData) => {
     });
     console.log(`📊 現有品項數量: ${existingItems.size}`);
   } catch (error) {
+    step2Failed = true;
     console.error("⚠️ 無法讀取現有選單,將直接寫入:", error);
     // 繼續執行,當作沒有現有數據
   }
@@ -150,16 +152,25 @@ export const saveMenuData = async (menuData) => {
     }
   }
 
+  let deleteFailCount = 0;
+
   if (deletePromises.length > 0) {
     const deleteResults = await Promise.allSettled(deletePromises);
     const deleteSuccess = deleteResults.filter((r) => r.value?.success).length;
+    deleteFailCount = deletePromises.length - deleteSuccess;
     console.log(`🗑️ 刪除結果: ${deleteSuccess}/${deletePromises.length} 成功`);
   }
 
   // ==================== 步驟 5: 檢查結果 ====================
-  if (failCount > 0) {
-    console.error(`⚠️ 有 ${failCount} 個品項保存失敗`);
-    throw new Error(`保存失敗: ${failCount} 個品項未能成功儲存`);
+  const issues = [];
+  if (step2Failed) issues.push("無法讀取現有品項清單（刪除操作未執行）");
+  if (failCount > 0) issues.push(`${failCount} 個品項更新失敗`);
+  if (deleteFailCount > 0) issues.push(`${deleteFailCount} 個品項刪除失敗`);
+
+  if (issues.length > 0) {
+    const errorMessage = issues.join("、");
+    console.error(`⚠️ 儲存問題: ${errorMessage}`);
+    throw new Error(errorMessage);
   }
 
   console.log("✅ 選單保存完成");
