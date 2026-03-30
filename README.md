@@ -156,4 +156,4 @@ functions/              # Firebase Cloud Functions（排程報表寄送）
 
 ## 開發說明
 
-本專案使用 [Claude Code](https://claude.ai/code)（AI 工具）輔助開發，包含程式碼生成、架構規劃與問題排查。
+本專案使用 [Claude Code](https://claude.ai/code)（AI 工具）輔助開發，包含程式碼生成與問題排查。核心邏輯設計、架構決策與功能規劃均由開發者主導。
