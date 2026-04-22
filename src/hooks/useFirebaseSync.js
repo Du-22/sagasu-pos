@@ -102,18 +102,19 @@ const useFirebaseSync = ({
 
   // 儲存菜單到 Firebase
   const saveMenuDataToFirebase = async (newMenuData) => {
-    // 先更新本地 state（立即反應）
+    // 先更新本地 state（讓 UI 立刻反應）
     setMenuData(newMenuData);
 
     // 同步更新 localStorage 備份
-    // 重要：若不更新，被刪除的品項下次啟動時會被合併邏輯誤判為「離線新增」而還原
+    // 用途：Firebase 讀取失敗時的唯讀 fallback（見 useInitialLoad 菜單載入策略）
+    // 注意：此備份不會被寫回 Firebase，純粹作為離線狀態下的顯示來源
     try {
       localStorage.setItem(
         "cafeMenuData_backup",
         JSON.stringify({
           data: newMenuData,
           timestamp: new Date().toISOString(),
-          version: "v2_granular",
+          version: "v3_firebase_first",
         }),
       );
     } catch (e) {
@@ -128,7 +129,8 @@ const useFirebaseSync = ({
         "⚠️ 菜單儲存失敗\n\n" +
         "錯誤原因：" + error.message + "\n\n" +
         "品項變更可能未儲存成功。\n" +
-        "請截圖此訊息並通知管理員。"
+        "請重新整理頁面確認菜單狀態，必要時重試此操作。\n\n" +
+        "若多次失敗，請截圖此訊息並通知管理員。"
       );
     }
   };
