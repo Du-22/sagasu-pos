@@ -1,7 +1,8 @@
-# Sagasu POS 系統重構 - Claude Instructions
+# Sagasu POS 系統 - Claude Instructions
 
 ## 專案背景
-這是為親戚經營的 Sagasu 咖啡廳開發的 POS 系統，目前已部署使用中。現在進行重構以提升程式碼品質。
+這是為親戚經營的 Sagasu 咖啡廳開發的 POS 系統，目前已部署使用中。
+前期的架構重構（Phase 1~9）已全部完成並合併到 main，目前進入維護與功能調整階段。
 
 ## 技術堆疊
 - **React** 19.1.1
@@ -28,31 +29,21 @@ git push        # 推送到 GitHub（Vercel 會自動從 main 部署）
 **實際專案路徑：** `sagasu-pos/src/`
 
 **關鍵資料夾：**
-- `src/components/` - UI 元件（Phase 1 完成）
-- `src/firebase/` - Firebase 操作（Phase 2 完成）
+- `src/components/` - UI 元件
+- `src/firebase/` - Firebase 操作
 - `src/auth/` - 認證相關
 - `src/utils/` - 工具函數
 - `src/services/` - 業務邏輯
 - `src/pages/` - 頁面元件
 - `src/hooks/` - 自訂 Hooks
 
-**當前重構狀態：**
-- Phase 1: 完成（資料夾結構已建立）
-- Phase 2: 完成（已拆分 operations.js 為 5 個模組）
-- Phase 3: 準備開始（拆分 CafePOSSystem.js）
-- Phase 4-9: 待開始
-
-## 重構原則
+## 程式碼風格原則
 - **單一職責原則（SRP）**：每個檔案/函數只做一件事
-- **檔案長度限制**：單一檔案不超過 300 行
-- **函數長度限制**：單一函數不超過 50 行
-- **保持可運行**：每個階段都要確保專案能正常執行
-- **不改變行為**：只改結構，不改功能
-
-## 重構規則
-- 每個組件需說明：原始程式碼、功能效果、用途、組件長度
-- 在特別重要或困難的地方追加區塊註解說明原因
-- 遵循單一職責原則（SRP），每個檔案/函數只做一件事
+- **檔案長度限制**：單一檔案盡量不超過 300 行
+- **函數長度限制**：單一函數盡量不超過 50 行
+- **保持可運行**：修改時要確保專案能正常執行
+- 特別重要或困難的地方加區塊註解說明「為什麼」這樣做
+- 新元件需包含功能說明與使用範例
 
 ## 開發準則
 - **頻繁提交**：每完成一個小功能就提交，方便隨時回滾
@@ -62,40 +53,41 @@ git push        # 推送到 GitHub（Vercel 會自動從 main 部署）
 - **完整文件**：新組件需包含功能說明和使用範例
 
 ## Git 工作流程
-- **當前策略**：使用單一分支 `refactor/all-phases` 開發所有 Phase
-- Phase 1 已獨立完成並合併到 `main`
-- Phase 2~9 都在 `refactor/all-phases` 分支上開發
-- 全部完成後，一次性合併 `refactor/all-phases` → `main`
+
+### 分支策略
+- `main` 是正式分支，Vercel 自動從 main 部署
+- 每次改動（feature / fix / chore）**開獨立分支**，不在 main 直接改
+- 分支命名：`fix/xxx`、`feat/xxx`、`chore/xxx` 等
+- 完成 + 測試通過 → GitHub 建 PR → 合併到 main
 
 ### 合併習慣
 - 偏好在 GitHub 網站建立並合併 PR（不使用本地 merge）
-- 每個 Phase 完成後的標準流程：
+- 合併後的標準本地收尾：
 ```bash
-git status
-git add .
-git commit -m "refactor: Phase X - 描述"
-git push
+git checkout main
+git pull
+git branch -d <合併完的分支>
+git remote prune origin
 ```
 
-### 重構文件管理
-- 重構相關文件（計畫書、Phase 報告）存放在**桌面的獨立資料夾** `sagasu-pos-refactoring/`
-- **不要**將這些文件加入專案 Git，等全部重構完成後再一次性整理上傳
-- 目的：展現「完整的 Before/After 對比」而非「進行中的計畫」
+### 改動完成檢查流程
+1. Claude 完成程式碼修改
+2. Claude 提醒需要測試的功能項目
+3. 使用者測試功能（本地 / preview URL）
+4. 測試通過 → commit + push → PR → 合併
+5. 測試失敗 → 告知 Claude 錯誤 → 修正 → 重新測試
 
-### 回滾機制
+### 回滾機制（僅限未 push 或 preview 狀態）
 ```bash
 git reset --hard HEAD~1  # 回到上一個 commit
-git push -f              # 強制推送
+git push -f              # 強制推送（僅限 feature/fix 分支，main 絕對禁止）
 ```
 
-### Phase 完成檢查流程
-1. Claude 完成程式碼重構
-2. Claude 提醒需要測試的功能項目
-3. 使用者測試功能
-4. 測試通過 → commit + push
-5. 測試失敗 → 告知 Claude 錯誤訊息 → 修正 → 重新測試
+### 重構文件管理（歷史資料）
+- 重構過程的計畫書、Phase 報告存放在**桌面的獨立資料夾** `sagasu-pos-refactoring/`
+- 這些文件**不加入專案 Git**，保留作為重構歷程紀錄
 
-## 測試重點（每個 Phase 完成後需驗證）
+## 測試重點（動到核心功能時需驗證）
 - [ ] 登入/登出
 - [ ] 點餐功能（新增、修改、刪除）
 - [ ] 送出訂單與批次顯示
@@ -116,6 +108,6 @@ git push -f              # 強制推送
 
 ## 提醒事項
 - 如果發現適合放到 CLAUDE.md 的內容，請主動提醒
-- 重構時保持專案隨時可運行
+- 修改時保持專案隨時可運行
 - 小步前進，頻繁測試
 - 使用者正在學習 JS 及前後端技術，說明時可適當解釋原因
