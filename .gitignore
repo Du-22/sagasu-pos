@@ -31,6 +31,9 @@ out/
 .idea/
 .claude/
 
+# Claude 專案指令（個人開發設定，不入 repo）
+CLAUDE.md
+
 # Windows 系統檔案
 Thumbs.db
 
