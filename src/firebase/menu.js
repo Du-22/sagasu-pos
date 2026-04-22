@@ -17,8 +17,10 @@ import {
   collection,
   doc,
   getDocs,
+  getDocsFromServer,
   setDoc,
   deleteDoc,
+  waitForPendingWrites,
 } from "firebase/firestore";
 import { db } from "./config";
 
@@ -26,16 +28,18 @@ const STORE_ID = "default_store";
 
 /**
  * 取得選單資料
- * @returns {Array|null} 選單項目陣列，失敗時返回 null
+ * @returns {Array|null}
+ *   - Array（可能是空陣列）：成功讀取，Firebase 實際有幾個品項就回幾個
+ *   - null：讀取失敗（網路錯誤等）
+ *
+ * 注意：空陣列和 null 意義不同
+ * - [] 代表 Firebase 確實沒有菜單（全部刪光的合法狀態）
+ * - null 代表連線失敗，呼叫方需要改用 localStorage 備份做 fallback
  */
 export const getMenuData = async () => {
   try {
     const menuRef = collection(db, "stores", STORE_ID, "menu");
     const menuSnap = await getDocs(menuRef);
-
-    if (menuSnap.empty) {
-      return null;
-    }
 
     const menuItems = [];
     menuSnap.forEach((doc) => {
@@ -161,11 +165,85 @@ export const saveMenuData = async (menuData) => {
     console.log(`🗑️ 刪除結果: ${deleteSuccess}/${deletePromises.length} 成功`);
   }
 
+  // ==================== 步驟 4.5: 從伺服器驗證實際狀態 ====================
+  //
+  // 為什麼需要這一步：
+  // config.js 啟用了 persistentLocalCache，這會讓 setDoc/deleteDoc 的 promise
+  // 在「寫入本地快取」時就 resolve，不等伺服器確認。如果伺服器後來沒真正收到，
+  // 前面的 Promise.allSettled 會全部顯示 success，但 Firebase 遠端其實狀態不對。
+  //
+  // 解法：
+  // 1. waitForPendingWrites：等所有 queue 中的寫入實際送到伺服器
+  // 2. getDocsFromServer：強制從伺服器（而非快取）讀取當前狀態
+  // 3. 比對：應該留下的、應該刪除的，跟伺服器實際狀態是否一致
+  //
+  // 如果離線或網路不穩，waitForPendingWrites 會卡住，所以加 10 秒 timeout：
+  // timeout 時不視為失敗（寫入仍在 queue、上線後會同步），但會 console 警告。
+  let verificationIssues = [];
+  let verificationSkipped = false;
+
+  try {
+    const waitPromise = waitForPendingWrites(db).then(() => ({ synced: true }));
+    const timeoutPromise = new Promise((resolve) =>
+      setTimeout(() => resolve({ synced: false }), 10000),
+    );
+    const waitResult = await Promise.race([waitPromise, timeoutPromise]);
+
+    if (!waitResult.synced) {
+      verificationSkipped = true;
+      console.warn(
+        "⚠️ 寫入尚未完全同步到伺服器（可能網路不穩），跳過驗證。上線後 Firestore 會自動補送寫入。",
+      );
+    } else {
+      const serverSnap = await getDocsFromServer(menuRef);
+      const serverIds = new Set();
+      serverSnap.forEach((d) => serverIds.add(d.id));
+
+      const shouldBeDeletedButStillExist = [];
+      for (const [existingId] of existingItems) {
+        if (!newItemIds.has(existingId) && serverIds.has(existingId)) {
+          shouldBeDeletedButStillExist.push(existingId);
+        }
+      }
+
+      const shouldExistButMissing = [];
+      for (const id of newItemIds) {
+        if (!serverIds.has(id)) {
+          shouldExistButMissing.push(id);
+        }
+      }
+
+      if (shouldBeDeletedButStillExist.length > 0) {
+        verificationIssues.push(
+          `${shouldBeDeletedButStillExist.length} 個品項刪除未生效（伺服器仍有記錄）`,
+        );
+        console.error(
+          "❌ 刪除未生效的品項 ID:",
+          shouldBeDeletedButStillExist,
+        );
+      }
+      if (shouldExistButMissing.length > 0) {
+        verificationIssues.push(
+          `${shouldExistButMissing.length} 個品項寫入未生效（伺服器缺少記錄）`,
+        );
+        console.error("❌ 寫入未生效的品項 ID:", shouldExistButMissing);
+      }
+
+      if (verificationIssues.length === 0) {
+        console.log(`✅ 伺服器驗證通過：${serverIds.size} 個品項狀態一致`);
+      }
+    }
+  } catch (verifyError) {
+    console.warn("⚠️ 伺服器驗證過程失敗（不視為儲存失敗）:", verifyError);
+    verificationSkipped = true;
+  }
+
   // ==================== 步驟 5: 檢查結果 ====================
   const issues = [];
   if (step2Failed) issues.push("無法讀取現有品項清單（刪除操作未執行）");
   if (failCount > 0) issues.push(`${failCount} 個品項更新失敗`);
   if (deleteFailCount > 0) issues.push(`${deleteFailCount} 個品項刪除失敗`);
+  if (verificationIssues.length > 0) issues.push(...verificationIssues);
 
   if (issues.length > 0) {
     const errorMessage = issues.join("、");
@@ -173,7 +251,11 @@ export const saveMenuData = async (menuData) => {
     throw new Error(errorMessage);
   }
 
-  console.log("✅ 選單保存完成");
+  if (verificationSkipped) {
+    console.log("✅ 選單保存完成（未驗證伺服器實際狀態）");
+  } else {
+    console.log("✅ 選單保存完成（已驗證伺服器狀態）");
+  }
 };
 
 /**

@@ -1,6 +1,4 @@
 import { useState, useEffect } from "react";
-import { collection, doc, setDoc } from "firebase/firestore";
-import { db } from "../firebase/config";
 import {
   getMenuData,
   getTableStates,
@@ -12,18 +10,17 @@ import {
  * useInitialLoad Hook
  *
  * 原始程式碼：定義在 CafePOSSystem.js 的 loadAllData useEffect 與相關輔助函數
- * 功能效果：應用程式啟動時載入所有資料，包含 localStorage 快取、Firebase 資料、菜單合併邏輯
+ * 功能效果：應用程式啟動時載入所有資料，包含 localStorage 快取、Firebase 資料
  * 用途：封裝初始載入邏輯，讓主元件只需讀取 isLoading/loadError 狀態
- * 組件長度：約 230 行
  *
- * 重要說明：
- * - 菜單合併採「精細版逐品項比對」：比較 localStorage 與 Firebase 的 lastUpdated 時間戳，取較新版本
- * - 若本地有 Firebase 沒有的品項（可能是離線新增），會自動同步回 Firebase
- * - loadFromLocalStorage 是離線備用方案，Firebase 載入失敗時才呼叫
- * - getTableStatusFromOrders 僅為 loadFromLocalStorage 服務，將舊格式 orders 轉換成狀態字串
+ * 菜單載入策略（重要）：
+ * - Firebase 為「唯一真實來源」。讀取成功就用 Firebase（即使是空陣列也尊重）
+ * - localStorage 僅在 Firebase 讀取失敗時作為「唯讀 fallback」
+ * - 絕對不把 localStorage 的品項寫回 Firebase（避免被刪除的品項被復活）
+ * - 離線新增的品項由 Firestore SDK 的 persistentLocalCache 負責 queue，上線後自動同步
+ *
+ * loadFromLocalStorage：桌位/訂單/歷史的離線備用方案，Firebase 整體載入失敗時呼叫
  */
-
-const STORE_ID = "default_store";
 
 const useInitialLoad = ({
   dataManager,
@@ -133,152 +130,62 @@ const useInitialLoad = ({
               })(),
         ]);
 
-        // ==================== 3. 精細版菜單合併邏輯 ====================
-        // 步驟 1: 讀取 localStorage 備份
-        let localMenuMap = new Map();
+        // ==================== 3. 菜單載入（Firebase 為唯一真實來源）====================
+        //
+        // 歷史背景：
+        // 之前採「精細版逐品項合併」—— 會比對 localStorage 與 Firebase 的時間戳，
+        // 本地較新就寫回 Firebase。這設計原意是防止資料遺失，但意外造成兩個問題：
+        //   1. 刪除的品項只要 localStorage 有殘留，下次載入就會被「救回來」（殭屍品項）
+        //   2. 每次載入會刷新 localStorage 時間戳，讓它幾乎永遠比 Firebase 新 →
+        //      觸發整份菜單被重寫回 Firebase，製造大量不必要的寫入
+        //
+        // 新策略：
+        //   - Firebase 回傳非 null：以 Firebase 為準（即使空陣列也尊重，不從本地救回）
+        //   - Firebase 回傳 null（讀取失敗）：localStorage 作唯讀 fallback，不寫回
+        //
+        // 離線編輯不會遺失：Firestore SDK 的 persistentLocalCache（config.js）會把
+        // 離線期間的寫入 queue 在 IndexedDB，網路恢復後自動補送，不需要本層額外處理。
+        let finalMenuData = [];
 
-        try {
-          const localBackup = localStorage.getItem("cafeMenuData_backup");
-          if (localBackup) {
-            const parsed = JSON.parse(localBackup);
-            const localMenuData = parsed.data;
+        if (firebaseMenuData !== null) {
+          finalMenuData = Array.isArray(firebaseMenuData)
+            ? [...firebaseMenuData]
+            : [];
+          console.log(`☁️  Firebase 菜單載入: ${finalMenuData.length} 個品項`);
 
-            if (Array.isArray(localMenuData)) {
-              localMenuData.forEach((item) => {
-                if (item && item.id) {
-                  localMenuMap.set(item.id, {
-                    ...item,
-                    _localTimestamp: new Date(parsed.timestamp),
-                  });
-                }
-              });
-              console.log(
-                `📱 找到本地備份: ${localMenuMap.size} 個品項 (${parsed.timestamp})`,
-              );
-            }
-          }
-        } catch (error) {
-          console.warn("⚠️ 本地備份讀取失敗:", error);
-        }
-
-        // 步驟 2: 建立 Firebase 數據的 Map
-        let firebaseMenuMap = new Map();
-
-        if (
-          firebaseMenuData &&
-          Array.isArray(firebaseMenuData) &&
-          firebaseMenuData.length > 0
-        ) {
-          firebaseMenuData.forEach((item) => {
-            if (item && item.id) {
-              firebaseMenuMap.set(item.id, {
-                ...item,
-                _firebaseTimestamp: item.lastUpdated
-                  ? new Date(item.lastUpdated)
-                  : null,
-              });
-            }
-          });
-          console.log(`☁️  找到 Firebase 數據: ${firebaseMenuMap.size} 個品項`);
-        }
-
-        // 步驟 3: 逐個產品合併
-        const mergedMenu = new Map();
-        const needSync = [];
-        let syncReasons = {
-          newerLocal: 0,
-          onlyLocal: 0,
-          noFirebaseTime: 0,
-          useFirebase: 0,
-        };
-
-        // 3.1 處理所有在 localStorage 中的產品
-        for (const [id, localItem] of localMenuMap) {
-          const firebaseItem = firebaseMenuMap.get(id);
-
-          if (!firebaseItem) {
-            const { _localTimestamp, ...cleanItem } = localItem;
-            mergedMenu.set(id, cleanItem);
-            needSync.push(cleanItem);
-            syncReasons.onlyLocal++;
-          } else {
-            const localTime = localItem._localTimestamp;
-            const firebaseTime = firebaseItem._firebaseTimestamp;
-
-            if (!firebaseTime) {
-              const { _localTimestamp, ...cleanItem } = localItem;
-              mergedMenu.set(id, cleanItem);
-              needSync.push(cleanItem);
-              syncReasons.noFirebaseTime++;
-            } else if (localTime > firebaseTime) {
-              const { _localTimestamp, ...cleanItem } = localItem;
-              mergedMenu.set(id, cleanItem);
-              needSync.push(cleanItem);
-              syncReasons.newerLocal++;
-            } else {
-              const { _firebaseTimestamp, ...cleanItem } = firebaseItem;
-              mergedMenu.set(id, cleanItem);
-              syncReasons.useFirebase++;
-            }
-          }
-        }
-
-        // 3.2 處理只在 Firebase 中的產品
-        for (const [id, firebaseItem] of firebaseMenuMap) {
-          if (!localMenuMap.has(id)) {
-            const { _firebaseTimestamp, ...cleanItem } = firebaseItem;
-            mergedMenu.set(id, cleanItem);
-            syncReasons.useFirebase++;
-          }
-        }
-
-        console.log(
-          `📊 菜單合併：本地較新 ${syncReasons.newerLocal}、只在本地 ${syncReasons.onlyLocal}、Firebase 無時間戳 ${syncReasons.noFirebaseTime}、使用 Firebase ${syncReasons.useFirebase}`,
-        );
-
-        // 步驟 4: 同步需要更新的品項回 Firebase
-        if (needSync.length > 0) {
-          console.log(`🔄 需要同步 ${needSync.length} 個產品到 Firebase`);
           try {
-            const syncPromises = needSync.map(async (item) => {
-              const { id, ...itemData } = item;
-              const menuRef = collection(db, "stores", STORE_ID, "menu");
-              return setDoc(
-                doc(menuRef, id),
-                { ...itemData, lastUpdated: new Date().toISOString() },
-                { merge: true },
-              )
-                .then(() => ({ success: true, id, name: item.name }))
-                .catch((error) => ({ success: false, id, name: item.name, error }));
-            });
-
-            const results = await Promise.allSettled(syncPromises);
-            const successCount = results.filter((r) => r.value?.success).length;
-            console.log(`✅ 同步完成: ${successCount}/${needSync.length} 成功`);
-          } catch (syncError) {
-            console.warn("⚠️ 同步過程發生錯誤:", syncError);
+            localStorage.setItem(
+              "cafeMenuData_backup",
+              JSON.stringify({
+                data: finalMenuData,
+                timestamp: new Date().toISOString(),
+                version: "v3_firebase_first",
+              }),
+            );
+          } catch (backupError) {
+            console.warn("⚠️ 更新本地備份失敗（不影響主流程）:", backupError);
+          }
+        } else {
+          console.warn("⚠️ Firebase 菜單讀取失敗，改用 localStorage 唯讀 fallback");
+          try {
+            const localBackup = localStorage.getItem("cafeMenuData_backup");
+            if (localBackup) {
+              const parsed = JSON.parse(localBackup);
+              if (Array.isArray(parsed.data)) {
+                finalMenuData = parsed.data;
+                console.log(
+                  `📱 使用本地備份: ${finalMenuData.length} 個品項 (備份時間 ${parsed.timestamp})`,
+                );
+              }
+            }
+          } catch (fallbackError) {
+            console.error("❌ 本地備份讀取失敗:", fallbackError);
           }
         }
 
-        // 步驟 5: 轉換為陣列並排序
-        const finalMenuData = Array.from(mergedMenu.values());
         finalMenuData.sort((a, b) => (a.order || 0) - (b.order || 0));
         setMenuData(finalMenuData);
         console.log(`✅ 菜單載入完成，共 ${finalMenuData.length} 個品項`);
-
-        // 步驟 6: 更新 localStorage 備份
-        try {
-          localStorage.setItem(
-            "cafeMenuData_backup",
-            JSON.stringify({
-              data: finalMenuData,
-              timestamp: new Date().toISOString(),
-              version: "v2_granular",
-            }),
-          );
-        } catch (backupError) {
-          console.warn("⚠️ 更新本地備份失敗:", backupError);
-        }
 
         // ==================== 4. 設置桌位與外帶資料 ====================
         const loadedTableStates = firebaseTableStates || {};
