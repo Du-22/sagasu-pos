@@ -69,11 +69,13 @@ export const saveMenuData = async (menuData) => {
   console.log("📝 開始安全保存選單數據...");
 
   // ==================== 步驟 1: 備份到 localStorage ====================
+  // 備份用途：Firebase 讀取失敗時的唯讀 fallback（見 useInitialLoad 菜單載入策略）
+  // version 與 useFirebaseSync、useInitialLoad 保持一致（v3_firebase_first）
   try {
     const backup = {
       data: menuData,
       timestamp: new Date().toISOString(),
-      version: "v2_granular",
+      version: "v3_firebase_first",
     };
     localStorage.setItem("cafeMenuData", JSON.stringify(menuData));
     localStorage.setItem("cafeMenuData_backup", JSON.stringify(backup));
