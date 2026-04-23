@@ -85,19 +85,19 @@ const SetupSecurityQuestionPage = ({ onComplete, onSkip }) => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full">
-          <div className="bg-white rounded-xl shadow-lg p-8">
+          <div className="bg-ivory rounded-xl shadow-lg p-8">
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-green-600" />
+              <div className="w-16 h-16 bg-warm-sand rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-terracotta-dark" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              <h1 className="text-2xl font-bold text-anthropic-black mb-2">
                 設定完成
               </h1>
-              <p className="text-gray-600">
+              <p className="text-warm-olive">
                 安全問題已成功設定，正在進入系統...
               </p>
               <div className="mt-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-terracotta mx-auto"></div>
               </div>
             </div>
           </div>
@@ -109,25 +109,25 @@ const SetupSecurityQuestionPage = ({ onComplete, onSkip }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        <div className="bg-white rounded-xl shadow-lg p-8">
+        <div className="bg-ivory rounded-xl shadow-lg p-8">
           {/* 標題區域 */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Shield className="w-8 h-8 text-blue-600" />
+            <div className="w-16 h-16 bg-warm-sand rounded-full flex items-center justify-center mx-auto mb-4">
+              <Shield className="w-8 h-8 text-terracotta" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">安全問題設定</h1>
-            <p className="text-gray-600 mt-2">為了帳戶安全，請設定安全問題</p>
+            <h1 className="text-2xl font-bold text-anthropic-black">安全問題設定</h1>
+            <p className="text-warm-olive mt-2">為了帳戶安全，請設定安全問題</p>
           </div>
 
           {/* 說明區域 */}
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="mb-6 p-4 bg-parchment border border-terracotta-light rounded-lg">
             <div className="flex items-start">
-              <AlertCircle className="w-5 h-5 text-blue-600 mr-2 mt-0.5 flex-shrink-0" />
+              <AlertCircle className="w-5 h-5 text-terracotta mr-2 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-blue-800 text-sm font-medium mb-1">
+                <p className="text-terracotta-dark text-sm font-medium mb-1">
                   為什麼需要設定安全問題？
                 </p>
-                <ul className="text-blue-700 text-xs space-y-1">
+                <ul className="text-terracotta-dark text-xs space-y-1">
                   <li>• 忘記密碼時可以重置密碼</li>
                   <li>• 提供額外的帳戶安全保護</li>
                   <li>• 確保只有店主能重置密碼</li>
@@ -138,22 +138,22 @@ const SetupSecurityQuestionPage = ({ onComplete, onSkip }) => {
 
           {/* 錯誤訊息 */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-800 text-sm">{error}</p>
+            <div className="mb-4 p-3 bg-error-warm/10 border border-error-warm/30 rounded-lg">
+              <p className="text-error-warm text-sm">{error}</p>
             </div>
           )}
 
           {/* 表單 */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-warm-charcoal mb-2">
                 安全問題
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Store className="h-5 w-5 text-gray-400" />
+                  <Store className="h-5 w-5 text-warm-silver" />
                 </div>
-                <div className="pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-800 font-medium">
+                <div className="pl-10 pr-4 py-3 border border-warm-sand rounded-lg bg-parchment text-warm-dark font-medium">
                   {question}
                 </div>
               </div>
@@ -162,7 +162,7 @@ const SetupSecurityQuestionPage = ({ onComplete, onSkip }) => {
             <div>
               <label
                 htmlFor="answer"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-medium text-warm-charcoal mb-2"
               >
                 您的答案
               </label>
@@ -172,13 +172,13 @@ const SetupSecurityQuestionPage = ({ onComplete, onSkip }) => {
                 value={answer}
                 onChange={handleAnswerChange}
                 className={`block w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  error ? "border-red-300 bg-red-50" : "border-gray-300"
+                  error ? "border-error-warm/50 bg-error-warm/10" : "border-warm-sand"
                 }`}
                 placeholder="請輸入您的咖啡廳店名"
                 disabled={isLoading}
                 autoFocus
               />
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-warm-stone mt-2">
                 答案會經過加密儲存，請確保只有您知道正確答案
               </p>
             </div>
@@ -187,10 +187,10 @@ const SetupSecurityQuestionPage = ({ onComplete, onSkip }) => {
             <button
               type="submit"
               disabled={isLoading || !answer.trim()}
-              className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-colors ${
+              className={`w-full py-3 px-4 rounded-lg font-medium text-ivory transition-colors ${
                 isLoading || !answer.trim()
                   ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  : "bg-terracotta-dark hover:bg-terracotta-dark focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               }`}
             >
               {isLoading ? (
@@ -208,16 +208,16 @@ const SetupSecurityQuestionPage = ({ onComplete, onSkip }) => {
               type="button"
               onClick={handleSkip}
               disabled={isLoading}
-              className="w-full py-2 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="w-full py-2 px-4 border border-warm-sand text-warm-charcoal rounded-lg hover:bg-parchment transition-colors disabled:opacity-50"
             >
               暫時跳過
             </button>
           </form>
 
           {/* 注意事項 */}
-          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-yellow-800 text-sm font-medium">注意事項：</p>
-            <ul className="text-yellow-700 text-xs mt-1 space-y-1">
+          <div className="mt-6 p-4 bg-parchment border border-warm-sand rounded-lg">
+            <p className="text-warm-dark text-sm font-medium">注意事項：</p>
+            <ul className="text-warm-charcoal text-xs mt-1 space-y-1">
               <li>• 請確保答案準確，重置密碼時需要完全一致</li>
               <li>• 建議使用正式的店名，避免使用暱稱</li>
               <li>• 答案不區分大小寫，但請記住正確的字詞</li>

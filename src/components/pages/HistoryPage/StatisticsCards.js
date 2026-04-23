@@ -17,25 +17,25 @@ const StatisticsCards = ({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-      <div className="bg-white rounded-lg p-4 text-center">
-        <div className="text-2xl font-bold text-blue-600">{orderCount}</div>
-        <div className="text-sm text-gray-600">筆訂單</div>
+      <div className="bg-ivory rounded-lg p-4 text-center">
+        <div className="text-2xl font-bold text-terracotta">{orderCount}</div>
+        <div className="text-sm text-warm-olive">筆訂單</div>
       </div>
-      <div className="bg-white rounded-lg p-4 text-center">
-        <div className="text-2xl font-bold text-green-600">{itemCount}</div>
-        <div className="text-sm text-gray-600">項商品</div>
+      <div className="bg-ivory rounded-lg p-4 text-center">
+        <div className="text-2xl font-bold text-terracotta-dark">{itemCount}</div>
+        <div className="text-sm text-warm-olive">項商品</div>
       </div>
-      <div className="bg-white rounded-lg p-4 text-center">
-        <div className="text-2xl font-bold text-purple-600">${periodTotal}</div>
-        <div className="text-sm text-gray-600">營業額</div>
+      <div className="bg-ivory rounded-lg p-4 text-center">
+        <div className="text-2xl font-bold text-terracotta">${periodTotal}</div>
+        <div className="text-sm text-warm-olive">營業額</div>
       </div>
-      <div className="bg-white rounded-lg p-4 text-center">
-        <div className="text-2xl font-bold text-red-600">${refundedTotal}</div>
-        <div className="text-sm text-gray-600">退款金額</div>
+      <div className="bg-ivory rounded-lg p-4 text-center">
+        <div className="text-2xl font-bold text-error-warm">${refundedTotal}</div>
+        <div className="text-sm text-warm-olive">退款金額</div>
       </div>
-      <div className="bg-white rounded-lg p-4 text-center">
-        <div className="text-2xl font-bold text-orange-600">{avgPrice}</div>
-        <div className="text-sm text-gray-600">平均單價</div>
+      <div className="bg-ivory rounded-lg p-4 text-center">
+        <div className="text-2xl font-bold text-terracotta">{avgPrice}</div>
+        <div className="text-sm text-warm-olive">平均單價</div>
       </div>
     </div>
   );

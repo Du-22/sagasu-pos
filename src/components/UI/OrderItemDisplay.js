@@ -15,21 +15,21 @@ const OrderItemDisplay = ({ item, priceInfo }) => {
   // 渲染價格信息
   const renderPriceInfo = () => {
     if (!hasAdjustment) {
-      return <div className="text-xs text-gray-600">${originalPrice}</div>;
+      return <div className="text-xs text-warm-olive">${originalPrice}</div>;
     }
 
     return (
-      <div className="text-xs text-gray-600">
+      <div className="text-xs text-warm-olive">
         <div className="flex items-center space-x-2">
-          <span className="line-through text-gray-400">${originalPrice}</span>
+          <span className="line-through text-warm-silver">${originalPrice}</span>
           <span
             className={`font-medium ${
-              unitPrice > originalPrice ? "text-red-600" : "text-green-600"
+              unitPrice > originalPrice ? "text-error-warm" : "text-terracotta-dark"
             }`}
           >
             ${unitPrice}
           </span>
-          <span className="text-xs text-blue-600">
+          <span className="text-xs text-terracotta">
             ({adjustment > 0 ? "+" : ""}${adjustment})
           </span>
         </div>
@@ -66,7 +66,7 @@ const OrderItemDisplay = ({ item, priceInfo }) => {
           return (
             <div
               key={type}
-              className="text-xs text-gray-500 flex items-center justify-between"
+              className="text-xs text-warm-stone flex items-center justify-between"
             >
               <span>
                 {type}: {value}
@@ -75,8 +75,8 @@ const OrderItemDisplay = ({ item, priceInfo }) => {
                 <span
                   className={`font-medium ml-2 ${
                     adjustmentDetail.adjustment > 0
-                      ? "text-red-600"
-                      : "text-green-600"
+                      ? "text-error-warm"
+                      : "text-terracotta-dark"
                   }`}
                 >
                   {adjustmentText}
@@ -99,7 +99,7 @@ const OrderItemDisplay = ({ item, priceInfo }) => {
         {item.name}
         {/* 編輯狀態指示器 */}
         {item.isEditing && (
-          <span className="ml-2 px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">
+          <span className="ml-2 px-2 py-1 text-xs bg-warm-sand text-warm-charcoal rounded-full">
             編輯中
           </span>
         )}
@@ -113,7 +113,7 @@ const OrderItemDisplay = ({ item, priceInfo }) => {
 
       {/* 小計顯示（當數量大於1時） */}
       {item.quantity > 1 && (
-        <div className="text-xs text-blue-600 mt-1">
+        <div className="text-xs text-terracotta mt-1">
           小計: ${unitPrice} × {item.quantity} = ${subtotal}
         </div>
       )}

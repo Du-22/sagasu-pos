@@ -42,7 +42,7 @@ const OrderingPage = ({
         {tableStatus === "seated" && (
           <button
             onClick={() => onReleaseSeat(selectedTable)}
-            className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded mt-2 transition"
+            className="bg-gray-700 hover:bg-gray-800 text-ivory px-4 py-2 rounded mt-2 transition"
           >
             釋放桌子
           </button>
@@ -52,7 +52,7 @@ const OrderingPage = ({
         {tableStatus === "occupied" && (
           <button
             onClick={onMoveTable}
-            className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded mt-2 transition"
+            className="bg-warm-charcoal hover:bg-anthropic-black text-ivory px-4 py-2 rounded mt-2 transition"
           >
             換桌
           </button>

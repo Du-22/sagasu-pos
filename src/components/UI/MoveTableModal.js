@@ -22,7 +22,7 @@ const MoveTableModal = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 shadow-lg min-w-[300px]">
+      <div className="bg-ivory rounded-lg p-6 shadow-lg min-w-[300px]">
         <h2 className="text-lg font-bold mb-4">換桌</h2>
         <div className="mb-4">
           選擇要搬移到哪個桌位：
@@ -50,7 +50,7 @@ const MoveTableModal = ({
         </div>
         <div className="flex space-x-2">
           <button
-            className="bg-blue-500 text-white px-4 py-2 rounded"
+            className="bg-terracotta text-ivory px-4 py-2 rounded"
             onClick={onConfirm}
             disabled={!moveTableTarget}
           >

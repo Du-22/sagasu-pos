@@ -16,22 +16,22 @@ const RefundStatisticsCard = ({ refundedPeriodRecords, allPeriodRecords, refunde
       : 0;
 
   return (
-    <div className="bg-white rounded-lg p-4">
-      <h3 className="text-lg font-bold mb-3 text-red-600">退款統計</h3>
+    <div className="bg-ivory rounded-lg p-4">
+      <h3 className="text-lg font-bold mb-3 text-error-warm">退款統計</h3>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <span className="font-medium">退款筆數</span>
-          <span className="font-bold text-red-600">
+          <span className="font-bold text-error-warm">
             {refundedPeriodRecords.length} 筆
           </span>
         </div>
         <div className="flex items-center justify-between">
           <span className="font-medium">退款金額</span>
-          <span className="font-bold text-red-600">${refundedTotal}</span>
+          <span className="font-bold text-error-warm">${refundedTotal}</span>
         </div>
         <div className="flex items-center justify-between">
           <span className="font-medium">退款率</span>
-          <span className="font-bold text-red-600">{refundRate}%</span>
+          <span className="font-bold text-error-warm">{refundRate}%</span>
         </div>
       </div>
     </div>

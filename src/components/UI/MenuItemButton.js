@@ -50,24 +50,24 @@ const MenuItemButton = ({ item, onAddToOrder }) => {
       {/* 菜單項目按鈕 */}
       <button
         onClick={handleClick}
-        className="p-6 border-2 border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 min-h-[80px] group"
+        className="p-6 border-2 border-warm-sand rounded-lg hover:border-terracotta hover:bg-parchment transition-all duration-200 min-h-[80px] group"
       >
-        <div className="text-sm font-medium text-gray-800 group-hover:text-blue-800">
+        <div className="text-sm font-medium text-warm-dark group-hover:text-terracotta-dark">
           {item.name}
         </div>
-        <div className="text-sm text-gray-600 mt-1 group-hover:text-blue-600">
+        <div className="text-sm text-warm-olive mt-1 group-hover:text-terracotta">
           ${item.price}
         </div>
 
         {/* 特色標籤 */}
         <div className="flex flex-wrap gap-1 mt-2">
           {hasAdjustableOptions && (
-            <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">
+            <span className="text-xs bg-warm-sand text-terracotta-dark px-2 py-1 rounded-full">
               可調價
             </span>
           )}
           {item.customOptions && item.customOptions.length > 0 && (
-            <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
+            <span className="text-xs bg-warm-sand text-terracotta px-2 py-1 rounded-full">
               可客製
             </span>
           )}

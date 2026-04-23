@@ -11,7 +11,7 @@ const DailyAnalysisTable = ({ dailyBreakdown, viewMode }) => {
   if (viewMode === "daily" || dailyBreakdown.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-lg p-4">
+    <div className="bg-ivory rounded-lg p-4">
       <h3 className="text-lg font-bold mb-3">
         每日營業分析 ({viewMode === "weekly" ? "本週" : "本月"})
       </h3>
@@ -28,11 +28,11 @@ const DailyAnalysisTable = ({ dailyBreakdown, viewMode }) => {
           </thead>
           <tbody>
             {dailyBreakdown.map((day) => (
-              <tr key={day.date} className="border-b hover:bg-gray-50">
+              <tr key={day.date} className="border-b hover:bg-parchment">
                 <td className="p-2 font-medium">{day.date}</td>
                 <td className="p-2 text-right">{day.orderCount}</td>
                 <td className="p-2 text-right">{day.itemCount}</td>
-                <td className="p-2 text-right font-bold text-green-600">
+                <td className="p-2 text-right font-bold text-terracotta-dark">
                   ${day.revenue}
                 </td>
                 <td className="p-2 text-right">

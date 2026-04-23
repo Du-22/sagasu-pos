@@ -295,8 +295,8 @@ export const SmartConnectionMonitor = ({
               <span
                 className={
                   networkOnline
-                    ? "text-green-600 font-medium"
-                    : "text-red-600 font-medium"
+                    ? "text-terracotta font-medium"
+                    : "text-error-warm font-medium"
                 }
               >
                 {networkOnline ? "✓ 在線" : "✗ 離線"}
@@ -340,7 +340,7 @@ export const SmartConnectionMonitor = ({
 
             {/* 錯誤訊息 */}
             {errorDetails && (
-              <div className="text-xs text-red-600 bg-red-50 p-2 rounded">
+              <div className="text-xs text-error-warm bg-error-warm/10 p-2 rounded">
                 {errorDetails}
               </div>
             )}
@@ -352,7 +352,7 @@ export const SmartConnectionMonitor = ({
               className={`w-full py-2 rounded-lg font-medium text-sm transition-colors ${
                 isTesting
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-blue-500 text-white hover:bg-blue-600"
+                  : "bg-terracotta text-ivory hover:bg-terracotta-dark"
               }`}
             >
               {isTesting ? "測試中..." : "🔄 測試連線"}

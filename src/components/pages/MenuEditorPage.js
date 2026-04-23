@@ -104,9 +104,9 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
         onSubmit={handleAddProduct}
       />
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-bold text-blue-800 mb-2">🔧 使用說明</h4>
-        <ul className="text-sm text-blue-700 space-y-1">
+      <div className="bg-parchment border border-terracotta-light rounded-lg p-4">
+        <h4 className="font-bold text-terracotta-dark mb-2">🔧 使用說明</h4>
+        <ul className="text-sm text-terracotta-dark space-y-1">
           <li>• 現在可以為每個客製選項設定價格調整了！</li>
           <li>• 設定步驟：填寫選項類型 → 填寫選項內容 → 點擊「新增價格調整」→ 選擇選項並設定金額</li>
           <li>• 正數表示加價，負數表示折扣，零或空白表示無價格調整</li>

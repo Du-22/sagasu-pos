@@ -44,7 +44,7 @@ const MenuArea = ({ menuData, onAddToOrder }) => {
 
   return (
     <div className="p-4">
-      <div className="bg-white rounded-lg shadow-sm h-full">
+      <div className="bg-ivory rounded-lg shadow-whisper h-full">
         {/* 類別選單 */}
         <MenuCategories
           categories={categories}

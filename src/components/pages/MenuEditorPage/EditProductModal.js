@@ -35,7 +35,7 @@ const EditProductModal = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 shadow-lg min-w-[600px] max-w-[800px] w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-ivory rounded-lg p-6 shadow-lg min-w-[600px] max-w-[800px] w-full mx-4 max-h-[90vh] overflow-y-auto">
         <h4 className="font-bold mb-4 text-lg">編輯產品</h4>
 
         <div className="grid grid-cols-2 gap-4 mb-4">
@@ -60,7 +60,7 @@ const EditProductModal = ({
             <label className="font-medium">客製選項：</label>
             <button
               onClick={onAddCustomOption}
-              className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600"
+              className="bg-terracotta text-ivory px-3 py-1 rounded text-sm hover:bg-terracotta-dark"
             >
               ＋ 新增客製選項
             </button>
@@ -79,13 +79,13 @@ const EditProductModal = ({
         <div className="flex space-x-3">
           <button
             onClick={onSave}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+            className="px-4 py-2 bg-terracotta text-ivory rounded hover:bg-terracotta-dark transition-colors"
           >
             儲存
           </button>
           <button
             onClick={onCancel}
-            className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
+            className="px-4 py-2 bg-gray-300 text-warm-charcoal rounded hover:bg-gray-400 transition-colors"
           >
             取消
           </button>

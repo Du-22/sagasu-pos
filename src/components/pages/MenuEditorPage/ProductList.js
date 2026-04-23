@@ -25,19 +25,19 @@ const ProductList = ({
   onDelete,
 }) => {
   return (
-    <div className="mb-6 bg-white rounded-lg shadow">
+    <div className="mb-6 bg-ivory rounded-lg shadow">
       <div className="p-4 border-b">
         <h3 className="font-bold flex items-center">
           <span className="mr-2">📋</span>
           產品列表 - {selectedCategory}
-          <span className="ml-2 text-sm text-gray-500">(拖拉調整順序)</span>
+          <span className="ml-2 text-sm text-warm-stone">(拖拉調整順序)</span>
         </h3>
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <div className="p-4 min-h-[200px]">
           {currentCategoryItems.length === 0 ? (
-            <div className="text-gray-500 text-center py-8">此類別暫無商品</div>
+            <div className="text-warm-stone text-center py-8">此類別暫無商品</div>
           ) : (
             <SortableContext
               items={currentCategoryItems.map((item) => item.id)}

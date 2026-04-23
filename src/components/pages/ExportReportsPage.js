@@ -194,19 +194,19 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
 
       <div className="p-6 max-w-4xl mx-auto space-y-6">
         {/* 手動報表區塊 */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-ivory rounded-lg shadow-whisper p-6">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            <h2 className="text-2xl font-bold text-warm-dark mb-2">
               📊 手動報表匯出
             </h2>
-            <p className="text-gray-600">
+            <p className="text-warm-olive">
               選擇統計期間和收件人，立即生成並發送營業報表。
             </p>
           </div>
 
           {/* 快速日期選擇 */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="block text-sm font-medium text-warm-charcoal mb-3">
               快速選擇統計期間
             </label>
             <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
@@ -223,8 +223,8 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
                   onClick={() => handleQuickDateRange(option.key)}
                   className={`p-4 text-center border-2 rounded-lg transition-all ${
                     quickDateRange === option.key
-                      ? "border-blue-500 bg-blue-50 text-blue-700"
-                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                      ? "border-terracotta bg-parchment text-terracotta-dark"
+                      : "border-warm-cream hover:border-warm-sand hover:bg-parchment"
                   }`}
                 >
                   <div className="text-xl mb-2">{option.icon}</div>
@@ -236,12 +236,12 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
 
           {/* 自訂日期範圍 */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="block text-sm font-medium text-warm-charcoal mb-3">
               自訂統計期間
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-gray-500 mb-2">
+                <label className="block text-xs text-warm-stone mb-2">
                   開始日期
                 </label>
                 <input
@@ -252,11 +252,11 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
                     setQuickDateRange("");
                     setReportType("自訂報表");
                   }}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-warm-sand rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-2">
+                <label className="block text-xs text-warm-stone mb-2">
                   結束日期
                 </label>
                 <input
@@ -267,22 +267,22 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
                     setQuickDateRange("");
                     setReportType("自訂報表");
                   }}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-warm-sand rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
           </div>
 
           {/* 報表類型顯示 */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="bg-parchment border border-terracotta-light rounded-lg p-4 mb-6">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-blue-600 font-medium">📄 報表類型：</span>
-                <span className="ml-2 text-blue-800 font-bold">
+                <span className="text-terracotta font-medium">📄 報表類型：</span>
+                <span className="ml-2 text-terracotta-dark font-bold">
                   {reportType}
                 </span>
               </div>
-              <span className="text-blue-600 text-sm">
+              <span className="text-terracotta text-sm">
                 {reportStartDate} ~ {reportEndDate}
               </span>
             </div>
@@ -290,14 +290,14 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
 
           {/* 收件人設定 */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="block text-sm font-medium text-warm-charcoal mb-3">
               收件人信箱
             </label>
 
             {/* 常用信箱選擇 */}
             {savedEmails.length > 0 && (
               <div className="mb-4">
-                <label className="block text-xs text-gray-500 mb-2">
+                <label className="block text-xs text-warm-stone mb-2">
                   常用信箱
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -306,8 +306,8 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
                       key={email}
                       className={`group relative inline-flex items-center px-3 py-2 text-sm rounded-full border transition-colors ${
                         reportEmail === email
-                          ? "bg-blue-500 text-white border-blue-500"
-                          : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200"
+                          ? "bg-terracotta text-ivory border-terracotta"
+                          : "bg-parchment text-warm-charcoal border-warm-sand hover:bg-warm-sand"
                       }`}
                     >
                       <button
@@ -323,8 +323,8 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
                         }}
                         className={`ml-2 w-4 h-4 rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity ${
                           reportEmail === email
-                            ? "hover:bg-blue-600 text-white"
-                            : "hover:bg-red-500 hover:text-white"
+                            ? "hover:bg-terracotta-dark text-ivory"
+                            : "hover:bg-error-warm hover:text-ivory"
                         }`}
                         title={`移除 ${email}`}
                       >
@@ -343,12 +343,12 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
                 value={reportEmail}
                 onChange={(e) => setReportEmail(e.target.value)}
                 placeholder="請輸入接收報表的信箱地址"
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="flex-1 border border-warm-sand rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               {!showAddEmailInput ? (
                 <button
                   onClick={() => setShowAddEmailInput(true)}
-                  className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap"
+                  className="px-4 py-2 bg-parchment text-warm-olive rounded-lg hover:bg-warm-sand transition-colors whitespace-nowrap"
                 >
                   + 加入常用
                 </button>
@@ -356,7 +356,7 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
                 <button
                   onClick={handleAddEmail}
                   disabled={!reportEmail || savedEmails.includes(reportEmail)}
-                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2 bg-terracotta text-ivory rounded-lg hover:bg-terracotta-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   確定
                 </button>
@@ -373,7 +373,7 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
               !reportStartDate ||
               !reportEndDate
             }
-            className="w-full py-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-4 bg-terracotta text-ivory rounded-lg hover:bg-terracotta-dark font-semibold text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isGeneratingReport ? (
               <div className="flex items-center justify-center">
@@ -387,13 +387,13 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
         </div>
 
         {/* 自動報表區塊 */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-ivory rounded-lg shadow-whisper p-6">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              <h2 className="text-2xl font-bold text-warm-dark mb-2">
                 🤖 自動報表
               </h2>
-              <p className="text-gray-600">
+              <p className="text-warm-olive">
                 系統會自動在指定時間發送報表，無需手動操作。
               </p>
             </div>
@@ -401,11 +401,11 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* 週報設定 */}
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-green-800 mb-3">
+            <div className="bg-parchment border border-warm-sand rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-terracotta-dark mb-3">
                 📅 自動週報
               </h3>
-              <ul className="text-sm text-green-700 space-y-2">
+              <ul className="text-sm text-terracotta-dark space-y-2">
                 <li>
                   <strong>發送時間：</strong> 每週日 19:00
                 </li>
@@ -417,17 +417,17 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
                 </li>
                 <li>
                   <strong>狀態：</strong>{" "}
-                  <span className="text-green-600 font-medium">✓ 已啟用</span>
+                  <span className="text-terracotta-dark font-medium">✓ 已啟用</span>
                 </li>
               </ul>
             </div>
 
             {/* 月報設定 */}
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-purple-800 mb-3">
+            <div className="bg-parchment border border-warm-cream rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-terracotta-dark mb-3">
                 📊 自動月報
               </h3>
-              <ul className="text-sm text-purple-700 space-y-2">
+              <ul className="text-sm text-terracotta-dark space-y-2">
                 <li>
                   <strong>發送時間：</strong> 每月最後一天 19:00
                 </li>
@@ -439,7 +439,7 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
                 </li>
                 <li>
                   <strong>狀態：</strong>{" "}
-                  <span className="text-purple-600 font-medium">✓ 已啟用</span>
+                  <span className="text-terracotta font-medium">✓ 已啟用</span>
                 </li>
               </ul>
             </div>
@@ -447,14 +447,14 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
         </div>
 
         {/* 報表內容說明 */}
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        <div className="bg-parchment border border-warm-cream rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-warm-dark mb-4">
             📋 報表內容說明
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h4 className="font-medium text-gray-700 mb-2">統計分析包含：</h4>
-              <ul className="text-sm text-gray-600 space-y-1">
+              <h4 className="font-medium text-warm-charcoal mb-2">統計分析包含：</h4>
+              <ul className="text-sm text-warm-olive space-y-1">
                 <li>• 營業摘要統計</li>
                 <li>• 熱門商品排行榜</li>
                 <li>• 付款方式分析</li>
@@ -463,8 +463,8 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
               </ul>
             </div>
             <div>
-              <h4 className="font-medium text-gray-700 mb-2">檔案格式：</h4>
-              <ul className="text-sm text-gray-600 space-y-1">
+              <h4 className="font-medium text-warm-charcoal mb-2">檔案格式：</h4>
+              <ul className="text-sm text-warm-olive space-y-1">
                 <li>• 專業 HTML 格式郵件</li>
                 <li>• 完整銷售明細 CSV 檔案</li>
                 <li>• 支援 Excel 開啟編輯</li>
@@ -478,13 +478,13 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
       {/* 刪除信箱確認 Modal */}
       {showDeleteEmailModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+          <div className="bg-ivory rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
             <div className="mb-4">
-              <h3 className="text-lg font-bold text-gray-800 mb-2">確認刪除</h3>
-              <p className="text-gray-600 text-sm">
+              <h3 className="text-lg font-bold text-warm-dark mb-2">確認刪除</h3>
+              <p className="text-warm-olive text-sm">
                 確定要從常用信箱列表中移除以下信箱嗎？
               </p>
-              <p className="font-medium text-gray-800 mt-2 p-2 bg-gray-50 rounded">
+              <p className="font-medium text-warm-dark mt-2 p-2 bg-parchment rounded">
                 {emailToDelete}
               </p>
             </div>
@@ -495,13 +495,13 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
                   setShowDeleteEmailModal(false);
                   setEmailToDelete("");
                 }}
-                className="flex-1 py-2 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                className="flex-1 py-2 px-4 border border-warm-sand text-warm-charcoal rounded-lg hover:bg-parchment font-medium transition-colors"
               >
                 取消
               </button>
               <button
                 onClick={() => handleRemoveEmail(emailToDelete)}
-                className="flex-1 py-2 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 font-medium transition-colors"
+                className="flex-1 py-2 px-4 bg-error-warm text-ivory rounded-lg hover:bg-error-warm font-medium transition-colors"
               >
                 確定刪除
               </button>

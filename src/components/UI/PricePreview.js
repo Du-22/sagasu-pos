@@ -14,12 +14,12 @@ const PricePreview = ({
   hasAdjustment,
 }) => {
   return (
-    <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-4">
+    <div className="bg-parchment border-2 border-terracotta-light rounded-lg p-4 mb-4">
       <div className="flex justify-between items-center">
-        <span className="font-medium text-gray-700">預覽價格：</span>
+        <span className="font-medium text-warm-charcoal">預覽價格：</span>
         <div className="flex items-center space-x-2">
           {hasAdjustment && (
-            <span className="text-sm text-gray-500 line-through">
+            <span className="text-sm text-warm-stone line-through">
               ${basePrice}
             </span>
           )}
@@ -27,9 +27,9 @@ const PricePreview = ({
             className={`font-bold text-lg ${
               hasAdjustment
                 ? adjustment > 0
-                  ? "text-red-600"
-                  : "text-green-600"
-                : "text-gray-800"
+                  ? "text-error-warm"
+                  : "text-terracotta-dark"
+                : "text-warm-dark"
             }`}
           >
             ${currentPrice}
@@ -41,12 +41,12 @@ const PricePreview = ({
         <div className="mt-2 text-xs">
           <div
             className={`font-medium ${
-              adjustment > 0 ? "text-red-600" : "text-green-600"
+              adjustment > 0 ? "text-error-warm" : "text-terracotta-dark"
             }`}
           >
             價格調整：{adjustment > 0 ? "+" : ""}${adjustment}
           </div>
-          <div className="text-gray-500 mt-1">
+          <div className="text-warm-stone mt-1">
             基本價格 ${basePrice} {adjustment > 0 ? "+" : ""} 調整 $
             {Math.abs(adjustment)} = ${currentPrice}
           </div>

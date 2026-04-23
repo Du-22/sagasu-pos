@@ -21,7 +21,7 @@ const DailyOrdersList = ({
   if (viewMode !== "daily") return null;
 
   return (
-    <div className="bg-white rounded-lg p-4">
+    <div className="bg-ivory rounded-lg p-4">
       <div className="flex justify-between items-center mb-3">
         <h3 className="text-lg font-bold">
           詳細記錄{displayMode === "grouped" ? " (同桌訂單)" : " (詳細檢視)"}
@@ -38,7 +38,7 @@ const DailyOrdersList = ({
       </div>
 
       {displayRecords.length === 0 ? (
-        <div className="text-center text-gray-500 py-8">
+        <div className="text-center text-warm-stone py-8">
           {selectedDate} 暫無資料
         </div>
       ) : displayMode === "grouped" ? (
@@ -64,22 +64,22 @@ const GroupedView = ({ groupedRecords, onRefundClick }) => (
         key={group.groupId}
         className={`border-2 rounded-lg overflow-hidden ${
           group.hasRefunded
-            ? "border-red-200 bg-red-50"
+            ? "border-error-warm/30 bg-error-warm/10"
             : group.isGrouped
-            ? "border-blue-300 bg-blue-50"
-            : "border-gray-200 bg-white"
+            ? "border-terracotta-light bg-parchment"
+            : "border-warm-cream bg-ivory"
         }`}
       >
         {/* 群組標題列 */}
         <div
           className={`p-4 ${
             group.hasRefunded
-              ? "bg-red-500 text-white"
+              ? "bg-error-warm text-ivory"
               : group.isGrouped
-              ? "bg-blue-500 text-white"
+              ? "bg-terracotta text-ivory"
               : group.type === "takeout"
-              ? "bg-orange-500 text-white"
-              : "bg-gray-500 text-white"
+              ? "bg-terracotta text-ivory"
+              : "bg-gray-500 text-ivory"
           }`}
         >
           <div className="flex justify-between items-center">
@@ -126,12 +126,12 @@ const SplitPaymentRecords = ({ records, onRefundClick }) => (
       <div
         key={record.id}
         className={`border rounded-lg p-3 ${
-          record.isRefunded ? "bg-red-50 border-red-200 opacity-75" : "bg-white"
+          record.isRefunded ? "bg-error-warm/10 border-error-warm/30 opacity-75" : "bg-ivory"
         }`}
       >
         {record.isRefunded && (
           <div className="mb-2">
-            <span className="bg-red-500 text-white px-2 py-1 rounded text-xs">
+            <span className="bg-error-warm text-ivory px-2 py-1 rounded text-xs">
               已退款 {record.refundDate} {record.refundTime}
             </span>
           </div>
@@ -139,8 +139,8 @@ const SplitPaymentRecords = ({ records, onRefundClick }) => (
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center space-x-3">
             <span
-              className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold text-white ${
-                record.isRefunded ? "bg-red-500" : "bg-blue-500"
+              className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold text-ivory ${
+                record.isRefunded ? "bg-error-warm" : "bg-terracotta"
               }`}
             >
               {index + 1}
@@ -152,8 +152,8 @@ const SplitPaymentRecords = ({ records, onRefundClick }) => (
               <span
                 className={`text-xs px-2 py-1 rounded ${
                   record.paymentMethod === "cash"
-                    ? "bg-blue-100 text-blue-800"
-                    : "bg-green-100 text-green-800"
+                    ? "bg-warm-sand text-terracotta-dark"
+                    : "bg-warm-sand text-terracotta-dark"
                 }`}
               >
                 {record.paymentMethod === "cash" ? "現金" : "Line Pay"}
@@ -163,7 +163,7 @@ const SplitPaymentRecords = ({ records, onRefundClick }) => (
           <div className="flex items-center space-x-2">
             <div
               className={`text-lg font-bold ${
-                record.isRefunded ? "text-red-600 line-through" : ""
+                record.isRefunded ? "text-error-warm line-through" : ""
               }`}
             >
               ${record.total}
@@ -171,7 +171,7 @@ const SplitPaymentRecords = ({ records, onRefundClick }) => (
             {!record.isRefunded && (
               <button
                 onClick={() => onRefundClick(record)}
-                className="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600 transition-colors"
+                className="bg-error-warm text-ivory px-3 py-1 rounded text-xs hover:bg-error-warm transition-colors"
               >
                 退款
               </button>
@@ -189,19 +189,19 @@ const SinglePaymentRecord = ({ record, onRefundClick }) => (
   <div>
     {record.isRefunded && (
       <div className="mb-2">
-        <span className="bg-red-500 text-white px-2 py-1 rounded text-xs">
+        <span className="bg-error-warm text-ivory px-2 py-1 rounded text-xs">
           已退款 {record.refundDate} {record.refundTime}
         </span>
       </div>
     )}
     <div className="flex justify-between items-start mb-2">
-      <div className="text-sm text-gray-700 flex-1">
+      <div className="text-sm text-warm-charcoal flex-1">
         <ItemsList items={record.items} />
       </div>
       {!record.isRefunded && (
         <button
           onClick={() => onRefundClick(record)}
-          className="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600 transition-colors ml-4"
+          className="bg-error-warm text-ivory px-3 py-1 rounded text-xs hover:bg-error-warm transition-colors ml-4"
         >
           退款
         </button>
@@ -211,8 +211,8 @@ const SinglePaymentRecord = ({ record, onRefundClick }) => (
       <span
         className={`text-xs px-2 py-1 rounded ${
           record.paymentMethod === "cash"
-            ? "bg-blue-100 text-blue-800"
-            : "bg-green-100 text-green-800"
+            ? "bg-warm-sand text-terracotta-dark"
+            : "bg-warm-sand text-terracotta-dark"
         }`}
       >
         {record.paymentMethod === "cash" ? "現金" : "Line Pay"}
@@ -231,13 +231,13 @@ const DetailedView = ({ displayRecords, onRefundClick }) => (
           key={record.id}
           className={`border rounded-lg p-3 ${
             record.isRefunded
-              ? "bg-red-50 border-red-200 opacity-75"
-              : "hover:bg-gray-50"
+              ? "bg-error-warm/10 border-error-warm/30 opacity-75"
+              : "hover:bg-parchment"
           }`}
         >
           {record.isRefunded && (
             <div className="mb-2">
-              <span className="bg-red-500 text-white px-2 py-1 rounded text-xs">
+              <span className="bg-error-warm text-ivory px-2 py-1 rounded text-xs">
                 已退款 {record.refundDate} {record.refundTime}
               </span>
             </div>
@@ -247,18 +247,18 @@ const DetailedView = ({ displayRecords, onRefundClick }) => (
               <span className="font-medium">
                 {record.type === "takeout" ? `外帶 #${record.table}` : record.table}
               </span>
-              <span className="text-sm text-gray-600">{record.time}</span>
+              <span className="text-sm text-warm-olive">{record.time}</span>
               <span
                 className={`text-xs px-2 py-1 rounded ${
                   record.type === "takeout"
-                    ? "bg-orange-100 text-orange-700"
-                    : "bg-blue-100 text-blue-700"
+                    ? "bg-warm-sand text-terracotta-dark"
+                    : "bg-warm-sand text-terracotta-dark"
                 }`}
               >
                 {record.type === "takeout" ? "外帶" : "內用"}
               </span>
               {record.isPartialPayment && (
-                <span className="text-xs px-2 py-1 rounded bg-yellow-100 text-yellow-700">
+                <span className="text-xs px-2 py-1 rounded bg-warm-sand text-warm-charcoal">
                   部分結帳
                 </span>
               )}
@@ -267,24 +267,24 @@ const DetailedView = ({ displayRecords, onRefundClick }) => (
               <div className="text-right">
                 <span
                   className={`font-bold ${
-                    record.isRefunded ? "text-red-600 line-through" : "text-green-600"
+                    record.isRefunded ? "text-error-warm line-through" : "text-terracotta-dark"
                   }`}
                 >
                   ${record.total}
                 </span>
-                <div className="text-sm text-gray-600">{record.itemCount} 項商品</div>
+                <div className="text-sm text-warm-olive">{record.itemCount} 項商品</div>
               </div>
               {!record.isRefunded && (
                 <button
                   onClick={() => onRefundClick(record)}
-                  className="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600 transition-colors"
+                  className="bg-error-warm text-ivory px-3 py-1 rounded text-xs hover:bg-error-warm transition-colors"
                 >
                   退款
                 </button>
               )}
             </div>
           </div>
-          <div className="text-sm text-gray-700">
+          <div className="text-sm text-warm-charcoal">
             <ItemsList items={record.items} />
           </div>
         </div>
@@ -300,7 +300,7 @@ const ItemsList = ({ items }) => (
         {item.name} x{item.quantity}
         {item.selectedCustom &&
           Object.entries(item.selectedCustom).map(([type, value]) => (
-            <span key={type} className="ml-1 text-xs text-gray-500">
+            <span key={type} className="ml-1 text-xs text-warm-stone">
               [{type}:{value}]
             </span>
           ))}

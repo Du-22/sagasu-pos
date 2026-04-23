@@ -19,39 +19,39 @@ const CheckoutTypeModal = ({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl">
+      <div className="bg-ivory rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl">
         <div className="text-center mb-6">
-          <h3 className="text-2xl font-bold text-gray-800 mb-2">
+          <h3 className="text-2xl font-bold text-warm-dark mb-2">
             選擇結帳方式
           </h3>
-          <div className="text-lg text-gray-600">總計: ${grandTotal}</div>
+          <div className="text-lg text-warm-olive">總計: ${grandTotal}</div>
         </div>
 
         <div className="space-y-4 mb-8">
           <button
             onClick={onFullCheckout}
-            className="w-full p-4 rounded-xl border-2 border-blue-500 bg-blue-50 hover:bg-blue-100 transition-colors"
+            className="w-full p-4 rounded-xl border-2 border-terracotta bg-parchment hover:bg-warm-sand transition-colors"
           >
-            <h4 className="text-lg font-semibold text-blue-800 mb-1">
+            <h4 className="text-lg font-semibold text-terracotta-dark mb-1">
               全部結帳
             </h4>
-            <p className="text-sm text-blue-600">一次結清所有餐點</p>
+            <p className="text-sm text-terracotta">一次結清所有餐點</p>
           </button>
 
           <button
             onClick={onPartialCheckout}
-            className="w-full p-4 rounded-xl border-2 border-orange-500 bg-orange-50 hover:bg-orange-100 transition-colors"
+            className="w-full p-4 rounded-xl border-2 border-terracotta bg-parchment hover:bg-warm-sand transition-colors"
           >
-            <h4 className="text-lg font-semibold text-orange-800 mb-1">
+            <h4 className="text-lg font-semibold text-terracotta-dark mb-1">
               分開結帳
             </h4>
-            <p className="text-sm text-orange-600">選擇部分餐點結帳</p>
+            <p className="text-sm text-terracotta">選擇部分餐點結帳</p>
           </button>
         </div>
 
         <button
           onClick={onClose}
-          className="w-full py-3 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+          className="w-full py-3 px-4 border border-warm-sand text-warm-charcoal rounded-lg hover:bg-parchment font-medium transition-colors"
         >
           取消
         </button>

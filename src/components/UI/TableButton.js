@@ -86,7 +86,7 @@ const TableButton = ({ table, status, onClick, startTime }) => {
         >
           <Timer
             startTime={startTime}
-            className="bg-black text-white px-2 py-0.5 rounded text-xs"
+            className="bg-black text-ivory px-2 py-0.5 rounded text-xs"
           />
         </div>
       )}
