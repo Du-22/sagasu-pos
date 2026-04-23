@@ -13,7 +13,7 @@ const OrderItemControls = ({ item, onUpdateQuantity, onRemove }) => {
       {/* 減少數量按鈕 */}
       <button
         onClick={() => onUpdateQuantity(item.uniqueId, item.quantity - 1)}
-        className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-sm font-bold transition-colors"
+        className="w-6 h-6 rounded-full bg-warm-sand hover:bg-warm-sand flex items-center justify-center text-sm font-bold transition-colors"
         title="減少數量"
       >
         -
@@ -27,7 +27,7 @@ const OrderItemControls = ({ item, onUpdateQuantity, onRemove }) => {
       {/* 增加數量按鈕 */}
       <button
         onClick={() => onUpdateQuantity(item.uniqueId, item.quantity + 1)}
-        className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-sm font-bold transition-colors"
+        className="w-6 h-6 rounded-full bg-warm-sand hover:bg-warm-sand flex items-center justify-center text-sm font-bold transition-colors"
         title="增加數量"
       >
         +
@@ -38,8 +38,8 @@ const OrderItemControls = ({ item, onUpdateQuantity, onRemove }) => {
         onClick={() => onRemove(item.uniqueId || item.id)}
         className={`w-6 h-6 rounded-full flex items-center justify-center text-sm transition-colors ${
           item.isEditing
-            ? "bg-red-200 hover:bg-red-300 text-red-600"
-            : "bg-red-200 hover:bg-red-300 text-red-500"
+            ? "bg-error-warm/20 hover:bg-error-warm/30 text-error-warm"
+            : "bg-error-warm/20 hover:bg-error-warm/30 text-error-warm"
         }`}
         title={item.isEditing ? "刪除此餐點" : "移除"}
       >

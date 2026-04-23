@@ -31,16 +31,16 @@ const SortableItem = ({ item, index, onEdit, onDelete }) => {
       style={style}
       {...attributes}
       className={`flex items-center justify-between p-3 mb-2 border rounded-lg transition-all ${
-        isDragging ? "bg-white shadow-lg scale-105 z-10" : "bg-gray-50 hover:bg-gray-100"
+        isDragging ? "bg-ivory shadow-lg scale-105 z-10" : "bg-parchment hover:bg-parchment"
       }`}
     >
       {/* 拖拉手柄 */}
       <div
         {...listeners}
-        className="flex items-center mr-3 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-gray-200 transition-colors"
+        className="flex items-center mr-3 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-warm-sand transition-colors"
         title="拖拉調整順序"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-gray-400">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-warm-silver">
           <circle cx="9" cy="6" r="1" fill="currentColor" />
           <circle cx="15" cy="6" r="1" fill="currentColor" />
           <circle cx="9" cy="12" r="1" fill="currentColor" />
@@ -51,19 +51,19 @@ const SortableItem = ({ item, index, onEdit, onDelete }) => {
       </div>
 
       {/* 順序編號 */}
-      <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">
+      <div className="w-8 h-8 bg-terracotta text-ivory rounded-full flex items-center justify-center text-sm font-bold mr-3">
         {index + 1}
       </div>
 
       {/* 商品資訊 */}
       <div className="flex-1">
         <div className="font-medium">{item.name}</div>
-        <div className="text-sm text-gray-600">${item.price}</div>
+        <div className="text-sm text-warm-olive">${item.price}</div>
         {item.customOptions &&
           item.customOptions.some(
             (opt) => opt.priceAdjustments && Object.keys(opt.priceAdjustments).length > 0
           ) && (
-            <div className="text-xs text-green-600 mt-1">💰 含價格調整選項</div>
+            <div className="text-xs text-terracotta-dark mt-1">💰 含價格調整選項</div>
           )}
       </div>
 
@@ -71,13 +71,13 @@ const SortableItem = ({ item, index, onEdit, onDelete }) => {
       <div className="flex space-x-2">
         <button
           onClick={() => onEdit(item)}
-          className="px-3 py-1 bg-yellow-400 hover:bg-yellow-500 rounded text-sm transition-colors"
+          className="px-3 py-1 bg-warm-olive hover:bg-warm-charcoal rounded text-sm transition-colors"
         >
           編輯
         </button>
         <button
           onClick={() => onDelete(item.id)}
-          className="px-3 py-1 bg-red-400 hover:bg-red-500 text-white rounded text-sm transition-colors"
+          className="px-3 py-1 bg-error-warm/80 hover:bg-error-warm text-ivory rounded text-sm transition-colors"
         >
           刪除
         </button>

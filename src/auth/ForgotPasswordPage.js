@@ -140,18 +140,18 @@ const ForgotPasswordPage = ({ onBack, onResetSuccess }) => {
 
   const PasswordInput = ({ label, field, value, onChange, placeholder }) => (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <label className="block text-sm font-medium text-warm-charcoal">{label}</label>
       <div className="flex items-center space-x-2">
         <div className="relative flex-1">
           <Key
-            className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none h-5 w-5 text-gray-400"
+            className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none h-5 w-5 text-warm-silver"
             style={{ top: "50%", transform: "translateY(-50%)", left: "12px" }}
           />
           <input
             type={showPasswords[field] ? "text" : "password"}
             value={value}
             onChange={onChange}
-            className="block w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300"
+            className="block w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-terracotta focus:border-transparent border-warm-sand"
             placeholder={placeholder}
             disabled={isLoading}
           />
@@ -159,13 +159,13 @@ const ForgotPasswordPage = ({ onBack, onResetSuccess }) => {
         <button
           type="button"
           onClick={() => togglePasswordVisibility(field)}
-          className="p-3 border rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center"
+          className="p-3 border rounded-lg hover:bg-parchment transition-colors flex items-center justify-center"
           disabled={isLoading}
         >
           {showPasswords[field] ? (
-            <EyeOff className="h-5 w-5 text-gray-400" />
+            <EyeOff className="h-5 w-5 text-warm-silver" />
           ) : (
-            <Eye className="h-5 w-5 text-gray-400" />
+            <Eye className="h-5 w-5 text-warm-silver" />
           )}
         </button>
       </div>
@@ -175,21 +175,21 @@ const ForgotPasswordPage = ({ onBack, onResetSuccess }) => {
   // 成功頁面
   if (step === 2 && isLoading && !error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-parchment flex items-center justify-center p-4">
         <div className="max-w-md w-full">
-          <div className="bg-white rounded-xl shadow-lg p-8">
+          <div className="bg-ivory rounded-xl shadow-lg p-8">
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-green-600" />
+              <div className="w-16 h-16 bg-warm-sand rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-terracotta-dark" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              <h1 className="text-2xl font-bold text-anthropic-black mb-2">
                 密碼重置成功
               </h1>
-              <p className="text-gray-600 mb-4">
+              <p className="text-warm-olive mb-4">
                 您的密碼已成功重置，請使用新密碼登入
               </p>
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto"></div>
-              <p className="text-sm text-gray-500 mt-2">正在返回登入頁面...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-terracotta mx-auto"></div>
+              <p className="text-sm text-warm-stone mt-2">正在返回登入頁面...</p>
             </div>
           </div>
         </div>
@@ -198,42 +198,42 @@ const ForgotPasswordPage = ({ onBack, onResetSuccess }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-parchment flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         {/* 返回按鈕 */}
         <button
           onClick={onBack}
-          className="mb-4 flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+          className="mb-4 flex items-center text-warm-olive hover:text-warm-dark transition-colors"
           disabled={isLoading}
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
           返回登入
         </button>
 
-        <div className="bg-white rounded-xl shadow-lg p-8">
+        <div className="bg-ivory rounded-xl shadow-lg p-8">
           {/* 標題區域 */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-warm-sand rounded-full flex items-center justify-center mx-auto mb-4">
               {step === 1 ? (
-                <Shield className="w-8 h-8 text-blue-600" />
+                <Shield className="w-8 h-8 text-terracotta" />
               ) : (
-                <Key className="w-8 h-8 text-blue-600" />
+                <Key className="w-8 h-8 text-terracotta" />
               )}
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-anthropic-black">
               {step === 1 ? "安全驗證" : "設定新密碼"}
             </h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-warm-olive mt-2">
               {step === 1 ? "請回答安全問題來驗證身份" : "請設定您的新密碼"}
             </p>
           </div>
 
           {/* 錯誤訊息 */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="mb-6 p-4 bg-error-warm/10 border border-error-warm/30 rounded-lg">
               <div className="flex items-start">
-                <AlertCircle className="w-5 h-5 text-red-600 mr-2 mt-0.5 flex-shrink-0" />
-                <p className="text-red-800 text-sm">{error}</p>
+                <AlertCircle className="w-5 h-5 text-error-warm mr-2 mt-0.5 flex-shrink-0" />
+                <p className="text-error-warm text-sm">{error}</p>
               </div>
             </div>
           )}
@@ -242,11 +242,11 @@ const ForgotPasswordPage = ({ onBack, onResetSuccess }) => {
           {step === 1 && (
             <form onSubmit={handleAnswerSubmit} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-warm-charcoal mb-2">
                   安全問題
                 </label>
-                <div className="p-4 border border-gray-300 rounded-lg bg-gray-50">
-                  <p className="text-gray-800 font-medium">
+                <div className="p-4 border border-warm-sand rounded-lg bg-parchment">
+                  <p className="text-warm-dark font-medium">
                     {securityQuestion || "載入中..."}
                   </p>
                 </div>
@@ -255,7 +255,7 @@ const ForgotPasswordPage = ({ onBack, onResetSuccess }) => {
               <div>
                 <label
                   htmlFor="securityAnswer"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+                  className="block text-sm font-medium text-warm-charcoal mb-2"
                 >
                   您的答案
                 </label>
@@ -267,7 +267,7 @@ const ForgotPasswordPage = ({ onBack, onResetSuccess }) => {
                     setSecurityAnswer(e.target.value);
                     if (error) setError("");
                   }}
-                  className="block w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300"
+                  className="block w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-terracotta focus:border-transparent border-warm-sand"
                   placeholder="請輸入答案"
                   disabled={isLoading}
                   autoFocus
@@ -277,15 +277,15 @@ const ForgotPasswordPage = ({ onBack, onResetSuccess }) => {
               <button
                 type="submit"
                 disabled={isLoading || !securityAnswer.trim()}
-                className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-colors ${
+                className={`w-full py-3 px-4 rounded-lg font-medium text-ivory transition-colors ${
                   isLoading || !securityAnswer.trim()
                     ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700"
+                    : "bg-terracotta hover:bg-terracotta-dark"
                 }`}
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-ivory mr-2"></div>
                     驗證中...
                   </div>
                 ) : (
@@ -323,15 +323,15 @@ const ForgotPasswordPage = ({ onBack, onResetSuccess }) => {
               <button
                 type="submit"
                 disabled={isLoading || !newPassword || !confirmPassword}
-                className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-colors ${
+                className={`w-full py-3 px-4 rounded-lg font-medium text-ivory transition-colors ${
                   isLoading || !newPassword || !confirmPassword
                     ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-green-600 hover:bg-green-700"
+                    : "bg-terracotta hover:bg-terracotta-dark"
                 }`}
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-ivory mr-2"></div>
                     重置中...
                   </div>
                 ) : (
@@ -342,16 +342,16 @@ const ForgotPasswordPage = ({ onBack, onResetSuccess }) => {
           )}
 
           {/* 提示訊息 */}
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-blue-800 text-sm font-medium">提示：</p>
+          <div className="mt-6 p-4 bg-parchment border border-terracotta-light rounded-lg">
+            <p className="text-terracotta-dark text-sm font-medium">提示：</p>
             {step === 1 ? (
-              <ul className="text-blue-700 text-xs mt-1 space-y-1">
+              <ul className="text-terracotta-dark text-xs mt-1 space-y-1">
                 <li>• 答案不區分大小寫</li>
                 <li>• 請輸入完整且準確的店名</li>
                 <li>• 如果忘記答案，請聯絡技術支援</li>
               </ul>
             ) : (
-              <ul className="text-blue-700 text-xs mt-1 space-y-1">
+              <ul className="text-terracotta-dark text-xs mt-1 space-y-1">
                 <li>• 新密碼至少需要6個字符</li>
                 <li>• 不能使用預設密碼 "sagasu2024"</li>
                 <li>• 請妥善保管新密碼</li>

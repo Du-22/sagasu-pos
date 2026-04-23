@@ -38,12 +38,12 @@ const PaymentModal = ({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl">
+      <div className="bg-ivory rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl">
         <div className="text-center mb-6">
-          <h3 className="text-2xl font-bold text-gray-800 mb-2">
+          <h3 className="text-2xl font-bold text-warm-dark mb-2">
             選擇付款方式
           </h3>
-          <div className="text-3xl font-bold text-blue-600">總計: ${total}</div>
+          <div className="text-3xl font-bold text-terracotta">總計: ${total}</div>
         </div>
 
         <div className="space-y-4 mb-8">
@@ -55,14 +55,14 @@ const PaymentModal = ({
                 relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-200
                 ${
                   paymentMethod === method.id
-                    ? "border-blue-500 bg-blue-50 shadow-md"
-                    : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                    ? "border-terracotta bg-parchment shadow-md"
+                    : "border-warm-cream hover:border-warm-sand hover:bg-parchment"
                 }
                 ${method.popular ? "ring-2 ring-orange-200" : ""}
               `}
             >
               {method.popular && (
-                <div className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                <div className="absolute -top-2 -right-2 bg-terracotta text-ivory text-xs px-2 py-1 rounded-full font-medium">
                   推薦
                 </div>
               )}
@@ -73,12 +73,12 @@ const PaymentModal = ({
                     p-3 rounded-lg
                     ${
                       paymentMethod === method.id
-                        ? "bg-blue-500 text-white"
-                        : "bg-gray-100 text-gray-600"
+                        ? "bg-terracotta text-ivory"
+                        : "bg-parchment text-warm-olive"
                     }
                     ${
                       method.popular && paymentMethod !== method.id
-                        ? "bg-orange-100 text-orange-600"
+                        ? "bg-warm-sand text-terracotta"
                         : ""
                     }
                   `}
@@ -88,16 +88,16 @@ const PaymentModal = ({
 
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">
-                    <h4 className="text-lg font-semibold text-gray-800">
+                    <h4 className="text-lg font-semibold text-warm-dark">
                       {method.name}
                     </h4>
                     {method.popular && (
-                      <span className="text-orange-600 text-sm font-medium">
+                      <span className="text-terracotta text-sm font-medium">
                         (常用)
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600">{method.description}</p>
+                  <p className="text-sm text-warm-olive">{method.description}</p>
                 </div>
 
                 <div
@@ -105,13 +105,13 @@ const PaymentModal = ({
                     w-6 h-6 rounded-full border-2 flex items-center justify-center
                     ${
                       paymentMethod === method.id
-                        ? "border-blue-500 bg-blue-500"
-                        : "border-gray-300"
+                        ? "border-terracotta bg-terracotta"
+                        : "border-warm-sand"
                     }
                   `}
                 >
                   {paymentMethod === method.id && (
-                    <div className="w-2 h-2 rounded-full bg-white"></div>
+                    <div className="w-2 h-2 rounded-full bg-ivory"></div>
                   )}
                 </div>
               </div>
@@ -122,13 +122,13 @@ const PaymentModal = ({
         <div className="flex space-x-3">
           <button
             onClick={onClose}
-            className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+            className="flex-1 py-3 px-4 border border-warm-sand text-warm-charcoal rounded-lg hover:bg-parchment font-medium transition-colors"
           >
             取消
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 py-3 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium transition-colors shadow-md"
+            className="flex-1 py-3 px-4 bg-terracotta text-ivory rounded-lg hover:bg-terracotta-dark font-medium transition-colors shadow-md"
           >
             確認付款
           </button>

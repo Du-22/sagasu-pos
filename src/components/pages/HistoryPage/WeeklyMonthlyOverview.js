@@ -17,7 +17,7 @@ const WeeklyMonthlyOverview = ({
   if (viewMode === "daily" || displayRecords.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-lg p-4">
+    <div className="bg-ivory rounded-lg p-4">
       <div className="flex justify-between items-center mb-3">
         <h3 className="text-lg font-bold">
           {viewMode === "weekly" ? "本週" : "本月"}記錄概覽
@@ -41,18 +41,18 @@ const WeeklyMonthlyOverview = ({
               key={record.id}
               className={`flex items-center justify-between p-3 border rounded-lg ${
                 record.isRefunded
-                  ? "bg-red-50 border-red-200 opacity-75"
-                  : "hover:bg-gray-50"
+                  ? "bg-error-warm/10 border-error-warm/30 opacity-75"
+                  : "hover:bg-parchment"
               }`}
             >
               <div className="flex items-center space-x-3">
-                <span className="text-sm text-gray-500">{record.date}</span>
+                <span className="text-sm text-warm-stone">{record.date}</span>
                 <span className="font-medium">
                   {record.type === "takeout" ? `外帶 #${record.table}` : record.table}
                 </span>
-                <span className="text-sm text-gray-600">{record.time}</span>
+                <span className="text-sm text-warm-olive">{record.time}</span>
                 {record.isRefunded && (
-                  <span className="bg-red-500 text-white px-2 py-1 rounded text-xs">
+                  <span className="bg-error-warm text-ivory px-2 py-1 rounded text-xs">
                     已退款
                   </span>
                 )}
@@ -60,7 +60,7 @@ const WeeklyMonthlyOverview = ({
               <div className="flex items-center space-x-3">
                 <span
                   className={`font-bold ${
-                    record.isRefunded ? "text-red-600 line-through" : "text-green-600"
+                    record.isRefunded ? "text-error-warm line-through" : "text-terracotta-dark"
                   }`}
                 >
                   ${record.total}
@@ -68,7 +68,7 @@ const WeeklyMonthlyOverview = ({
                 {!record.isRefunded && (
                   <button
                     onClick={() => onRefundClick(record)}
-                    className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 transition-colors"
+                    className="bg-error-warm text-ivory px-2 py-1 rounded text-xs hover:bg-error-warm transition-colors"
                   >
                     退款
                   </button>

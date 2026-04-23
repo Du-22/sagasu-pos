@@ -255,7 +255,7 @@ export const SmartConnectionMonitor = ({
     <div className="fixed top-4 right-40 z-50">
       {/* 簡易指示器 */}
       <div
-        className="flex items-center gap-2 bg-white rounded-lg shadow-lg px-3 py-2 cursor-pointer hover:shadow-xl transition-shadow"
+        className="flex items-center gap-2 bg-ivory rounded-lg shadow-lg px-3 py-2 cursor-pointer hover:shadow-xl transition-shadow"
         onClick={() => setShowDetails(!showDetails)}
       >
         {/* 狀態圖示 */}
@@ -266,24 +266,24 @@ export const SmartConnectionMonitor = ({
         />
 
         {/* 狀態文字 */}
-        <span className="text-sm font-medium text-gray-700">
+        <span className="text-sm font-medium text-warm-charcoal">
           {connectionStatus.text}
         </span>
 
         {/* 展開/收合圖示 */}
-        <span className="text-gray-400 text-xs">{showDetails ? "▲" : "▼"}</span>
+        <span className="text-warm-silver text-xs">{showDetails ? "▲" : "▼"}</span>
       </div>
 
       {/* 詳細資訊面板 */}
       {showDetails && (
-        <div className="mt-2 bg-white rounded-lg shadow-xl p-4 min-w-[300px]">
+        <div className="mt-2 bg-ivory rounded-lg shadow-xl p-4 min-w-[300px]">
           <div className="space-y-3">
             {/* 標題 */}
             <div className="flex items-center justify-between border-b pb-2">
-              <h3 className="font-bold text-gray-800">連線狀態</h3>
+              <h3 className="font-bold text-warm-dark">連線狀態</h3>
               <button
                 onClick={() => setShowDetails(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-warm-silver hover:text-warm-olive"
               >
                 ✕
               </button>
@@ -291,12 +291,12 @@ export const SmartConnectionMonitor = ({
 
             {/* 瀏覽器網路狀態 */}
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">瀏覽器網路:</span>
+              <span className="text-warm-olive">瀏覽器網路:</span>
               <span
                 className={
                   networkOnline
-                    ? "text-green-600 font-medium"
-                    : "text-red-600 font-medium"
+                    ? "text-terracotta font-medium"
+                    : "text-error-warm font-medium"
                 }
               >
                 {networkOnline ? "✓ 在線" : "✗ 離線"}
@@ -305,7 +305,7 @@ export const SmartConnectionMonitor = ({
 
             {/* Firebase 連線狀態 */}
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">Firebase:</span>
+              <span className="text-warm-olive">Firebase:</span>
               <span
                 className="font-medium"
                 style={{ color: connectionStatus.color }}
@@ -317,22 +317,22 @@ export const SmartConnectionMonitor = ({
             {/* 延遲時間 */}
             {latency !== null && (
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">延遲:</span>
-                <span className="text-gray-800 font-medium">{latency} ms</span>
+                <span className="text-warm-olive">延遲:</span>
+                <span className="text-warm-dark font-medium">{latency} ms</span>
               </div>
             )}
 
             {/* 最後檢測時間 */}
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">最後檢測:</span>
-              <span className="text-gray-500">{formatTime(lastCheckTime)}</span>
+              <span className="text-warm-olive">最後檢測:</span>
+              <span className="text-warm-stone">{formatTime(lastCheckTime)}</span>
             </div>
 
             {/* 最後成功時間 */}
             {lastSuccessTime && (
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">最後成功:</span>
-                <span className="text-gray-500">
+                <span className="text-warm-olive">最後成功:</span>
+                <span className="text-warm-stone">
                   {formatTime(lastSuccessTime)}
                 </span>
               </div>
@@ -340,7 +340,7 @@ export const SmartConnectionMonitor = ({
 
             {/* 錯誤訊息 */}
             {errorDetails && (
-              <div className="text-xs text-red-600 bg-red-50 p-2 rounded">
+              <div className="text-xs text-error-warm bg-error-warm/10 p-2 rounded">
                 {errorDetails}
               </div>
             )}
@@ -351,22 +351,22 @@ export const SmartConnectionMonitor = ({
               disabled={isTesting}
               className={`w-full py-2 rounded-lg font-medium text-sm transition-colors ${
                 isTesting
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-blue-500 text-white hover:bg-blue-600"
+                  ? "bg-gray-300 text-warm-stone cursor-not-allowed"
+                  : "bg-terracotta text-ivory hover:bg-terracotta-dark"
               }`}
             >
               {isTesting ? "測試中..." : "🔄 測試連線"}
             </button>
 
             {/* 說明文字 */}
-            <div className="text-xs text-gray-500 pt-2 border-t">
+            <div className="text-xs text-warm-stone pt-2 border-t">
               <p>💡 提示：</p>
               <ul className="list-disc list-inside mt-1 space-y-1">
                 <li>綠色 = 連線正常</li>
                 <li>黃色 = 連線較慢</li>
                 <li>紅色 = 無法連線</li>
               </ul>
-              <p className="mt-2 text-gray-400">
+              <p className="mt-2 text-warm-silver">
                 ⚠️ 點擊「測試連線」會使用 1 次 Firebase 讀取額度
               </p>
             </div>

@@ -102,12 +102,12 @@ const ChangePasswordPage = ({ onBack, onPasswordChanged }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-parchment flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         {/* 返回按鈕 */}
         <button
           onClick={onBack}
-          className="mb-4 flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+          className="mb-4 flex items-center text-warm-olive hover:text-warm-dark transition-colors"
           disabled={isLoading}
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
@@ -115,22 +115,22 @@ const ChangePasswordPage = ({ onBack, onPasswordChanged }) => {
         </button>
 
         {/* 主要卡片 */}
-        <div className="bg-white rounded-xl shadow-lg p-8">
+        <div className="bg-ivory rounded-xl shadow-lg p-8">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Lock className="w-8 h-8 text-blue-600" />
+            <div className="w-16 h-16 bg-warm-sand rounded-full flex items-center justify-center mx-auto mb-4">
+              <Lock className="w-8 h-8 text-terracotta" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">更改密碼</h1>
-            <p className="text-gray-600 mt-2">請輸入目前密碼和新密碼</p>
+            <h1 className="text-2xl font-bold text-anthropic-black">更改密碼</h1>
+            <p className="text-warm-olive mt-2">請輸入目前密碼和新密碼</p>
           </div>
 
           {/* 成功訊息 */}
           {successMessage && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-green-800 text-sm text-center">
+            <div className="mb-6 p-4 bg-parchment border border-warm-sand rounded-lg">
+              <p className="text-terracotta-dark text-sm text-center">
                 {successMessage}
               </p>
-              <p className="text-green-600 text-xs text-center mt-1">
+              <p className="text-terracotta-dark text-xs text-center mt-1">
                 3秒後自動返回系統...
               </p>
             </div>
@@ -138,8 +138,8 @@ const ChangePasswordPage = ({ onBack, onPasswordChanged }) => {
 
           {/* 一般錯誤訊息 */}
           {errors.general && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-800 text-sm text-center">
+            <div className="mb-6 p-4 bg-error-warm/10 border border-error-warm/30 rounded-lg">
+              <p className="text-error-warm text-sm text-center">
                 {errors.general}
               </p>
             </div>
@@ -148,13 +148,13 @@ const ChangePasswordPage = ({ onBack, onPasswordChanged }) => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* 目前密碼 */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-warm-charcoal">
                 目前密碼
               </label>
               <div className="flex items-center space-x-2">
                 <div className="relative flex-1">
                   <Lock
-                    className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none h-5 w-5 text-gray-400"
+                    className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none h-5 w-5 text-warm-silver"
                     style={{
                       top: "50%",
                       transform: "translateY(-50%)",
@@ -164,10 +164,10 @@ const ChangePasswordPage = ({ onBack, onPasswordChanged }) => {
                   <input
                     ref={oldPasswordRef}
                     type={showPasswords.oldPassword ? "text" : "password"}
-                    className={`block w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    className={`block w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-terracotta focus:border-transparent ${
                       errors.oldPassword
-                        ? "border-red-300 bg-red-50"
-                        : "border-gray-300"
+                        ? "border-error-warm/50 bg-error-warm/10"
+                        : "border-warm-sand"
                     }`}
                     placeholder="請輸入目前密碼"
                     disabled={isLoading}
@@ -177,30 +177,30 @@ const ChangePasswordPage = ({ onBack, onPasswordChanged }) => {
                 <button
                   type="button"
                   onClick={() => togglePasswordVisibility("oldPassword")}
-                  className="p-3 border rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center"
+                  className="p-3 border rounded-lg hover:bg-parchment transition-colors flex items-center justify-center"
                   disabled={isLoading}
                 >
                   {showPasswords.oldPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
+                    <EyeOff className="h-5 w-5 text-warm-silver" />
                   ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
+                    <Eye className="h-5 w-5 text-warm-silver" />
                   )}
                 </button>
               </div>
               {errors.oldPassword && (
-                <p className="text-sm text-red-600">{errors.oldPassword}</p>
+                <p className="text-sm text-error-warm">{errors.oldPassword}</p>
               )}
             </div>
 
             {/* 新密碼 */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-warm-charcoal">
                 新密碼
               </label>
               <div className="flex items-center space-x-2">
                 <div className="relative flex-1">
                   <Lock
-                    className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none h-5 w-5 text-gray-400"
+                    className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none h-5 w-5 text-warm-silver"
                     style={{
                       top: "50%",
                       transform: "translateY(-50%)",
@@ -210,10 +210,10 @@ const ChangePasswordPage = ({ onBack, onPasswordChanged }) => {
                   <input
                     ref={newPasswordRef}
                     type={showPasswords.newPassword ? "text" : "password"}
-                    className={`block w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    className={`block w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-terracotta focus:border-transparent ${
                       errors.newPassword
-                        ? "border-red-300 bg-red-50"
-                        : "border-gray-300"
+                        ? "border-error-warm/50 bg-error-warm/10"
+                        : "border-warm-sand"
                     }`}
                     placeholder="請輸入新密碼 (至少6個字符)"
                     disabled={isLoading}
@@ -223,30 +223,30 @@ const ChangePasswordPage = ({ onBack, onPasswordChanged }) => {
                 <button
                   type="button"
                   onClick={() => togglePasswordVisibility("newPassword")}
-                  className="p-3 border rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center"
+                  className="p-3 border rounded-lg hover:bg-parchment transition-colors flex items-center justify-center"
                   disabled={isLoading}
                 >
                   {showPasswords.newPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
+                    <EyeOff className="h-5 w-5 text-warm-silver" />
                   ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
+                    <Eye className="h-5 w-5 text-warm-silver" />
                   )}
                 </button>
               </div>
               {errors.newPassword && (
-                <p className="text-sm text-red-600">{errors.newPassword}</p>
+                <p className="text-sm text-error-warm">{errors.newPassword}</p>
               )}
             </div>
 
             {/* 確認新密碼 */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-warm-charcoal">
                 確認新密碼
               </label>
               <div className="flex items-center space-x-2">
                 <div className="relative flex-1">
                   <Lock
-                    className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none h-5 w-5 text-gray-400"
+                    className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none h-5 w-5 text-warm-silver"
                     style={{
                       top: "50%",
                       transform: "translateY(-50%)",
@@ -256,10 +256,10 @@ const ChangePasswordPage = ({ onBack, onPasswordChanged }) => {
                   <input
                     ref={confirmPasswordRef}
                     type={showPasswords.confirmPassword ? "text" : "password"}
-                    className={`block w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    className={`block w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-terracotta focus:border-transparent ${
                       errors.confirmPassword
-                        ? "border-red-300 bg-red-50"
-                        : "border-gray-300"
+                        ? "border-error-warm/50 bg-error-warm/10"
+                        : "border-warm-sand"
                     }`}
                     placeholder="請再次輸入新密碼"
                     disabled={isLoading}
@@ -269,18 +269,18 @@ const ChangePasswordPage = ({ onBack, onPasswordChanged }) => {
                 <button
                   type="button"
                   onClick={() => togglePasswordVisibility("confirmPassword")}
-                  className="p-3 border rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center"
+                  className="p-3 border rounded-lg hover:bg-parchment transition-colors flex items-center justify-center"
                   disabled={isLoading}
                 >
                   {showPasswords.confirmPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
+                    <EyeOff className="h-5 w-5 text-warm-silver" />
                   ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
+                    <Eye className="h-5 w-5 text-warm-silver" />
                   )}
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="text-sm text-red-600">{errors.confirmPassword}</p>
+                <p className="text-sm text-error-warm">{errors.confirmPassword}</p>
               )}
             </div>
 
@@ -288,15 +288,15 @@ const ChangePasswordPage = ({ onBack, onPasswordChanged }) => {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-colors ${
+              className={`w-full py-3 px-4 rounded-lg font-medium text-ivory transition-colors ${
                 isLoading
                   ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700"
+                  : "bg-terracotta hover:bg-terracotta-dark"
               }`}
             >
               {isLoading ? (
                 <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-ivory mr-2"></div>
                   更改中...
                 </div>
               ) : (
@@ -306,11 +306,11 @@ const ChangePasswordPage = ({ onBack, onPasswordChanged }) => {
           </form>
 
           {/* 提示訊息 */}
-          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-yellow-800 text-sm">
+          <div className="mt-6 p-4 bg-parchment border border-warm-sand rounded-lg">
+            <p className="text-warm-dark text-sm">
               <strong>注意：</strong>
             </p>
-            <ul className="text-yellow-700 text-xs mt-1 space-y-1">
+            <ul className="text-warm-charcoal text-xs mt-1 space-y-1">
               <li>• 新密碼至少需要6個字符</li>
               <li>• 請妥善保管新密碼</li>
               <li>• 更改後請重新登入所有裝置</li>

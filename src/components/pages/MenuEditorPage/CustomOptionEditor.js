@@ -32,10 +32,10 @@ const CustomOptionEditor = ({ option, index, onChange, onDelete }) => {
   };
 
   return (
-    <div className="border rounded-lg p-4 mb-4 bg-gray-50">
+    <div className="border rounded-lg p-4 mb-4 bg-parchment">
       <div className="flex justify-between items-center mb-3">
-        <h4 className="font-medium text-gray-800">客製選項 #{index + 1}</h4>
-        <button onClick={onDelete} className="text-red-500 hover:text-red-700 font-bold">
+        <h4 className="font-medium text-warm-dark">客製選項 #{index + 1}</h4>
+        <button onClick={onDelete} className="text-error-warm hover:text-error-warm font-bold">
           ✕
         </button>
       </div>
@@ -70,7 +70,7 @@ const CustomOptionEditor = ({ option, index, onChange, onDelete }) => {
           <label className="block text-sm font-medium">價格調整設定：</label>
           <button
             onClick={addPriceAdjustment}
-            className="text-sm bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600"
+            className="text-sm bg-terracotta text-ivory px-2 py-1 rounded hover:bg-terracotta-dark"
           >
             ＋ 新增價格調整
           </button>
@@ -79,8 +79,8 @@ const CustomOptionEditor = ({ option, index, onChange, onDelete }) => {
         <div className="space-y-2">
           {option.priceAdjustments &&
             Object.entries(option.priceAdjustments).map(([optionValue, adjustment]) => (
-              <div key={optionValue} className="flex items-center space-x-2 bg-white p-2 rounded border">
-                <span className="text-sm text-gray-600 min-w-[60px]">當選擇</span>
+              <div key={optionValue} className="flex items-center space-x-2 bg-ivory p-2 rounded border">
+                <span className="text-sm text-warm-olive min-w-[60px]">當選擇</span>
                 <select
                   value={optionValue}
                   onChange={(e) => {
@@ -99,7 +99,7 @@ const CustomOptionEditor = ({ option, index, onChange, onDelete }) => {
                     <option key={opt} value={opt}>{opt}</option>
                   ))}
                 </select>
-                <span className="text-sm text-gray-600">價格</span>
+                <span className="text-sm text-warm-olive">價格</span>
                 <input
                   type="number"
                   value={adjustment}
@@ -108,10 +108,10 @@ const CustomOptionEditor = ({ option, index, onChange, onDelete }) => {
                   className="border rounded px-2 py-1 text-sm w-20"
                   step="1"
                 />
-                <span className="text-sm text-gray-600">元</span>
+                <span className="text-sm text-warm-olive">元</span>
                 <button
                   onClick={() => deletePriceAdjustment(optionValue)}
-                  className="text-red-500 hover:text-red-700 text-sm px-2"
+                  className="text-error-warm hover:text-error-warm text-sm px-2"
                 >
                   刪除
                 </button>
@@ -120,13 +120,13 @@ const CustomOptionEditor = ({ option, index, onChange, onDelete }) => {
         </div>
 
         {(!option.priceAdjustments || Object.keys(option.priceAdjustments).length === 0) && (
-          <div className="text-sm text-gray-500 italic bg-white p-3 rounded border">
+          <div className="text-sm text-warm-stone italic bg-ivory p-3 rounded border">
             尚未設定價格調整。點擊「新增價格調整」來設定某些選項的加價或折扣。
           </div>
         )}
       </div>
 
-      <div className="text-xs text-gray-500 bg-blue-50 p-2 rounded">
+      <div className="text-xs text-warm-stone bg-parchment p-2 rounded">
         💡 價格調整說明：
         <ul className="mt-1 ml-4 list-disc">
           <li>正數表示加價（例如：+10 表示加價10元）</li>

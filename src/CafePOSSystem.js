@@ -190,10 +190,10 @@ const CafePOSSystem = () => {
   // 載入中的顯示
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-parchment flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
-          <p className="mt-4 text-lg text-gray-600">載入中...</p>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-terracotta"></div>
+          <p className="mt-4 text-lg text-warm-olive">載入中...</p>
         </div>
       </div>
     );
@@ -202,14 +202,14 @@ const CafePOSSystem = () => {
   // 錯誤顯示
   if (loadError) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-parchment flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-500 text-xl mb-4">⚠️</div>
-          <h2 className="text-xl font-bold text-gray-800 mb-2">載入失敗</h2>
-          <p className="text-gray-600 mb-4">{loadError}</p>
+          <div className="text-error-warm text-xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold text-warm-dark mb-2">載入失敗</h2>
+          <p className="text-warm-olive mb-4">{loadError}</p>
           <button
             onClick={() => window.location.reload()}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            className="bg-terracotta text-ivory px-4 py-2 rounded hover:bg-terracotta-dark"
           >
             重新載入
           </button>

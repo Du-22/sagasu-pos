@@ -29,7 +29,7 @@ const AddProductForm = ({
   };
 
   return (
-    <div className="mb-6 bg-white rounded-lg p-4 shadow">
+    <div className="mb-6 bg-ivory rounded-lg p-4 shadow">
       <h4 className="font-bold mb-4 flex items-center">
         <span className="mr-2">➕</span>
         新增產品
@@ -67,7 +67,7 @@ const AddProductForm = ({
           <label className="font-medium">客製選項：</label>
           <button
             onClick={onAddCustomOption}
-            className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600"
+            className="bg-terracotta text-ivory px-3 py-1 rounded text-sm hover:bg-terracotta-dark"
           >
             ＋ 新增客製選項
           </button>
@@ -85,7 +85,7 @@ const AddProductForm = ({
 
       <button
         onClick={onSubmit}
-        className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+        className="px-4 py-2 bg-terracotta text-ivory rounded hover:bg-terracotta-dark transition-colors"
       >
         新增商品
       </button>

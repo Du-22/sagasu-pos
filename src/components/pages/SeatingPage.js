@@ -15,7 +15,7 @@ const SeatingPage = ({
   onMenuSelect,
   onLogout,
 }) => (
-  <div className="min-h-screen bg-gray-100 flex flex-col">
+  <div className="min-h-screen bg-parchment flex flex-col">
     <Header
       title="Sagasu POS系統"
       subtitle="座位管理"

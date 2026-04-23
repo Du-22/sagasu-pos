@@ -1,16 +1,16 @@
 import React from "react";
 
 const FloorTabs = ({ currentFloor, onFloorChange }) => (
-  <div className="bg-white border-b">
+  <div className="bg-ivory border-b border-warm-cream">
     <div className="flex">
       {["1F", "2F"].map((floor) => (
         <button
           key={floor}
           onClick={() => onFloorChange(floor)}
-          className={`px-6 py-3 font-medium border-r ${
+          className={`px-6 py-3 font-medium border-r border-warm-cream transition-colors ${
             currentFloor === floor
-              ? "bg-blue-500 text-white"
-              : "bg-white text-gray-700 hover:bg-gray-50"
+              ? "bg-terracotta text-ivory"
+              : "bg-ivory text-warm-charcoal hover:bg-parchment"
           }`}
         >
           {floor}

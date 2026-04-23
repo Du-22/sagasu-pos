@@ -17,7 +17,7 @@ const DateSelector = ({
   dateRangeText,
 }) => {
   return (
-    <div className="bg-white rounded-lg p-4">
+    <div className="bg-ivory rounded-lg p-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <label className="font-medium">查看日期:</label>
@@ -27,17 +27,17 @@ const DateSelector = ({
             onChange={(e) => onDateChange(e.target.value)}
             className="border rounded-lg px-3 py-2"
           />
-          <div className="text-sm text-gray-600">期間: {dateRangeText}</div>
+          <div className="text-sm text-warm-olive">期間: {dateRangeText}</div>
         </div>
         <div className="flex space-x-2">
           {viewMode === "daily" && (
-            <div className="flex bg-gray-100 rounded-lg p-1">
+            <div className="flex bg-parchment rounded-lg p-1">
               <button
                 onClick={() => onDisplayModeChange("grouped")}
                 className={`px-3 py-1 rounded-lg text-sm ${
                   displayMode === "grouped"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-600"
+                    ? "bg-ivory text-anthropic-black shadow-whisper"
+                    : "text-warm-olive"
                 }`}
               >
                 同桌訂單
@@ -46,8 +46,8 @@ const DateSelector = ({
                 onClick={() => onDisplayModeChange("detailed")}
                 className={`px-3 py-1 rounded-lg text-sm ${
                   displayMode === "detailed"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-600"
+                    ? "bg-ivory text-anthropic-black shadow-whisper"
+                    : "text-warm-olive"
                 }`}
               >
                 詳細檢視
@@ -60,8 +60,8 @@ const DateSelector = ({
               onClick={() => onViewModeChange(mode)}
               className={`px-3 py-1 rounded-lg text-sm ${
                 viewMode === mode
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 text-gray-700"
+                  ? "bg-terracotta text-ivory"
+                  : "bg-warm-sand text-warm-charcoal"
               }`}
             >
               {mode === "daily" ? "日" : mode === "weekly" ? "週" : "月"}

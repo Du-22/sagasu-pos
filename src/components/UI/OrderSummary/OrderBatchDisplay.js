@@ -16,12 +16,12 @@ import { formatTimestamp } from "../../../utils/orderDataProcessors";
  */
 const OrderBatchDisplay = ({ processedBatches, onEditConfirmedItem }) => {
   if (processedBatches.length === 0) {
-    return <div className="text-yellow-600 text-sm mb-4">尚未點餐</div>;
+    return <div className="text-warm-olive text-sm mb-4">尚未點餐</div>;
   }
 
   return (
     <div className="mb-4">
-      <div className="text-sm text-green-600 mb-2">
+      <div className="text-sm text-terracotta-dark mb-2">
         有 {processedBatches.length} 次點餐紀錄
       </div>
 
@@ -32,29 +32,29 @@ const OrderBatchDisplay = ({ processedBatches, onEditConfirmedItem }) => {
         return (
           <div key={`batch-${batchIndex}-${batchTime}`} className="mb-4">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-gray-600">
+              <h3 className="text-sm font-medium text-warm-olive">
                 {batchIndex === 0 ? "首次點餐" : `第${batchIndex + 1}次追加`}
                 {batchTime && (
-                  <span className="ml-2 text-xs text-gray-500">
+                  <span className="ml-2 text-xs text-warm-stone">
                     ({formatTimestamp(batchTime)})
                   </span>
                 )}
               </h3>
-              <span className="text-sm text-gray-500">${batchTotal}</span>
+              <span className="text-sm text-warm-stone">${batchTotal}</span>
             </div>
 
-            <div className="bg-gray-50 p-3 rounded-lg space-y-1">
+            <div className="bg-parchment p-3 rounded-lg space-y-1">
               {batch.map((item, itemIndex) => (
                 <div
                   key={`confirmed-${batchIndex}-${item.id}-${itemIndex}-${item.timestamp}`}
-                  className="py-2 border-b border-gray-200 last:border-b-0"
+                  className="py-2 border-b border-warm-cream last:border-b-0"
                 >
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-700">
+                      <div className="text-sm font-medium text-warm-charcoal">
                         {item.name}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-warm-stone">
                         基本價格 ${item.price} × {item.quantity}
                       </div>
                     </div>
@@ -68,7 +68,7 @@ const OrderBatchDisplay = ({ processedBatches, onEditConfirmedItem }) => {
                             : itemIndex
                         )
                       }
-                      className="ml-2 p-1 text-gray-400 hover:text-blue-500"
+                      className="ml-2 p-1 text-warm-silver hover:text-terracotta"
                       title="修改此項目"
                     >
                       <Edit3 className="w-3 h-3" />
@@ -94,7 +94,7 @@ const OrderBatchDisplay = ({ processedBatches, onEditConfirmedItem }) => {
                             return (
                               <div
                                 key={type}
-                                className="text-xs text-gray-600 flex justify-between"
+                                className="text-xs text-warm-olive flex justify-between"
                               >
                                 <span>
                                   {type}: {value}
@@ -103,8 +103,8 @@ const OrderBatchDisplay = ({ processedBatches, onEditConfirmedItem }) => {
                                   <span
                                     className={`font-medium ${
                                       adjustment.amount > 0
-                                        ? "text-red-600"
-                                        : "text-green-600"
+                                        ? "text-error-warm"
+                                        : "text-terracotta-dark"
                                     }`}
                                   >
                                     {adjustment.amount > 0 ? "+" : ""}$
@@ -119,9 +119,9 @@ const OrderBatchDisplay = ({ processedBatches, onEditConfirmedItem }) => {
                     )}
 
                   {/* 價格小計 */}
-                  <div className="ml-4 mt-1 pt-1 border-t border-gray-100">
+                  <div className="ml-4 mt-1 pt-1 border-t border-warm-cream">
                     <div className="flex justify-between items-center">
-                      <div className="text-xs text-gray-600">
+                      <div className="text-xs text-warm-olive">
                         {(() => {
                           const subtotal = calculateItemPrice(item).subtotal;
                           const finalUnitPrice = subtotal / item.quantity;
@@ -134,8 +134,8 @@ const OrderBatchDisplay = ({ processedBatches, onEditConfirmedItem }) => {
                                 <span
                                   className={`mx-1 ${
                                     adjustment > 0
-                                      ? "text-red-600"
-                                      : "text-green-600"
+                                      ? "text-error-warm"
+                                      : "text-terracotta-dark"
                                   }`}
                                 >
                                   {adjustment > 0 ? "+" : ""}${adjustment}
@@ -152,7 +152,7 @@ const OrderBatchDisplay = ({ processedBatches, onEditConfirmedItem }) => {
                           }
                         })()}
                       </div>
-                      <div className="text-sm font-bold text-green-600">
+                      <div className="text-sm font-bold text-terracotta-dark">
                         小計: ${calculateItemPrice(item).subtotal}
                       </div>
                     </div>

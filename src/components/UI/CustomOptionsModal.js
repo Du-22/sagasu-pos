@@ -66,8 +66,8 @@ const CustomOptionsModal = ({ item, onConfirm, onCancel }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-6 shadow-2xl min-w-[400px] max-w-[500px] max-h-[80vh] overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4 text-gray-800">客製選項</h2>
+      <div className="bg-ivory rounded-xl p-6 shadow-2xl min-w-[400px] max-w-[500px] max-h-[80vh] overflow-y-auto">
+        <h2 className="text-xl font-bold mb-4 text-warm-dark">客製選項</h2>
 
         {/* 價格預覽 */}
         <PricePreview
@@ -81,14 +81,14 @@ const CustomOptionsModal = ({ item, onConfirm, onCancel }) => {
         <div className="space-y-4 mb-6">
           {item.customOptions?.map((opt) => (
             <div key={opt.type} className="mb-4">
-              <label className="font-medium mr-2 block mb-2 text-gray-700">
+              <label className="font-medium mr-2 block mb-2 text-warm-charcoal">
                 {opt.type}：
               </label>
 
               <select
                 value={selectedCustom[opt.type] || ""}
                 onChange={(e) => handleCustomChange(opt.type, e.target.value)}
-                className="w-full border-2 border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none transition-colors"
+                className="w-full border-2 border-warm-sand rounded-lg px-3 py-2 focus:border-terracotta focus:outline-none transition-colors"
               >
                 <option value="">請選擇</option>
                 {(opt.options || []).map((optionValue) => (
@@ -101,7 +101,7 @@ const CustomOptionsModal = ({ item, onConfirm, onCancel }) => {
 
               {/* 顯示當前選項的價格影響 */}
               {selectedCustom[opt.type] && (
-                <div className="mt-1 text-xs text-gray-600">
+                <div className="mt-1 text-xs text-warm-olive">
                   {(() => {
                     const adjustment =
                       opt.priceAdjustments?.[selectedCustom[opt.type]];
@@ -109,7 +109,7 @@ const CustomOptionsModal = ({ item, onConfirm, onCancel }) => {
 
                     const sign = adjustment > 0 ? "+" : "";
                     const color =
-                      adjustment > 0 ? "text-red-600" : "text-green-600";
+                      adjustment > 0 ? "text-error-warm" : "text-terracotta-dark";
 
                     return (
                       <span className={`font-medium ${color}`}>
@@ -127,13 +127,13 @@ const CustomOptionsModal = ({ item, onConfirm, onCancel }) => {
         <div className="flex space-x-3">
           <button
             onClick={onCancel}
-            className="flex-1 py-3 px-4 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+            className="flex-1 py-3 px-4 border-2 border-warm-sand text-warm-charcoal rounded-lg hover:bg-parchment font-medium transition-colors"
           >
             取消
           </button>
           <button
             onClick={handleConfirm}
-            className="flex-1 py-3 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium transition-colors shadow-md"
+            className="flex-1 py-3 px-4 bg-terracotta text-ivory rounded-lg hover:bg-terracotta-dark font-medium transition-colors shadow-md"
           >
             確定加入 ${pricePreview.unitPrice}
           </button>

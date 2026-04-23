@@ -50,8 +50,8 @@ const MenuCategories = ({ categories, activeCategory, onCategoryChange }) => {
             py-3 px-4 text-center border-r last:border-r-0 font-medium transition-colors
             ${
               activeCategory === category
-                ? "bg-blue-500 text-white"
-                : "bg-white text-gray-700 hover:bg-gray-50"
+                ? "bg-terracotta text-ivory"
+                : "bg-ivory text-warm-charcoal hover:bg-parchment"
             }
           `}
         >

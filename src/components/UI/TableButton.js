@@ -2,19 +2,23 @@ import React from "react";
 import Timer from "./Timer";
 
 const TableButton = ({ table, status, onClick, startTime }) => {
-  // 新增入座狀態顏色
+  // 新增入座狀態顏色（Claude 暖色系）
   const getTableColor = (status) => {
     switch (status) {
       case "available":
-        return "bg-blue-200 border-blue-400 hover:bg-blue-300";
+        // 空桌：米色（Warm Sand），邀請感
+        return "bg-warm-sand border-warm-cream hover:bg-parchment text-warm-charcoal";
       case "seated":
-        return "bg-green-200 border-green-400 hover:bg-green-300";
+        // 入座：淺赤陶，剛開始
+        return "bg-terracotta-light/30 border-terracotta-light hover:bg-terracotta-light/50 text-warm-charcoal";
       case "occupied":
-        return "bg-purple-200 border-purple-400 hover:bg-purple-300";
+        // 用餐中：完整赤陶色，進行中
+        return "bg-terracotta/70 border-terracotta hover:bg-terracotta/90 text-ivory";
       case "ready-to-clean":
-        return "bg-yellow-200 border-yellow-400 hover:bg-yellow-300";
+        // 待清理：暖炭色半透明，需要注意
+        return "bg-warm-charcoal/30 border-warm-olive hover:bg-warm-charcoal/50 text-warm-charcoal";
       default:
-        return "bg-gray-200 border-gray-400";
+        return "bg-warm-sand border-warm-cream text-warm-charcoal";
     }
   };
 
@@ -82,7 +86,7 @@ const TableButton = ({ table, status, onClick, startTime }) => {
         >
           <Timer
             startTime={startTime}
-            className="bg-black text-white px-2 py-0.5 rounded text-xs"
+            className="bg-black text-ivory px-2 py-0.5 rounded text-xs"
           />
         </div>
       )}

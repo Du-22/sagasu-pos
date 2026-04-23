@@ -13,13 +13,13 @@ const SeatConfirmModal = ({ isOpen, onConfirm, onCancel }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 shadow-lg min-w-[300px]">
+      <div className="bg-ivory rounded-lg p-6 shadow-lg min-w-[300px]">
         <h2 className="text-lg font-bold mb-4">帶位確認</h2>
         <div className="mb-4">是否帶客人入座此桌？</div>
         <div className="flex space-x-2">
           <button
             onClick={onConfirm}
-            className="bg-blue-500 text-white px-4 py-2 rounded"
+            className="bg-terracotta text-ivory px-4 py-2 rounded"
           >
             是
           </button>
