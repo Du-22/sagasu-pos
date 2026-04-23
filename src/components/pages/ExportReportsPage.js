@@ -182,7 +182,7 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-parchment">
       <Header
         title="Sasuga POS系統"
         subtitle="資料匯出"

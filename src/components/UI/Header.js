@@ -61,19 +61,19 @@ const Header = ({
   };
 
   return (
-    <div className="bg-white shadow-sm border-b p-4 flex items-center justify-between relative">
+    <div className="bg-ivory border-b border-warm-cream p-4 flex items-center justify-between relative">
       <div className="flex items-center space-x-4">
         {showBackButton && (
           <button
             onClick={onBackClick}
-            className="p-2 hover:bg-gray-100 rounded-full"
+            className="p-2 hover:bg-warm-sand rounded-full transition-colors"
           >
-            <ArrowLeft className="w-6 h-6" />
+            <ArrowLeft className="w-6 h-6 text-warm-charcoal" />
           </button>
         )}
         <button
           type="button"
-          className="text-xl font-bold hover:text-blue-600 transition-colors"
+          className="text-xl font-serif text-anthropic-black hover:text-terracotta transition-colors"
           onClick={() => onMenuSelect && onMenuSelect("seating")}
         >
           Sagasu POS系統
@@ -84,7 +84,7 @@ const Header = ({
         {subtitle && (
           <div className="flex items-center space-x-2">
             {getPageIcon(currentPage)} {/* 動態圖示 */}
-            <span className="text-sm text-gray-600">{subtitle}</span>
+            <span className="text-sm text-warm-olive">{subtitle}</span>
           </div>
         )}
 
@@ -92,39 +92,39 @@ const Header = ({
         <div className="relative">
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-warm-sand rounded-full transition-colors"
           >
             {isMenuOpen ? (
-              <X className="w-6 h-6" />
+              <X className="w-6 h-6 text-warm-charcoal" />
             ) : (
-              <Menu className="w-6 h-6" />
+              <Menu className="w-6 h-6 text-warm-charcoal" />
             )}
           </button>
 
           {/* 下拉選單 */}
           {isMenuOpen && (
-            <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+            <div className="absolute right-0 top-full mt-2 w-48 bg-ivory rounded-xl shadow-whisper border border-warm-cream z-50">
               <div className="py-2">
                 {menuItems.map((item) => (
                   <button
                     key={item.id}
                     onClick={() => handleMenuClick(item.id)}
-                    className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors"
+                    className="w-full px-4 py-3 text-left hover:bg-parchment flex items-center space-x-3 transition-colors"
                   >
                     <span className="text-lg">{item.icon}</span>
-                    <span className="font-medium text-gray-700">
+                    <span className="font-medium text-warm-charcoal">
                       {item.label}
                     </span>
                   </button>
                 ))}
 
                 {/* 分隔線 */}
-                <hr className="my-2 border-gray-200" />
+                <hr className="my-2 border-warm-cream" />
 
                 {/* 登出選項 */}
                 <button
                   onClick={handleLogoutClick}
-                  className="w-full px-4 py-3 text-left hover:bg-red-50 flex items-center space-x-3 transition-colors text-red-600"
+                  className="w-full px-4 py-3 text-left hover:bg-parchment flex items-center space-x-3 transition-colors text-error-warm"
                 >
                   <LogOut className="w-5 h-5" />
                   <span className="font-medium">登出系統</span>

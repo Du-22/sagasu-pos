@@ -79,7 +79,7 @@ const AccountManagementPage = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-parchment">
       <Header
         title="Sagasu POS系統"
         subtitle="帳戶管理"

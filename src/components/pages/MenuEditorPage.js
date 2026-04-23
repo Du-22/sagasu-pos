@@ -39,7 +39,7 @@ const MenuEditorPage = ({ menuData, setMenuData, onBack }) => {
   } = useMenuEditor({ menuData, setMenuData });
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen bg-parchment p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">菜單編輯 - 支援價格調整</h2>
         <button onClick={onBack} className="px-4 py-2 bg-gray-300 rounded">

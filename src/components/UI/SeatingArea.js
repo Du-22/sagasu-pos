@@ -34,14 +34,14 @@ const TakeoutPanel = ({
   onNewTakeout,
 }) => {
   return (
-    <div className="w-1/5 bg-white border-l-2 border-b-2 border-t-2 border-r-2 border-gray-300 flex flex-col h-[605px]">
+    <div className="w-1/5 bg-ivory border border-warm-cream rounded-xl flex flex-col h-[605px] shadow-whisper">
       {/* 外帶標題 */}
-      <div className="p-4 border-b bg-orange-50">
+      <div className="p-4 border-b border-warm-cream bg-parchment rounded-t-xl">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-orange-600">外帶訂單</h3>
+          <h3 className="text-lg font-serif text-terracotta">外帶訂單</h3>
           <button
             onClick={onNewTakeout}
-            className="bg-orange-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-orange-600"
+            className="bg-terracotta text-ivory px-3 py-1.5 rounded-lg text-sm hover:bg-terracotta-dark transition-colors"
           >
             新增外帶
           </button>
@@ -51,7 +51,7 @@ const TakeoutPanel = ({
       {/* 外帶訂單列表 */}
       <div className="flex-1 p-4 overflow-y-auto">
         {Object.keys(takeoutOrders).length === 0 ? (
-          <div className="text-gray-500 text-center mt-8">尚無外帶訂單</div>
+          <div className="text-warm-stone text-center mt-8">尚無外帶訂單</div>
         ) : (
           <div className="space-y-3">
             {Object.entries(takeoutOrders).map(([takeoutId, orderData]) => {
@@ -97,21 +97,21 @@ const TakeoutPanel = ({
                 <div
                   key={takeoutId}
                   onClick={() => onTakeoutClick(takeoutId)}
-                  className={`p-3 rounded-lg border-2 cursor-pointer transition-colors ${
+                  className={`p-3 rounded-lg border cursor-pointer transition-colors ${
                     isPaid
-                      ? "bg-green-50 border-green-300 hover:bg-green-100"
-                      : "bg-orange-50 border-orange-300 hover:bg-orange-100"
+                      ? "bg-parchment border-warm-cream hover:bg-warm-sand"
+                      : "bg-ivory border-terracotta-light/40 hover:bg-parchment"
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="font-medium text-sm">外帶 #{takeoutId}</div>
+                    <div className="font-medium text-sm text-warm-charcoal">外帶 #{takeoutId}</div>
                     <div className="flex items-center space-x-2">
                       <Timer startTime={timers[takeoutId]} />
                       <div
                         className={`text-xs px-2 py-1 rounded ${
                           isPaid
-                            ? "bg-green-200 text-green-700"
-                            : "bg-orange-200 text-orange-700"
+                            ? "bg-warm-sand text-warm-charcoal"
+                            : "bg-terracotta text-ivory"
                         }`}
                       >
                         {isPaid ? "已結帳" : "待結帳"}
@@ -119,13 +119,13 @@ const TakeoutPanel = ({
                     </div>
                   </div>
 
-                  <div className="mt-2 text-sm text-gray-600">
+                  <div className="mt-2 text-sm text-warm-olive">
                     {isPaid
                       ? `${(orderData.orders || []).length} 項商品 (已完成)`
                       : `${itemCount} 項商品`}
                   </div>
 
-                  <div className="mt-1 font-bold text-orange-600">
+                  <div className="mt-1 font-bold text-terracotta">
                     $
                     {isPaid
                       ? (orderData.orders || []).reduce((sum, item) => {
@@ -158,7 +158,7 @@ const TakeoutPanel = ({
                       : total}
                   </div>
 
-                  <div className="mt-1 text-xs text-gray-500">
+                  <div className="mt-1 text-xs text-warm-stone">
                     {new Date(orderData.timestamp).toLocaleTimeString()}
                   </div>
                 </div>
@@ -228,14 +228,14 @@ const SeatingArea = ({
       return {
         containerClass: "flex",
         seatingClass:
-          "flex-1 bg-white rounded-lg shadow-sm h-[605px] relative border-2 border-gray-300 mr-8",
+          "flex-1 bg-ivory rounded-xl shadow-whisper h-[605px] relative border border-warm-cream mr-8",
       };
     } else {
       // 2F: 只有座位區
       return {
         containerClass: "flex",
         seatingClass:
-          "flex-1 bg-white rounded-lg shadow-sm h-[620px] relative border-2 border-gray-300",
+          "flex-1 bg-ivory rounded-xl shadow-whisper h-[620px] relative border border-warm-cream",
       };
     }
   };
@@ -247,14 +247,14 @@ const SeatingArea = ({
       {/* 2F 區域分隔線 */}
       {currentFloor === "2F" && (
         <div
-          className="absolute top-0 left-1/2 w-0.5 h-[620px] bg-gray-400"
+          className="absolute top-0 left-1/2 w-0.5 h-[620px] bg-warm-sand"
           style={{ zIndex: 10 }}
         ></div>
       )}
       <div className={containerClass + " flex-1 flex"}>
         {/* 座位區域 */}
         <div className={seatingClass} style={{ overflowY: "auto" }}>
-          <div className="relative w-full h-[600px] bg-white">
+          <div className="relative w-full h-[600px] bg-ivory rounded-xl">
             {/* 這裡渲染所有 TableButton */}
             {seatingData[currentFloor].map((table) => (
               <TableButton
@@ -281,24 +281,24 @@ const SeatingArea = ({
 
       {/* 圖例：新增入座 */}
       <div
-        className="absolute left-0 bottom-0 w-full flex justify-center space-x-6 bg-gray-100 py-8"
+        className="absolute left-0 bottom-0 w-full flex justify-center space-x-6 bg-parchment py-8"
         style={{ zIndex: 20 }}
       >
         <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-blue-200 border border-blue-400 rounded-full"></div>
-          <span className="text-sm">空桌</span>
+          <div className="w-4 h-4 bg-warm-sand border border-warm-cream rounded-full"></div>
+          <span className="text-sm text-warm-olive">空桌</span>
         </div>
         <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-green-200 border-green-400 rounded-full"></div>
-          <span className="text-sm">入座</span>
+          <div className="w-4 h-4 bg-terracotta-light/30 border border-terracotta-light rounded-full"></div>
+          <span className="text-sm text-warm-olive">入座</span>
         </div>
         <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-purple-200 border-purple-400 rounded-full"></div>
-          <span className="text-sm">用餐中</span>
+          <div className="w-4 h-4 bg-terracotta/70 border border-terracotta rounded-full"></div>
+          <span className="text-sm text-warm-olive">用餐中</span>
         </div>
         <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-yellow-200 border-yellow-400 rounded-full animate-pulse"></div>
-          <span className="text-sm">待清理</span>
+          <div className="w-4 h-4 bg-warm-charcoal/30 border border-warm-olive rounded-full animate-pulse"></div>
+          <span className="text-sm text-warm-olive">待清理</span>
         </div>
       </div>
     </div>

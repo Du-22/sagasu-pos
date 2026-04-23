@@ -190,7 +190,7 @@ const CafePOSSystem = () => {
   // 載入中的顯示
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-parchment flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
           <p className="mt-4 text-lg text-gray-600">載入中...</p>
@@ -202,7 +202,7 @@ const CafePOSSystem = () => {
   // 錯誤顯示
   if (loadError) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-parchment flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-500 text-xl mb-4">⚠️</div>
           <h2 className="text-xl font-bold text-gray-800 mb-2">載入失敗</h2>
