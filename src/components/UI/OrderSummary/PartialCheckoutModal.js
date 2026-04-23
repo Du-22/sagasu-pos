@@ -85,7 +85,7 @@ const PartialCheckoutModal = ({
                         onChange={(e) =>
                           onItemSelect(item.key, e.target.checked)
                         }
-                        className="w-4 h-4 text-terracotta rounded focus:ring-blue-500"
+                        className="w-4 h-4 text-terracotta rounded focus:ring-terracotta"
                       />
                     </label>
 

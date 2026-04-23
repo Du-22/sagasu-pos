@@ -81,7 +81,7 @@ const LoginFailurePage = ({
   const errorDisplay = getErrorDisplay();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-parchment flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         <div
           className={`bg-ivory rounded-xl shadow-lg p-8 border ${errorDisplay.borderColor}`}
@@ -157,14 +157,14 @@ const LoginFailurePage = ({
             {!isLocked ? (
               <button
                 onClick={onRetry}
-                className="w-full py-3 px-4 bg-terracotta-dark text-ivory rounded-lg hover:bg-terracotta-dark transition-colors font-medium"
+                className="w-full py-3 px-4 bg-terracotta text-ivory rounded-lg hover:bg-terracotta-dark transition-colors font-medium"
               >
                 重新嘗試
               </button>
             ) : timeRemaining === 0 ? (
               <button
                 onClick={onBackToLogin}
-                className="w-full py-3 px-4 bg-terracotta-dark text-ivory rounded-lg hover:bg-terracotta-dark transition-colors font-medium"
+                className="w-full py-3 px-4 bg-terracotta text-ivory rounded-lg hover:bg-terracotta-dark transition-colors font-medium"
               >
                 返回登入頁面
               </button>

@@ -41,21 +41,21 @@ const LoginPage = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-parchment flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
         {/* Logo 和標題區域 */}
         <div className="text-center">
           <div className="mx-auto h-20 w-20 bg-terracotta rounded-full flex items-center justify-center shadow-lg">
             <Coffee className="h-10 w-10 text-ivory" />
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-anthropic-black">
+          <h2 className="mt-6 text-3xl font-serif text-anthropic-black">
             Sagasu POS 系統
           </h2>
           <p className="mt-2 text-sm text-warm-olive">請輸入密碼以存取系統</p>
         </div>
 
         {/* 登入表單 */}
-        <div className="bg-ivory rounded-xl shadow-2xl p-8 space-y-6">
+        <div className="bg-ivory rounded-xl shadow-whisper p-8 space-y-6 border border-warm-cream">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="password" className="sr-only">
@@ -71,7 +71,7 @@ const LoginPage = ({
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none rounded-lg relative block w-full pl-10 pr-12 py-3 border border-warm-sand placeholder-gray-500 text-anthropic-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-terracotta focus:z-10 text-lg"
+                  className="appearance-none rounded-lg relative block w-full pl-10 pr-12 py-3 border border-warm-sand placeholder-warm-silver text-anthropic-black focus:outline-none focus:ring-2 focus:ring-terracotta focus:border-terracotta focus:z-10 text-lg"
                   placeholder="請輸入系統密碼"
                   disabled={isSubmitting || isLoading}
                 />
@@ -94,11 +94,11 @@ const LoginPage = ({
               <button
                 type="submit"
                 disabled={isSubmitting || isLoading || !password.trim()}
-                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-lg font-medium rounded-lg text-ivory bg-terracotta-dark hover:bg-terracotta-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-lg font-medium rounded-lg text-ivory bg-terracotta hover:bg-terracotta-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
               >
                 {isSubmitting || isLoading ? (
                   <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-ivory mr-3"></div>
                     驗證中...
                   </div>
                 ) : (

@@ -102,7 +102,7 @@ const ChangePasswordPage = ({ onBack, onPasswordChanged }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-parchment flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         {/* 返回按鈕 */}
         <button
@@ -164,7 +164,7 @@ const ChangePasswordPage = ({ onBack, onPasswordChanged }) => {
                   <input
                     ref={oldPasswordRef}
                     type={showPasswords.oldPassword ? "text" : "password"}
-                    className={`block w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    className={`block w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-terracotta focus:border-transparent ${
                       errors.oldPassword
                         ? "border-error-warm/50 bg-error-warm/10"
                         : "border-warm-sand"
@@ -210,7 +210,7 @@ const ChangePasswordPage = ({ onBack, onPasswordChanged }) => {
                   <input
                     ref={newPasswordRef}
                     type={showPasswords.newPassword ? "text" : "password"}
-                    className={`block w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    className={`block w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-terracotta focus:border-transparent ${
                       errors.newPassword
                         ? "border-error-warm/50 bg-error-warm/10"
                         : "border-warm-sand"
@@ -256,7 +256,7 @@ const ChangePasswordPage = ({ onBack, onPasswordChanged }) => {
                   <input
                     ref={confirmPasswordRef}
                     type={showPasswords.confirmPassword ? "text" : "password"}
-                    className={`block w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    className={`block w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-terracotta focus:border-transparent ${
                       errors.confirmPassword
                         ? "border-error-warm/50 bg-error-warm/10"
                         : "border-warm-sand"
@@ -291,12 +291,12 @@ const ChangePasswordPage = ({ onBack, onPasswordChanged }) => {
               className={`w-full py-3 px-4 rounded-lg font-medium text-ivory transition-colors ${
                 isLoading
                   ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-terracotta-dark hover:bg-terracotta-dark"
+                  : "bg-terracotta hover:bg-terracotta-dark"
               }`}
             >
               {isLoading ? (
                 <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-ivory mr-2"></div>
                   更改中...
                 </div>
               ) : (

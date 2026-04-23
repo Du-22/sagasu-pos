@@ -252,7 +252,7 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
                     setQuickDateRange("");
                     setReportType("自訂報表");
                   }}
-                  className="w-full border border-warm-sand rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-warm-sand rounded-lg px-3 py-2 focus:ring-2 focus:ring-terracotta focus:border-transparent"
                 />
               </div>
               <div>
@@ -267,7 +267,7 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
                     setQuickDateRange("");
                     setReportType("自訂報表");
                   }}
-                  className="w-full border border-warm-sand rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-warm-sand rounded-lg px-3 py-2 focus:ring-2 focus:ring-terracotta focus:border-transparent"
                 />
               </div>
             </div>
@@ -343,7 +343,7 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
                 value={reportEmail}
                 onChange={(e) => setReportEmail(e.target.value)}
                 placeholder="請輸入接收報表的信箱地址"
-                className="flex-1 border border-warm-sand rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="flex-1 border border-warm-sand rounded-lg px-3 py-2 focus:ring-2 focus:ring-terracotta focus:border-transparent"
               />
               {!showAddEmailInput ? (
                 <button
@@ -377,7 +377,7 @@ const ExportReportsPage = ({ onMenuSelect, onBack }) => {
           >
             {isGeneratingReport ? (
               <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-ivory mr-3"></div>
                 產生報表中...
               </div>
             ) : (

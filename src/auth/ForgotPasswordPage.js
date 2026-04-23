@@ -151,7 +151,7 @@ const ForgotPasswordPage = ({ onBack, onResetSuccess }) => {
             type={showPasswords[field] ? "text" : "password"}
             value={value}
             onChange={onChange}
-            className="block w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-warm-sand"
+            className="block w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-terracotta focus:border-transparent border-warm-sand"
             placeholder={placeholder}
             disabled={isLoading}
           />
@@ -175,7 +175,7 @@ const ForgotPasswordPage = ({ onBack, onResetSuccess }) => {
   // 成功頁面
   if (step === 2 && isLoading && !error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-parchment flex items-center justify-center p-4">
         <div className="max-w-md w-full">
           <div className="bg-ivory rounded-xl shadow-lg p-8">
             <div className="text-center">
@@ -198,7 +198,7 @@ const ForgotPasswordPage = ({ onBack, onResetSuccess }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-parchment flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         {/* 返回按鈕 */}
         <button
@@ -267,7 +267,7 @@ const ForgotPasswordPage = ({ onBack, onResetSuccess }) => {
                     setSecurityAnswer(e.target.value);
                     if (error) setError("");
                   }}
-                  className="block w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-warm-sand"
+                  className="block w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-terracotta focus:border-transparent border-warm-sand"
                   placeholder="請輸入答案"
                   disabled={isLoading}
                   autoFocus
@@ -280,12 +280,12 @@ const ForgotPasswordPage = ({ onBack, onResetSuccess }) => {
                 className={`w-full py-3 px-4 rounded-lg font-medium text-ivory transition-colors ${
                   isLoading || !securityAnswer.trim()
                     ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-terracotta-dark hover:bg-terracotta-dark"
+                    : "bg-terracotta hover:bg-terracotta-dark"
                 }`}
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-ivory mr-2"></div>
                     驗證中...
                   </div>
                 ) : (
@@ -326,12 +326,12 @@ const ForgotPasswordPage = ({ onBack, onResetSuccess }) => {
                 className={`w-full py-3 px-4 rounded-lg font-medium text-ivory transition-colors ${
                   isLoading || !newPassword || !confirmPassword
                     ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-terracotta-dark hover:bg-terracotta-dark"
+                    : "bg-terracotta hover:bg-terracotta-dark"
                 }`}
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-ivory mr-2"></div>
                     重置中...
                   </div>
                 ) : (
