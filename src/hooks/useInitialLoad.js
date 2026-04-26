@@ -22,6 +22,11 @@ import {
  * loadFromLocalStorage：桌位/訂單/歷史的離線備用方案，Firebase 整體載入失敗時呼叫
  */
 
+// 載入超時保護：避免 iPad 等行動裝置在 Firestore 連線被擋或網路品質極差時
+// 無限轉圈（getDocs 不會自動 timeout，會持續重試）。10 秒內沒回應就視為失敗，
+// 顯示錯誤畫面讓使用者看到「重新載入」按鈕，而不是以為 POS 當機了。
+const FIREBASE_LOAD_TIMEOUT_MS = 10000;
+
 const useInitialLoad = ({
   dataManager,
   setMenuData,
@@ -108,13 +113,16 @@ const useInitialLoad = ({
           }
         }
 
-        // ==================== 2. 載入必要資料 ====================
-        const [
-          firebaseMenuData,
-          firebaseTableStates,
-          firebaseTakeoutOrders,
-          recentSalesHistory,
-        ] = await Promise.all([
+        // ==================== 2. 載入必要資料（含超時保護）====================
+        let timeoutId;
+        const timeoutPromise = new Promise((_, reject) => {
+          timeoutId = setTimeout(
+            () => reject(new Error("FIREBASE_LOAD_TIMEOUT")),
+            FIREBASE_LOAD_TIMEOUT_MS,
+          );
+        });
+
+        const dataPromise = Promise.all([
           getMenuData(),
           getTableStates(),
           getTakeoutOrders(),
@@ -129,6 +137,21 @@ const useInitialLoad = ({
                 return getSalesHistoryByDate(startDate, endDate);
               })(),
         ]);
+
+        let firebaseMenuData,
+          firebaseTableStates,
+          firebaseTakeoutOrders,
+          recentSalesHistory;
+        try {
+          [
+            firebaseMenuData,
+            firebaseTableStates,
+            firebaseTakeoutOrders,
+            recentSalesHistory,
+          ] = await Promise.race([dataPromise, timeoutPromise]);
+        } finally {
+          clearTimeout(timeoutId);
+        }
 
         // ==================== 3. 菜單載入（Firebase 為唯一真實來源）====================
         //
@@ -212,7 +235,13 @@ const useInitialLoad = ({
         }
       } catch (error) {
         console.error("❌ 載入數據失敗:", error);
-        setLoadError("載入數據失敗，請檢查網路連線");
+        if (error.message === "FIREBASE_LOAD_TIMEOUT") {
+          setLoadError(
+            "連線逾時，無法載入資料。請確認網路連線後點擊下方重新載入。",
+          );
+        } else {
+          setLoadError("載入數據失敗，請檢查網路連線");
+        }
         loadFromLocalStorage();
       } finally {
         setIsLoading(false);
