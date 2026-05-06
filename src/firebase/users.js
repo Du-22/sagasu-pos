@@ -46,19 +46,10 @@ const STORE_ID = "default_store";
  * }
  */
 export const getAuthSettings = async () => {
-  try {
-    const authRef = doc(db, "stores", STORE_ID, "settings", "auth");
-    const authSnap = await getDoc(authRef);
+  const authRef = doc(db, "stores", STORE_ID, "settings", "auth");
+  const authSnap = await getDoc(authRef);
 
-    if (authSnap.exists()) {
-      return authSnap.data();
-    } else {
-      return null;
-    }
-  } catch (error) {
-    console.error("取得認證設定失敗:", error);
-    return null;
-  }
+  return authSnap.exists() ? authSnap.data() : null;
 };
 
 /**
@@ -94,22 +85,14 @@ export const setAuthPassword = async (password) => {
  * @returns {boolean} 密碼是否正確
  */
 export const verifyPassword = async (inputPassword) => {
-  try {
-    const authSettings = await getAuthSettings();
-    if (!authSettings) {
-      console.error("❌ 認證設定不存在");
-      return false;
-    }
-
-    const { hashedPassword, salt } = authSettings;
-    const inputHash = hashPassword(inputPassword, salt);
-    const isValid = inputHash === hashedPassword;
-
-    return isValid;
-  } catch (error) {
-    console.error("驗證密碼失敗:", error);
-    return false;
+  const authSettings = await getAuthSettings();
+  if (!authSettings) {
+    throw new Error("認證設定不存在，請先完成系統初始化");
   }
+
+  const { hashedPassword, salt } = authSettings;
+  const inputHash = hashPassword(inputPassword, salt);
+  return inputHash === hashedPassword;
 };
 
 /**
