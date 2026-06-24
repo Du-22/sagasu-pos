@@ -4,7 +4,7 @@ import { Archive } from "lucide-react";
 /**
  * ArchivedSummaryNotice
  *
- * 功能效果：提示目前查詢期間包含已封存的收支明細
+ * 功能效果：提示目前查詢期間包含已整理成總覽的收支紀錄
  * 使用範例：<ArchivedSummaryNotice archivedDayCount={3} archivedIncomeTotal={1200} />
  */
 const ArchivedSummaryNotice = ({
@@ -24,10 +24,10 @@ const ArchivedSummaryNotice = ({
         </div>
         <div className="min-w-0 flex-1">
           <div className="font-bold text-anthropic-black">
-            已顯示整理後的營業資料
+            此期間以營業總覽呈現
           </div>
           <div className="mt-1 text-sm leading-6 text-warm-charcoal">
-            {dateRangeText} 有 {archivedDayCount} 天已整理成彙總資料，收入
+            {dateRangeText}的紀錄已整理成營業總覽（共 {archivedDayCount} 天），營業額
             <span className="font-bold text-terracotta">
               ${archivedIncomeTotal.toLocaleString("zh-TW")}
             </span>
@@ -35,10 +35,10 @@ const ArchivedSummaryNotice = ({
             <span className="font-bold text-error-warm">
               ${archivedExpenseTotal.toLocaleString("zh-TW")}
             </span>
-            。系統會直接用這些資料計算上方統計。
+            ，會直接計入上方統計。
             {hasVisibleDetails
-              ? " 仍保留的近期明細會一起顯示。"
-              : " 較早期明細已收進後台保存。"}
+              ? " 近期明細會照常顯示。"
+              : " 此畫面保留每日與月份統計，方便查看營業狀況。"}
           </div>
         </div>
       </div>

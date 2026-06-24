@@ -13,7 +13,7 @@ const parseArgs = (argv) => {
   const options = {
     projectId: DEFAULT_PROJECT_ID,
     storageBucket: null,
-    retentionMonths: 18,
+    retentionMonths: 6,
     dryRun: true,
     deleteAfterArchive: false,
     force: false,
@@ -81,7 +81,7 @@ Options:
   --bucket <name>                        Storage bucket. Default: <projectId>-financial-archives
   --month <YYYY-MM>                      Validate one month.
   --oldest                               Validate the oldest eligible month.
-  --retention-months <number>            Default: 18
+  --retention-months <number>            Default: 6
   --force                                Allow a month inside the retention window for dev testing.
   --archive                              Actually upload files and write Firestore summaries.
   --delete-after-archive                 Delete Firestore details after archive verification.

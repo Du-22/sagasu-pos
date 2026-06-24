@@ -236,7 +236,7 @@ const ExpenseRecordsPage = ({
           </div>
           {activeVendor === "all" && archivedExpenseCount > 0 && (
             <div className="mt-2 text-xs leading-5 text-warm-olive">
-              其中 {archivedExpenseCount} 筆來自封存彙總，原始支出明細可能已移出。
+              其中 {archivedExpenseCount} 筆已整理進營業總覽。
             </div>
           )}
         </div>
@@ -258,7 +258,7 @@ const ExpenseRecordsPage = ({
         {visibleExpenseRecords.length === 0 ? (
           <div className="rounded-lg border border-dashed border-warm-sand py-10 text-center text-warm-stone">
             {hasArchivedSummaries && activeVendor === "all"
-              ? "這個期間的支出明細已封存，請以本期支出總額為準"
+              ? "這個期間的支出已整理成總覽，請以本期支出總額為準"
               : "這個期間尚無支出紀錄"}
           </div>
         ) : (

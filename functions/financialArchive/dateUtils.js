@@ -1,4 +1,4 @@
-const DEFAULT_RETENTION_MONTHS = 18;
+const DEFAULT_RETENTION_MONTHS = 6;
 
 const pad2 = (value) => String(value).padStart(2, "0");
 
@@ -67,4 +67,3 @@ module.exports = {
   isEligibleMonth,
   listMonths,
 };
-

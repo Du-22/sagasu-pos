@@ -107,6 +107,15 @@ const HistoryPage = ({ onBack, onMenuSelect, onRefundOrder, onLogout }) => {
   const allPeriodRecords = salesHistory;
   const activePeriodRecords = allPeriodRecords.filter((r) => !r.isRefunded);
   const refundedPeriodRecords = allPeriodRecords.filter((r) => r.isRefunded);
+  const visiblePeriodRecords = allPeriodRecords.filter(
+    (record) => !summarizedDateSet.has(record.date),
+  );
+  const visibleActivePeriodRecords = visiblePeriodRecords.filter(
+    (r) => !r.isRefunded,
+  );
+  const visibleRefundedPeriodRecords = visiblePeriodRecords.filter(
+    (r) => r.isRefunded,
+  );
   const activeDetailRecordsForTotals = activePeriodRecords.filter(
     (record) => !summarizedDateSet.has(record.date),
   );
@@ -127,9 +136,11 @@ const HistoryPage = ({ onBack, onMenuSelect, onRefundOrder, onLogout }) => {
   const refundedTotal =
     summaryTotals.refundTotal +
     refundedDetailRecordsForTotals.reduce((sum, r) => sum + r.total, 0);
-  const displayRecords = showRefundedOrders ? allPeriodRecords : activePeriodRecords;
+  const displayRecords = showRefundedOrders
+    ? visiblePeriodRecords
+    : visibleActivePeriodRecords;
 
-  const popularItems = getPopularItems(allPeriodRecords);
+  const popularItems = getPopularItems(visiblePeriodRecords);
   const groupedRecords = groupRecordsByTable(displayRecords);
   const dateRangeText = getDateRangeText(viewMode, selectedDate);
   const dailyBreakdown =
@@ -156,7 +167,8 @@ const HistoryPage = ({ onBack, onMenuSelect, onRefundOrder, onLogout }) => {
   const periodExpenseCount =
     summaryTotals.expenseRecordCount + detailExpenseRecordsForTotals.length;
   const hasArchivedSummaries = dailySummaries.length > 0;
-  const hasVisibleDetails = salesHistory.length > 0 || expenseRecords.length > 0;
+  const hasVisibleDetails =
+    visiblePeriodRecords.length > 0 || detailExpenseRecordsForTotals.length > 0;
 
   const vendorOptions = useMemo(
     () => [...new Set(expenseRecords.map((record) => record.vendor))],
@@ -230,16 +242,16 @@ const HistoryPage = ({ onBack, onMenuSelect, onRefundOrder, onLogout }) => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <PopularItemsCard popularItems={popularItems} viewMode={viewMode} />
               <DetailedRecordsCard
-                activePeriodRecords={activePeriodRecords}
+                activePeriodRecords={visibleActivePeriodRecords}
                 periodTotal={periodTotal}
               />
               <PaymentMethodCard
-                activePeriodRecords={activePeriodRecords}
+                activePeriodRecords={visibleActivePeriodRecords}
                 periodTotal={periodTotal}
               />
               <RefundStatisticsCard
-                refundedPeriodRecords={refundedPeriodRecords}
-                allPeriodRecords={allPeriodRecords}
+                refundedPeriodRecords={visibleRefundedPeriodRecords}
+                allPeriodRecords={visiblePeriodRecords}
                 refundedTotal={refundedTotal}
               />
             </div>

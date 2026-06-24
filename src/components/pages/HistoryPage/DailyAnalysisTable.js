@@ -34,7 +34,7 @@ const DailyAnalysisTable = ({ dailyBreakdown, viewMode }) => {
                     <span>{day.date}</span>
                     {day.isArchived && (
                       <span className="rounded-full bg-parchment px-2 py-0.5 text-xs font-medium text-warm-olive">
-                        封存彙總
+                        營業總覽
                       </span>
                     )}
                   </div>
