@@ -23,11 +23,6 @@ import RefundStatisticsCard from "./HistoryPage/RefundStatisticsCard";
 import DailyOrdersList from "./HistoryPage/DailyOrdersList";
 import WeeklyMonthlyOverview from "./HistoryPage/WeeklyMonthlyOverview";
 import RefundConfirmModal from "./HistoryPage/RefundConfirmModal";
-import {
-  createDemoIncomeRecords,
-  demoCommonExpenseItems,
-  demoExpenseRecords,
-} from "./HistoryPage/demoFinancialData";
 
 /**
  * HistoryPage
@@ -39,8 +34,8 @@ import {
  */
 const HistoryPage = ({ onBack, onMenuSelect, onRefundOrder, onLogout }) => {
   const [activeFinancialTab, setActiveFinancialTab] = useState("income");
-  const [expenseRecords, setExpenseRecords] = useState(demoExpenseRecords);
-  const [commonExpenseItems, setCommonExpenseItems] = useState(demoCommonExpenseItems);
+  const [expenseRecords, setExpenseRecords] = useState([]);
+  const [commonExpenseItems, setCommonExpenseItems] = useState([]);
 
   const {
     salesHistory,
@@ -60,13 +55,7 @@ const HistoryPage = ({ onBack, onMenuSelect, onRefundOrder, onLogout }) => {
     handleCancelRefund,
   } = useHistoryData({ onRefundOrder });
 
-  const demoIncomeRecords = useMemo(
-    () => createDemoIncomeRecords(selectedDate),
-    [selectedDate],
-  );
-
-  // v0 fallback: 沒有 Firebase 收入資料時，先用範例資料讓收支總覽可預覽。
-  const allPeriodRecords = salesHistory.length > 0 ? salesHistory : demoIncomeRecords;
+  const allPeriodRecords = salesHistory;
   const activePeriodRecords = allPeriodRecords.filter((r) => !r.isRefunded);
   const refundedPeriodRecords = allPeriodRecords.filter((r) => r.isRefunded);
   const periodTotal = activePeriodRecords.reduce((sum, r) => sum + r.total, 0);
