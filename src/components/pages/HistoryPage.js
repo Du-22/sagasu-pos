@@ -68,6 +68,7 @@ const HistoryPage = ({ onBack, onMenuSelect, onRefundOrder, onLogout }) => {
 
   const {
     dailySummaries,
+    monthlySummary,
     summaryLoading,
   } = useFinancialSummaryData(selectedDate, viewMode);
 
@@ -213,6 +214,7 @@ const HistoryPage = ({ onBack, onMenuSelect, onRefundOrder, onLogout }) => {
             archivedExpenseTotal={summaryTotals.expenseTotal}
             hasVisibleDetails={hasVisibleDetails}
             dateRangeText={dateRangeText}
+            monthlySummary={monthlySummary}
           />
         )}
 
