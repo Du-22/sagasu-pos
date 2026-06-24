@@ -15,22 +15,23 @@ const DateSelector = ({
   displayMode,
   onDisplayModeChange,
   dateRangeText,
+  showDisplayModeControls = true,
 }) => {
   return (
     <div className="bg-ivory rounded-lg p-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <label className="font-medium">查看日期:</label>
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <label className="font-medium whitespace-nowrap">查看日期:</label>
           <input
             type="date"
             value={selectedDate}
             onChange={(e) => onDateChange(e.target.value)}
-            className="border rounded-lg px-3 py-2"
+            className="w-full border rounded-lg px-3 py-2 sm:w-auto"
           />
           <div className="text-sm text-warm-olive">期間: {dateRangeText}</div>
         </div>
-        <div className="flex space-x-2">
-          {viewMode === "daily" && (
+        <div className="flex flex-wrap gap-2">
+          {showDisplayModeControls && viewMode === "daily" && (
             <div className="flex bg-parchment rounded-lg p-1">
               <button
                 onClick={() => onDisplayModeChange("grouped")}
