@@ -1,13 +1,12 @@
 import React, { useMemo, useState } from "react";
 import Header from "../UI/Header";
 import useHistoryData from "../../hooks/useHistoryData";
+import useExpenseData from "../../hooks/useExpenseData";
 import {
   getDateRangeText,
   getDailyBreakdown,
-  getMonthRange,
   groupRecordsByTable,
   getPopularItems,
-  getWeekRange,
 } from "../../utils/historyUtils";
 
 import DateSelector from "./HistoryPage/DateSelector";
@@ -34,8 +33,6 @@ import RefundConfirmModal from "./HistoryPage/RefundConfirmModal";
  */
 const HistoryPage = ({ onBack, onMenuSelect, onRefundOrder, onLogout }) => {
   const [activeFinancialTab, setActiveFinancialTab] = useState("income");
-  const [expenseRecords, setExpenseRecords] = useState([]);
-  const [commonExpenseItems, setCommonExpenseItems] = useState([]);
 
   const {
     salesHistory,
@@ -55,6 +52,18 @@ const HistoryPage = ({ onBack, onMenuSelect, onRefundOrder, onLogout }) => {
     handleCancelRefund,
   } = useHistoryData({ onRefundOrder });
 
+  const {
+    expenseRecords,
+    commonExpenseItems,
+    expenseLoading,
+    expenseSaving,
+    handleAddExpenseRecord,
+    handleDeleteExpenseRecord,
+    handleAddCommonExpenseItem,
+    handleUpdateCommonExpenseItem,
+    handleDeleteCommonExpenseItem,
+  } = useExpenseData(selectedDate, viewMode);
+
   const allPeriodRecords = salesHistory;
   const activePeriodRecords = allPeriodRecords.filter((r) => !r.isRefunded);
   const refundedPeriodRecords = allPeriodRecords.filter((r) => r.isRefunded);
@@ -68,35 +77,14 @@ const HistoryPage = ({ onBack, onMenuSelect, onRefundOrder, onLogout }) => {
   const dailyBreakdown = viewMode !== "daily" ? getDailyBreakdown(allPeriodRecords) : [];
   const dateRangeText = getDateRangeText(viewMode, selectedDate);
 
-  const filteredExpenseRecords = useMemo(() => {
-    let startDate = selectedDate;
-    let endDate = selectedDate;
-
-    if (viewMode === "weekly") {
-      const range = getWeekRange(selectedDate);
-      startDate = range.start;
-      endDate = range.end;
-    }
-
-    if (viewMode === "monthly") {
-      const range = getMonthRange(selectedDate);
-      startDate = range.start;
-      endDate = range.end;
-    }
-
-    return expenseRecords
-      .filter((record) => record.date >= startDate && record.date <= endDate)
-      .sort((a, b) => b.date.localeCompare(a.date));
-  }, [expenseRecords, selectedDate, viewMode]);
-
-  const periodExpenseTotal = filteredExpenseRecords.reduce(
+  const periodExpenseTotal = expenseRecords.reduce(
     (sum, record) => sum + record.amount,
     0,
   );
 
   const vendorOptions = useMemo(
-    () => [...new Set(filteredExpenseRecords.map((record) => record.vendor))],
-    [filteredExpenseRecords],
+    () => [...new Set(expenseRecords.map((record) => record.vendor))],
+    [expenseRecords],
   );
 
   const materialOptions = useMemo(
@@ -109,51 +97,11 @@ const HistoryPage = ({ onBack, onMenuSelect, onRefundOrder, onLogout }) => {
     [commonExpenseItems],
   );
 
-  const handleAddExpenseRecord = (record) => {
-    setExpenseRecords((currentRecords) => [
-      {
-        ...record,
-        id: `expense-${Date.now()}`,
-      },
-      ...currentRecords,
-    ]);
-  };
-
-  const handleDeleteExpenseRecord = (recordId) => {
-    setExpenseRecords((currentRecords) =>
-      currentRecords.filter((record) => record.id !== recordId),
-    );
-  };
-
-  const handleAddCommonExpenseItem = (item) => {
-    setCommonExpenseItems((currentItems) => [
-      {
-        ...item,
-        id: `common-expense-${Date.now()}`,
-      },
-      ...currentItems,
-    ]);
-  };
-
-  const handleDeleteCommonExpenseItem = (itemId) => {
-    setCommonExpenseItems((currentItems) =>
-      currentItems.filter((item) => item.id !== itemId),
-    );
-  };
-
-  const handleUpdateCommonExpenseItem = (itemId, nextItem) => {
-    setCommonExpenseItems((currentItems) =>
-      currentItems.map((item) =>
-        item.id === itemId ? { ...item, ...nextItem } : item,
-      ),
-    );
-  };
-
   return (
     <div className="min-h-screen bg-parchment">
-      {loading && (
+      {(loading || expenseLoading || expenseSaving) && (
         <div className="fixed top-4 right-4 bg-terracotta text-ivory px-4 py-2 rounded shadow-lg z-50">
-          載入中...
+          資料同步中...
         </div>
       )}
 
@@ -235,11 +183,12 @@ const HistoryPage = ({ onBack, onMenuSelect, onRefundOrder, onLogout }) => {
           <ExpenseRecordsPage
             selectedDate={selectedDate}
             dateRangeText={dateRangeText}
-            expenseRecords={filteredExpenseRecords}
+            expenseRecords={expenseRecords}
             vendorOptions={vendorOptions}
             materialOptions={materialOptions}
             commonVendorOptions={commonVendorOptions}
             commonExpenseItems={commonExpenseItems}
+            isSaving={expenseSaving}
             onAddRecord={handleAddExpenseRecord}
             onDeleteRecord={handleDeleteExpenseRecord}
             onAddCommonItem={handleAddCommonExpenseItem}
@@ -253,7 +202,7 @@ const HistoryPage = ({ onBack, onMenuSelect, onRefundOrder, onLogout }) => {
             incomeTotal={periodTotal}
             expenseTotal={periodExpenseTotal}
             orderCount={activePeriodRecords.length}
-            expenseCount={filteredExpenseRecords.length}
+            expenseCount={expenseRecords.length}
             dateRangeText={dateRangeText}
           />
         )}

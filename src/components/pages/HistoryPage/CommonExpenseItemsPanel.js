@@ -21,6 +21,7 @@ const CommonExpenseItemsPanel = ({
   materialOptions,
   vendorOptions,
   onSelectItem,
+  isSaving = false,
   onAddItem,
   onUpdateItem,
   onDeleteItem,
@@ -35,7 +36,7 @@ const CommonExpenseItemsPanel = ({
     }));
   };
 
-  const handleAddItem = (event) => {
+  const handleAddItem = async (event) => {
     event.preventDefault();
 
     const amount = Number(draftItem.amount);
@@ -44,12 +45,17 @@ const CommonExpenseItemsPanel = ({
       return;
     }
 
-    onAddItem({
-      name: draftItem.name.trim(),
-      vendor: draftItem.vendor.trim(),
-      amount,
-    });
-    setDraftItem(blankItem);
+    try {
+      await onAddItem({
+        name: draftItem.name.trim(),
+        vendor: draftItem.vendor.trim(),
+        amount,
+      });
+      setDraftItem(blankItem);
+    } catch (error) {
+      console.error("新增常用原材料失敗:", error);
+      window.alert("新增常用原材料失敗，請檢查網路後再試");
+    }
   };
 
   return (
@@ -97,7 +103,7 @@ const CommonExpenseItemsPanel = ({
       <form onSubmit={handleAddItem} className="mt-4 rounded-lg border border-warm-cream p-3">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="font-bold text-warm-charcoal">新增常用項目</h3>
-          <span className="text-xs text-warm-stone">v0 本機設定</span>
+          <span className="text-xs text-warm-stone">Firebase 同步</span>
         </div>
 
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(280px,1fr)_220px_150px_auto]">
@@ -151,10 +157,11 @@ const CommonExpenseItemsPanel = ({
           <div className="flex items-end">
             <button
               type="submit"
+              disabled={isSaving}
               className="flex min-h-[42px] w-full items-center justify-center gap-2 rounded-lg bg-terracotta px-4 py-2 font-medium text-ivory transition-colors hover:bg-terracotta-dark xl:w-auto"
             >
               <Plus className="h-4 w-4" />
-              新增常用
+              {isSaving ? "儲存中" : "新增常用"}
             </button>
           </div>
         </div>
@@ -164,6 +171,7 @@ const CommonExpenseItemsPanel = ({
         <CommonExpenseItemsManagerModal
           items={items}
           onClose={() => setIsManagerOpen(false)}
+          isSaving={isSaving}
           onUpdateItem={onUpdateItem}
           onDeleteItem={onDeleteItem}
         />
