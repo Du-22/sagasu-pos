@@ -181,7 +181,7 @@ const monthlyFinancialArchive = onSchedule(
     archiveOldestEligibleMonthCore({
       retentionMonths: DEFAULT_RETENTION_MONTHS,
       dryRun: false,
-      deleteAfterArchive: false,
+      deleteAfterArchive: true,
     }),
 );
 
