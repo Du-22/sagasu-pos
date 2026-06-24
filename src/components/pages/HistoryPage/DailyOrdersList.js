@@ -1,6 +1,9 @@
 import React from "react";
 import { calculateDiningTime } from "../../../utils/historyUtils";
 
+const getRecordKey = (record, index) =>
+  `${record.id || "record"}-${record.date || ""}-${record.time || record.timestamp || ""}-${index}`;
+
 /**
  * DailyOrdersList
  *
@@ -124,7 +127,7 @@ const SplitPaymentRecords = ({ records, onRefundClick }) => (
   <div className="space-y-3">
     {records.map((record, index) => (
       <div
-        key={record.id}
+        key={getRecordKey(record, index)}
         className={`border rounded-lg p-3 ${
           record.isRefunded ? "bg-error-warm/10 border-error-warm/30 opacity-75" : "bg-ivory"
         }`}
@@ -224,11 +227,11 @@ const SinglePaymentRecord = ({ record, onRefundClick }) => (
 // 詳細列表模式
 const DetailedView = ({ displayRecords, onRefundClick }) => (
   <div className="space-y-3">
-    {displayRecords
+    {[...displayRecords]
       .sort((a, b) => b.timestamp - a.timestamp)
-      .map((record) => (
+      .map((record, index) => (
         <div
-          key={record.id}
+          key={getRecordKey(record, index)}
           className={`border rounded-lg p-3 ${
             record.isRefunded
               ? "bg-error-warm/10 border-error-warm/30 opacity-75"

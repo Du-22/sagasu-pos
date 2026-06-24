@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import Header from "../UI/Header";
 import useHistoryData from "../../hooks/useHistoryData";
 import useExpenseData from "../../hooks/useExpenseData";
+import useFinancialSummaryData from "../../hooks/useFinancialSummaryData";
 import {
   getDateRangeText,
   getDailyBreakdown,
@@ -22,6 +23,7 @@ import RefundStatisticsCard from "./HistoryPage/RefundStatisticsCard";
 import DailyOrdersList from "./HistoryPage/DailyOrdersList";
 import WeeklyMonthlyOverview from "./HistoryPage/WeeklyMonthlyOverview";
 import RefundConfirmModal from "./HistoryPage/RefundConfirmModal";
+import ArchivedSummaryNotice from "./HistoryPage/ArchivedSummaryNotice";
 
 /**
  * HistoryPage
@@ -64,23 +66,109 @@ const HistoryPage = ({ onBack, onMenuSelect, onRefundOrder, onLogout }) => {
     handleDeleteCommonExpenseItem,
   } = useExpenseData(selectedDate, viewMode);
 
+  const {
+    dailySummaries,
+    summaryLoading,
+  } = useFinancialSummaryData(selectedDate, viewMode);
+
+  const summarizedDateSet = useMemo(
+    () => new Set(dailySummaries.map((summary) => summary.date)),
+    [dailySummaries],
+  );
+
+  const summaryTotals = useMemo(
+    () =>
+      dailySummaries.reduce(
+        (totals, summary) => ({
+          incomeTotal: totals.incomeTotal + summary.incomeTotal,
+          expenseTotal: totals.expenseTotal + summary.expenseTotal,
+          netTotal: totals.netTotal + summary.netTotal,
+          orderCount: totals.orderCount + summary.orderCount,
+          itemCount: totals.itemCount + summary.itemCount,
+          refundTotal: totals.refundTotal + summary.refundTotal,
+          refundCount: totals.refundCount + summary.refundCount,
+          expenseRecordCount:
+            totals.expenseRecordCount + summary.expenseRecordCount,
+        }),
+        {
+          incomeTotal: 0,
+          expenseTotal: 0,
+          netTotal: 0,
+          orderCount: 0,
+          itemCount: 0,
+          refundTotal: 0,
+          refundCount: 0,
+          expenseRecordCount: 0,
+        },
+      ),
+    [dailySummaries],
+  );
+
   const allPeriodRecords = salesHistory;
   const activePeriodRecords = allPeriodRecords.filter((r) => !r.isRefunded);
   const refundedPeriodRecords = allPeriodRecords.filter((r) => r.isRefunded);
-  const periodTotal = activePeriodRecords.reduce((sum, r) => sum + r.total, 0);
-  const periodItemCount = activePeriodRecords.reduce((sum, r) => sum + r.itemCount, 0);
-  const refundedTotal = refundedPeriodRecords.reduce((sum, r) => sum + r.total, 0);
-  const displayRecords = showRefundedOrders ? allPeriodRecords : activePeriodRecords;
+  const visiblePeriodRecords = allPeriodRecords.filter(
+    (record) => !summarizedDateSet.has(record.date),
+  );
+  const visibleActivePeriodRecords = visiblePeriodRecords.filter(
+    (r) => !r.isRefunded,
+  );
+  const visibleRefundedPeriodRecords = visiblePeriodRecords.filter(
+    (r) => r.isRefunded,
+  );
+  const activeDetailRecordsForTotals = activePeriodRecords.filter(
+    (record) => !summarizedDateSet.has(record.date),
+  );
+  const refundedDetailRecordsForTotals = refundedPeriodRecords.filter(
+    (record) => !summarizedDateSet.has(record.date),
+  );
+  const detailExpenseRecordsForTotals = expenseRecords.filter(
+    (record) => !summarizedDateSet.has(record.date),
+  );
+  const periodTotal =
+    summaryTotals.incomeTotal +
+    activeDetailRecordsForTotals.reduce((sum, r) => sum + r.total, 0);
+  const periodItemCount =
+    summaryTotals.itemCount +
+    activeDetailRecordsForTotals.reduce((sum, r) => sum + r.itemCount, 0);
+  const periodOrderCount =
+    summaryTotals.orderCount + activeDetailRecordsForTotals.length;
+  const refundedTotal =
+    summaryTotals.refundTotal +
+    refundedDetailRecordsForTotals.reduce((sum, r) => sum + r.total, 0);
+  const displayRecords = showRefundedOrders
+    ? visiblePeriodRecords
+    : visibleActivePeriodRecords;
 
-  const popularItems = getPopularItems(allPeriodRecords);
+  const popularItems = getPopularItems(visiblePeriodRecords);
   const groupedRecords = groupRecordsByTable(displayRecords);
-  const dailyBreakdown = viewMode !== "daily" ? getDailyBreakdown(allPeriodRecords) : [];
   const dateRangeText = getDateRangeText(viewMode, selectedDate);
+  const dailyBreakdown =
+    viewMode !== "daily"
+      ? [
+          ...dailySummaries.map((summary) => ({
+            date: summary.date,
+            orderCount: summary.orderCount,
+            itemCount: summary.itemCount,
+            revenue: summary.incomeTotal,
+            isArchived: true,
+          })),
+          ...getDailyBreakdown(
+            allPeriodRecords.filter((record) => !summarizedDateSet.has(record.date)),
+          ),
+        ].sort((a, b) => b.date.localeCompare(a.date))
+      : [];
 
-  const periodExpenseTotal = expenseRecords.reduce(
+  const detailExpenseTotal = detailExpenseRecordsForTotals.reduce(
     (sum, record) => sum + record.amount,
     0,
   );
+  const periodExpenseTotal = summaryTotals.expenseTotal + detailExpenseTotal;
+  const periodExpenseCount =
+    summaryTotals.expenseRecordCount + detailExpenseRecordsForTotals.length;
+  const hasArchivedSummaries = dailySummaries.length > 0;
+  const hasVisibleDetails =
+    visiblePeriodRecords.length > 0 || detailExpenseRecordsForTotals.length > 0;
 
   const vendorOptions = useMemo(
     () => [...new Set(expenseRecords.map((record) => record.vendor))],
@@ -99,7 +187,7 @@ const HistoryPage = ({ onBack, onMenuSelect, onRefundOrder, onLogout }) => {
 
   return (
     <div className="min-h-screen bg-parchment">
-      {(loading || expenseLoading || expenseSaving) && (
+      {(loading || expenseLoading || expenseSaving || summaryLoading) && (
         <div className="fixed top-4 right-4 bg-terracotta text-ivory px-4 py-2 rounded shadow-lg z-50">
           資料同步中...
         </div>
@@ -130,10 +218,20 @@ const HistoryPage = ({ onBack, onMenuSelect, onRefundOrder, onLogout }) => {
           showDisplayModeControls={activeFinancialTab === "income"}
         />
 
+        {hasArchivedSummaries && (
+          <ArchivedSummaryNotice
+            archivedDayCount={dailySummaries.length}
+            archivedIncomeTotal={summaryTotals.incomeTotal}
+            archivedExpenseTotal={summaryTotals.expenseTotal}
+            hasVisibleDetails={hasVisibleDetails}
+            dateRangeText={dateRangeText}
+          />
+        )}
+
         {activeFinancialTab === "income" && (
           <>
             <StatisticsCards
-              orderCount={activePeriodRecords.length}
+              orderCount={periodOrderCount}
               itemCount={periodItemCount}
               periodTotal={periodTotal}
               refundedTotal={refundedTotal}
@@ -144,16 +242,16 @@ const HistoryPage = ({ onBack, onMenuSelect, onRefundOrder, onLogout }) => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <PopularItemsCard popularItems={popularItems} viewMode={viewMode} />
               <DetailedRecordsCard
-                activePeriodRecords={activePeriodRecords}
+                activePeriodRecords={visibleActivePeriodRecords}
                 periodTotal={periodTotal}
               />
               <PaymentMethodCard
-                activePeriodRecords={activePeriodRecords}
+                activePeriodRecords={visibleActivePeriodRecords}
                 periodTotal={periodTotal}
               />
               <RefundStatisticsCard
-                refundedPeriodRecords={refundedPeriodRecords}
-                allPeriodRecords={allPeriodRecords}
+                refundedPeriodRecords={visibleRefundedPeriodRecords}
+                allPeriodRecords={visiblePeriodRecords}
                 refundedTotal={refundedTotal}
               />
             </div>
@@ -184,6 +282,9 @@ const HistoryPage = ({ onBack, onMenuSelect, onRefundOrder, onLogout }) => {
             selectedDate={selectedDate}
             dateRangeText={dateRangeText}
             expenseRecords={expenseRecords}
+            archivedExpenseTotal={summaryTotals.expenseTotal}
+            archivedExpenseCount={summaryTotals.expenseRecordCount}
+            hasArchivedSummaries={hasArchivedSummaries}
             vendorOptions={vendorOptions}
             materialOptions={materialOptions}
             commonVendorOptions={commonVendorOptions}
@@ -201,8 +302,8 @@ const HistoryPage = ({ onBack, onMenuSelect, onRefundOrder, onLogout }) => {
           <ProfitOverviewPage
             incomeTotal={periodTotal}
             expenseTotal={periodExpenseTotal}
-            orderCount={activePeriodRecords.length}
-            expenseCount={expenseRecords.length}
+            orderCount={periodOrderCount}
+            expenseCount={periodExpenseCount}
             dateRangeText={dateRangeText}
           />
         )}

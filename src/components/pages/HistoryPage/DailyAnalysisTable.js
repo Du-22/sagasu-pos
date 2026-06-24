@@ -29,7 +29,16 @@ const DailyAnalysisTable = ({ dailyBreakdown, viewMode }) => {
           <tbody>
             {dailyBreakdown.map((day) => (
               <tr key={day.date} className="border-b hover:bg-parchment">
-                <td className="p-2 font-medium">{day.date}</td>
+                <td className="p-2 font-medium">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span>{day.date}</span>
+                    {day.isArchived && (
+                      <span className="rounded-full bg-parchment px-2 py-0.5 text-xs font-medium text-warm-olive">
+                        營業總覽
+                      </span>
+                    )}
+                  </div>
+                </td>
                 <td className="p-2 text-right">{day.orderCount}</td>
                 <td className="p-2 text-right">{day.itemCount}</td>
                 <td className="p-2 text-right font-bold text-terracotta-dark">

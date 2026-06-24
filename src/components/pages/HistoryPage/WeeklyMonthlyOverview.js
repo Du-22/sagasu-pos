@@ -1,5 +1,8 @@
 import React from "react";
 
+const getRecordKey = (record, index) =>
+  `${record.id || "record"}-${record.date || ""}-${record.time || record.timestamp || ""}-${index}`;
+
 /**
  * WeeklyMonthlyOverview
  *
@@ -34,11 +37,11 @@ const WeeklyMonthlyOverview = ({
       </div>
 
       <div className="space-y-2 max-h-96 overflow-y-auto">
-        {displayRecords
+        {[...displayRecords]
           .sort((a, b) => b.timestamp - a.timestamp)
-          .map((record) => (
+          .map((record, index) => (
             <div
-              key={record.id}
+              key={getRecordKey(record, index)}
               className={`flex items-center justify-between p-3 border rounded-lg ${
                 record.isRefunded
                   ? "bg-error-warm/10 border-error-warm/30 opacity-75"

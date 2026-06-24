@@ -8,6 +8,13 @@ const createCsvWriter = require("csv-writer").createArrayCsvWriter;
 // 初始化 Firebase Admin
 initializeApp();
 const db = getFirestore();
+const {
+  archiveFinancialMonth,
+  monthlyFinancialArchive,
+} = require("./financialArchive");
+
+exports.archiveFinancialMonth = archiveFinancialMonth;
+exports.monthlyFinancialArchive = monthlyFinancialArchive;
 
 console.log("📧 SAGASU POS Functions 已載入");
 
