@@ -22,6 +22,9 @@ const ExpenseRecordsPage = ({
   selectedDate,
   dateRangeText,
   expenseRecords,
+  archivedExpenseTotal = 0,
+  archivedExpenseCount = 0,
+  hasArchivedSummaries = false,
   vendorOptions,
   materialOptions,
   commonVendorOptions,
@@ -61,6 +64,14 @@ const ExpenseRecordsPage = ({
     (sum, record) => sum + record.amount,
     0,
   );
+  const displayedExpenseTotal =
+    activeVendor === "all"
+      ? visibleExpenseTotal + archivedExpenseTotal
+      : visibleExpenseTotal;
+  const displayedExpenseCount =
+    activeVendor === "all"
+      ? visibleExpenseRecords.length + archivedExpenseCount
+      : visibleExpenseRecords.length;
 
   const handleChange = (field, value) => {
     setFormData((currentData) => ({
@@ -218,11 +229,16 @@ const ExpenseRecordsPage = ({
             {activeVendor === "all" ? "本期支出總額" : `${activeVendor} 支出總額`}
           </div>
           <div className="mt-2 text-3xl font-bold text-error-warm">
-            {formatCurrency(visibleExpenseTotal)}
+            {formatCurrency(displayedExpenseTotal)}
           </div>
           <div className="mt-1 text-sm text-warm-stone">
-            共 {visibleExpenseRecords.length} 筆支出紀錄
+            共 {displayedExpenseCount} 筆支出紀錄
           </div>
+          {activeVendor === "all" && archivedExpenseCount > 0 && (
+            <div className="mt-2 text-xs leading-5 text-warm-olive">
+              其中 {archivedExpenseCount} 筆來自封存彙總，原始支出明細可能已移出。
+            </div>
+          )}
         </div>
       </div>
 
@@ -241,7 +257,9 @@ const ExpenseRecordsPage = ({
 
         {visibleExpenseRecords.length === 0 ? (
           <div className="rounded-lg border border-dashed border-warm-sand py-10 text-center text-warm-stone">
-            這個期間尚無支出紀錄
+            {hasArchivedSummaries && activeVendor === "all"
+              ? "這個期間的支出明細已封存，請以本期支出總額為準"
+              : "這個期間尚無支出紀錄"}
           </div>
         ) : (
           <div className="overflow-x-auto">
