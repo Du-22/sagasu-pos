@@ -1,4 +1,4 @@
-const DEFAULT_RETENTION_MONTHS = 6;
+const DEFAULT_RETENTION_MONTHS = 12;
 
 const pad2 = (value) => String(value).padStart(2, "0");
 

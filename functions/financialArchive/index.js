@@ -118,7 +118,7 @@ const archiveFinancialMonthCore = async ({
   }
 };
 
-const findOldestUnarchivedMonth = async (retentionMonths) => {
+const findOldestUnarchivedMonth = async (retentionMonths, { deleteAfterArchive = false } = {}) => {
   const latestEligibleMonth = getLatestEligibleMonth(retentionMonths);
   const { endDate } = getMonthRange(latestEligibleMonth);
   const [oldestSalesDate, oldestExpenseDate] = await Promise.all([
@@ -130,7 +130,8 @@ const findOldestUnarchivedMonth = async (retentionMonths) => {
 
   for (const candidateMonth of listMonths(oldestDate.slice(0, 7), latestEligibleMonth)) {
     const status = await getArchiveJobStatus(candidateMonth);
-    if (!["archived", "deleted"].includes(status)) return candidateMonth;
+    const completedStatuses = deleteAfterArchive ? ["deleted"] : ["archived", "deleted"];
+    if (!completedStatuses.includes(status)) return candidateMonth;
   }
 
   return null;
@@ -142,7 +143,7 @@ const archiveOldestEligibleMonthCore = async ({
   deleteAfterArchive = false,
 } = {}) => {
   const safeRetentionMonths = Math.max(1, Number(retentionMonths) || DEFAULT_RETENTION_MONTHS);
-  const month = await findOldestUnarchivedMonth(safeRetentionMonths);
+  const month = await findOldestUnarchivedMonth(safeRetentionMonths, { deleteAfterArchive });
 
   if (!month) {
     return {
@@ -159,6 +160,40 @@ const archiveOldestEligibleMonthCore = async ({
     dryRun,
     deleteAfterArchive,
   });
+};
+
+const archiveAllEligibleMonthsCore = async ({
+  retentionMonths = DEFAULT_RETENTION_MONTHS,
+  dryRun = false,
+  deleteAfterArchive = false,
+} = {}) => {
+  const safeRetentionMonths = Math.max(1, Number(retentionMonths) || DEFAULT_RETENTION_MONTHS);
+  const processed = [];
+
+  while (true) {
+    const month = await findOldestUnarchivedMonth(safeRetentionMonths, { deleteAfterArchive });
+    if (!month) break;
+
+    const result = await archiveFinancialMonthCore({
+      month,
+      retentionMonths: safeRetentionMonths,
+      dryRun,
+      deleteAfterArchive,
+    });
+    processed.push(result);
+
+    if (dryRun) break;
+  }
+
+  return {
+    success: true,
+    skipped: processed.length === 0,
+    reason: processed.length === 0 ? "No eligible month found" : undefined,
+    retentionMonths: safeRetentionMonths,
+    processedCount: processed.length,
+    processedMonths: processed.map((result) => result.month),
+    results: processed,
+  };
 };
 
 const archiveFinancialMonth = onCall(async (request) => {
@@ -178,7 +213,7 @@ const monthlyFinancialArchive = onSchedule(
     timeZone: "Asia/Taipei",
   },
   async () =>
-    archiveOldestEligibleMonthCore({
+    archiveAllEligibleMonthsCore({
       retentionMonths: DEFAULT_RETENTION_MONTHS,
       dryRun: false,
       deleteAfterArchive: true,
@@ -190,4 +225,5 @@ module.exports = {
   monthlyFinancialArchive,
   archiveFinancialMonthCore,
   archiveOldestEligibleMonthCore,
+  archiveAllEligibleMonthsCore,
 };
