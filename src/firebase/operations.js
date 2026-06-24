@@ -17,3 +17,4 @@ export * from './tables';
 export * from './orders';
 export * from './sales';
 export * from './users';
+export * from './expenses';

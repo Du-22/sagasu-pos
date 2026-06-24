@@ -26,6 +26,7 @@ const ExpenseRecordsPage = ({
   materialOptions,
   commonVendorOptions,
   commonExpenseItems,
+  isSaving = false,
   onAddRecord,
   onDeleteRecord,
   onAddCommonItem,
@@ -77,7 +78,7 @@ const ExpenseRecordsPage = ({
     });
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     const amount = Number(formData.amount);
@@ -86,17 +87,34 @@ const ExpenseRecordsPage = ({
       return;
     }
 
-    onAddRecord({
-      date: formData.date,
-      name: formData.name.trim(),
-      vendor: formData.vendor.trim(),
-      amount,
-    });
+    try {
+      await onAddRecord({
+        date: formData.date,
+        name: formData.name.trim(),
+        vendor: formData.vendor.trim(),
+        amount,
+      });
 
-    setFormData({
-      ...initialFormState,
-      date: formData.date,
-    });
+      setFormData({
+        ...initialFormState,
+        date: formData.date,
+      });
+    } catch (error) {
+      console.error("新增支出紀錄失敗:", error);
+      window.alert("新增支出紀錄失敗，請檢查網路後再試");
+    }
+  };
+
+  const handleDeleteRecord = async (recordId) => {
+    const confirmed = window.confirm("這筆支出紀錄會從 Firebase 刪除，確定刪除嗎？");
+    if (!confirmed) return;
+
+    try {
+      await onDeleteRecord(recordId);
+    } catch (error) {
+      console.error("刪除支出紀錄失敗:", error);
+      window.alert("刪除支出紀錄失敗，請檢查網路後再試");
+    }
   };
 
   return (
@@ -106,6 +124,7 @@ const ExpenseRecordsPage = ({
         materialOptions={materialOptions}
         vendorOptions={commonVendorOptions}
         onSelectItem={handleSelectCommonItem}
+        isSaving={isSaving}
         onAddItem={onAddCommonItem}
         onUpdateItem={onUpdateCommonItem}
         onDeleteItem={onDeleteCommonItem}
@@ -184,10 +203,11 @@ const ExpenseRecordsPage = ({
             <div className="flex items-end">
               <button
                 type="submit"
+                disabled={isSaving}
                 className="flex min-h-[42px] w-full items-center justify-center gap-2 rounded-lg bg-terracotta px-4 py-2 font-medium text-ivory transition-colors hover:bg-terracotta-dark xl:w-auto"
               >
                 <Plus className="h-4 w-4" />
-                新增
+                {isSaving ? "儲存中" : "新增"}
               </button>
             </div>
           </div>
@@ -253,7 +273,8 @@ const ExpenseRecordsPage = ({
                     <td className="border-b border-warm-cream px-3 py-3 text-right">
                       <button
                         type="button"
-                        onClick={() => onDeleteRecord(record.id)}
+                        onClick={() => handleDeleteRecord(record.id)}
+                        disabled={isSaving}
                         className="inline-flex min-h-[34px] items-center gap-1 rounded-lg px-2 py-1 text-sm text-error-warm transition-colors hover:bg-error-warm/10"
                       >
                         <Trash2 className="h-4 w-4" />

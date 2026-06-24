@@ -18,6 +18,7 @@ const blankItem = {
 const CommonExpenseItemsManagerModal = ({
   items,
   onClose,
+  isSaving = false,
   onUpdateItem,
   onDeleteItem,
 }) => {
@@ -55,19 +56,36 @@ const CommonExpenseItemsManagerModal = ({
     }));
   };
 
-  const handleSaveEditing = () => {
+  const handleSaveEditing = async () => {
     const amount = Number(editingDraft.amount);
     if (!editingDraft.name.trim() || !editingDraft.vendor.trim() || amount <= 0) {
       window.alert("請填寫常用原材料名稱、廠商與大於 0 的價格");
       return;
     }
 
-    onUpdateItem(editingItemId, {
-      name: editingDraft.name.trim(),
-      vendor: editingDraft.vendor.trim(),
-      amount,
-    });
-    cancelEditing();
+    try {
+      await onUpdateItem(editingItemId, {
+        name: editingDraft.name.trim(),
+        vendor: editingDraft.vendor.trim(),
+        amount,
+      });
+      cancelEditing();
+    } catch (error) {
+      console.error("更新常用原材料失敗:", error);
+      window.alert("更新常用原材料失敗，請檢查網路後再試");
+    }
+  };
+
+  const handleDeleteItem = async (itemId) => {
+    const confirmed = window.confirm("這個常用項目會從 Firebase 刪除，確定刪除嗎？");
+    if (!confirmed) return;
+
+    try {
+      await onDeleteItem(itemId);
+    } catch (error) {
+      console.error("刪除常用原材料失敗:", error);
+      window.alert("刪除常用原材料失敗，請檢查網路後再試");
+    }
   };
 
   return (
@@ -122,7 +140,8 @@ const CommonExpenseItemsManagerModal = ({
                   onCancelEditing={cancelEditing}
                   onEditingChange={handleEditingChange}
                   onSaveEditing={handleSaveEditing}
-                  onDeleteItem={onDeleteItem}
+                  onDeleteItem={handleDeleteItem}
+                  isSaving={isSaving}
                 />
               ))}
             </div>
@@ -133,6 +152,7 @@ const CommonExpenseItemsManagerModal = ({
           <button
             type="button"
             onClick={onClose}
+            disabled={isSaving}
             className="min-h-[40px] rounded-lg bg-terracotta px-4 py-2 font-medium text-ivory transition-colors hover:bg-terracotta-dark"
           >
             完成
@@ -152,6 +172,7 @@ const CommonExpenseItemRow = ({
   onEditingChange,
   onSaveEditing,
   onDeleteItem,
+  isSaving,
 }) => {
   return (
     <div className="rounded-lg border border-warm-cream bg-parchment p-3">
@@ -179,10 +200,11 @@ const CommonExpenseItemRow = ({
             <button
               type="button"
               onClick={onSaveEditing}
+              disabled={isSaving}
               className="inline-flex min-h-[42px] flex-1 items-center justify-center gap-2 rounded-lg bg-terracotta px-3 py-2 text-sm font-medium text-ivory transition-colors hover:bg-terracotta-dark lg:flex-none"
             >
               <Check className="h-4 w-4" />
-              儲存
+              {isSaving ? "儲存中" : "儲存"}
             </button>
             <button
               type="button"
@@ -213,6 +235,7 @@ const CommonExpenseItemRow = ({
             <button
               type="button"
               onClick={() => onDeleteItem(item.id)}
+              disabled={isSaving}
               className="inline-flex min-h-[38px] flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-error-warm transition-colors hover:bg-error-warm/10 sm:flex-none"
             >
               <Trash2 className="h-4 w-4" />
