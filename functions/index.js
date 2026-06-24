@@ -12,9 +12,15 @@ const {
   archiveFinancialMonth,
   monthlyFinancialArchive,
 } = require("./financialArchive");
+const {
+  createFinancialArchiveDownloadSession,
+  downloadFinancialArchiveFile,
+} = require("./financialArchive/downloads");
 
 exports.archiveFinancialMonth = archiveFinancialMonth;
 exports.monthlyFinancialArchive = monthlyFinancialArchive;
+exports.createFinancialArchiveDownloadSession = createFinancialArchiveDownloadSession;
+exports.downloadFinancialArchiveFile = downloadFinancialArchiveFile;
 
 console.log("📧 SAGASU POS Functions 已載入");
 
